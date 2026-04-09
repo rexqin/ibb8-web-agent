@@ -46,12 +46,7 @@
   "welcome_openSettings": {
     "message": "Abrir Configurações"
   },
-  "welcome_quickStart": {
-    "message": "Guia de Início Rápido"
-  },
-  "welcome_joinCommunity": {
-    "message": "Junte-se à Nossa Comunidade"
-  },
+
   "status_checkingConfig": {
     "message": "Verificando configuração..."
   },

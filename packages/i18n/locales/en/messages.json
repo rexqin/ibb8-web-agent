@@ -38,19 +38,13 @@
     "message": "Back to chat"
   },
   "welcome_title": {
-    "message": "Welcome to Nanobrowser!"
+    "message": "Welcome to iBB8"
   },
   "welcome_instruction": {
     "message": "To get started, please configure your API keys in the settings page."
   },
   "welcome_openSettings": {
     "message": "Open Settings"
-  },
-  "welcome_quickStart": {
-    "message": "Quick Start Guide"
-  },
-  "welcome_joinCommunity": {
-    "message": "Join Our Community"
   },
   "status_checkingConfig": {
     "message": "Checking configuration..."

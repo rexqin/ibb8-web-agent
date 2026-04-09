@@ -46,12 +46,7 @@
   "welcome_openSettings": {
     "message": "開啟設定"
   },
-  "welcome_quickStart": {
-    "message": "快速入門指南"
-  },
-  "welcome_joinCommunity": {
-    "message": "加入我們的社群"
-  },
+
   "status_checkingConfig": {
     "message": "正在檢查設定..."
   },

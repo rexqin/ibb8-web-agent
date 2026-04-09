@@ -31,7 +31,6 @@ const SidePanel = () => {
   const [chatSessions, setChatSessions] = useState<Array<{ id: string; title: string; createdAt: number }>>([]);
   const [isFollowUpMode, setIsFollowUpMode] = useState(false);
   const [isHistoricalSession, setIsHistoricalSession] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [favoritePrompts, setFavoritePrompts] = useState<FavoritePrompt[]>([]);
   const [hasConfiguredModels, setHasConfiguredModels] = useState<boolean | null>(null); // null = loading, false = no models, true = has models
   const [isRecording, setIsRecording] = useState(false);
@@ -47,19 +46,6 @@ const SidePanel = () => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<number | null>(null);
-
-  // Check for dark mode preference
-  useEffect(() => {
-    const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    setIsDarkMode(darkModeMediaQuery.matches);
-
-    const handleChange = (e: MediaQueryListEvent) => {
-      setIsDarkMode(e.matches);
-    };
-
-    darkModeMediaQuery.addEventListener('change', handleChange);
-    return () => darkModeMediaQuery.removeEventListener('change', handleChange);
-  }, []);
 
   // Check if models are configured
   const checkModelConfiguration = useCallback(async () => {
@@ -999,22 +985,36 @@ const SidePanel = () => {
     }
   };
 
+  const panelClassName =
+    'bg-gradient-to-b from-[#fff4e8] via-[#ffedd9] to-[#ffe3c6] border-[#fd9b41]/35 shadow-[0_0_0_1px_rgba(253,155,65,0.15),0_10px_28px_rgba(253,155,65,0.18)]';
+  const iconClassName = 'text-[#fd9b41] hover:text-[#e98023]';
+  const contentBorderClassName = '';
+  const helperTextClassName = '';
+  const spinnerBorderClassName = '';
+  const setupButtonClassName = 'bg-[#fd9b41] text-white hover:bg-[#e98023]';
+  const panelBackgroundStyle = { backgroundColor: '#fff1e3' };
+
   return (
     <div>
       <div
-        className={`flex h-screen flex-col ${isDarkMode ? 'bg-slate-900' : "bg-[url('/bg.jpg')] bg-cover bg-no-repeat"} overflow-hidden border ${isDarkMode ? 'border-sky-800' : 'border-[rgb(186,230,253)]'} rounded-2xl`}>
+        className={`flex h-screen flex-col ${panelClassName} overflow-hidden rounded-2xl border`}
+        style={panelBackgroundStyle}>
         <header className="header relative">
           <div className="header-logo">
             {showHistory ? (
               <button
                 type="button"
                 onClick={() => handleBackToChat(false)}
-                className={`${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
+                className={`${iconClassName} cursor-pointer`}
                 aria-label={t('nav_back_a11y')}>
                 {t('nav_back')}
               </button>
             ) : (
-              <img src="/icon-128.png" alt="Extension Logo" className="size-6" />
+              <img
+                src="https://login.ibb8.store/static/logo.png"
+                alt="Extension Logo"
+                className="size-6 rounded-sm ring-1 ring-[#fd9b41]/40 shadow-[0_0_14px_rgba(253,155,65,0.35)]"
+              />
             )}
           </div>
           <div className="header-icons">
@@ -1024,7 +1024,7 @@ const SidePanel = () => {
                   type="button"
                   onClick={handleNewChat}
                   onKeyDown={e => e.key === 'Enter' && handleNewChat()}
-                  className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
+                  className={`header-icon ${iconClassName} cursor-pointer`}
                   aria-label={t('nav_newChat_a11y')}
                   tabIndex={0}>
                   <PiPlusBold size={20} />
@@ -1033,7 +1033,7 @@ const SidePanel = () => {
                   type="button"
                   onClick={handleLoadHistory}
                   onKeyDown={e => e.key === 'Enter' && handleLoadHistory()}
-                  className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
+                  className={`header-icon ${iconClassName} cursor-pointer`}
                   aria-label={t('nav_loadHistory_a11y')}
                   tabIndex={0}>
                   <GrHistory size={20} />
@@ -1044,14 +1044,14 @@ const SidePanel = () => {
               href="https://discord.gg/NN3ABHggMK"
               target="_blank"
               rel="noopener noreferrer"
-              className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'}`}>
+              className={`header-icon ${iconClassName}`}>
               <RxDiscordLogo size={20} />
             </a>
             <button
               type="button"
               onClick={() => chrome.runtime.openOptionsPage()}
               onKeyDown={e => e.key === 'Enter' && chrome.runtime.openOptionsPage()}
-              className={`header-icon ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-400 hover:text-sky-500'} cursor-pointer`}
+              className={`header-icon ${iconClassName} cursor-pointer`}
               aria-label={t('nav_settings_a11y')}
               tabIndex={0}>
               <FiSettings size={20} />
@@ -1066,17 +1066,16 @@ const SidePanel = () => {
               onSessionDelete={handleSessionDelete}
               onSessionBookmark={handleSessionBookmark}
               visible={true}
-              isDarkMode={isDarkMode}
             />
           </div>
         ) : (
           <>
             {/* Show loading state while checking model configuration */}
             {hasConfiguredModels === null && (
-              <div
-                className={`flex flex-1 items-center justify-center p-8 ${isDarkMode ? 'text-sky-300' : 'text-sky-600'}`}>
+              <div className={`flex flex-1 items-center justify-center p-8 ${helperTextClassName}`}>
                 <div className="text-center">
-                  <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-2 border-sky-400 border-t-transparent"></div>
+                  <div
+                    className={`mx-auto mb-4 size-8 animate-spin rounded-full border-2 ${spinnerBorderClassName} border-t-transparent`}></div>
                   <p>{t('status_checkingConfig')}</p>
                 </div>
               </div>
@@ -1084,38 +1083,16 @@ const SidePanel = () => {
 
             {/* Show setup message when no models are configured */}
             {hasConfiguredModels === false && (
-              <div
-                className={`flex flex-1 items-center justify-center p-8 ${isDarkMode ? 'text-sky-300' : 'text-sky-600'}`}>
+              <div className={`flex flex-1 items-center justify-center p-8 ${helperTextClassName}`}>
                 <div className="max-w-md text-center">
                   <img src="/icon-128.png" alt="Nanobrowser Logo" className="mx-auto mb-4 size-12" />
-                  <h3 className={`mb-2 text-lg font-semibold ${isDarkMode ? 'text-sky-200' : 'text-sky-700'}`}>
-                    {t('welcome_title')}
-                  </h3>
+                  <h3 className={`mb-2 text-lg font-semibold ${''}`}>{t('welcome_title')}</h3>
                   <p className="mb-4">{t('welcome_instruction')}</p>
                   <button
                     onClick={() => chrome.runtime.openOptionsPage()}
-                    className={`my-4 rounded-lg px-4 py-2 font-medium transition-colors ${
-                      isDarkMode ? 'bg-sky-600 text-white hover:bg-sky-700' : 'bg-sky-500 text-white hover:bg-sky-600'
-                    }`}>
+                    className={`my-4 rounded-lg px-4 py-2 font-medium transition-colors ${setupButtonClassName}`}>
                     {t('welcome_openSettings')}
                   </button>
-                  <div className="mt-4 text-sm opacity-75">
-                    <a
-                      href="https://github.com/nanobrowser/nanobrowser?tab=readme-ov-file#-quick-start"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-700 hover:text-sky-600'}`}>
-                      {t('welcome_quickStart')}
-                    </a>
-                    <span className="mx-2">•</span>
-                    <a
-                      href="https://discord.gg/NN3ABHggMK"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-sky-700 hover:text-sky-600'}`}>
-                      {t('welcome_joinCommunity')}
-                    </a>
-                  </div>
                 </div>
               </div>
             )}
@@ -1125,8 +1102,7 @@ const SidePanel = () => {
               <>
                 {messages.length === 0 && (
                   <>
-                    <div
-                      className={`border-t ${isDarkMode ? 'border-sky-900' : 'border-sky-100'} mb-2 p-2 shadow-sm backdrop-blur-sm`}>
+                    <div className={`mb-2 border-t p-2 shadow-sm backdrop-blur-sm ${contentBorderClassName}`}>
                       <ChatInput
                         onSendMessage={handleSendMessage}
                         onStopTask={handleStopTask}
@@ -1138,7 +1114,6 @@ const SidePanel = () => {
                         setContent={setter => {
                           setInputTextRef.current = setter;
                         }}
-                        isDarkMode={isDarkMode}
                         historicalSessionId={isHistoricalSession && replayEnabled ? currentSessionId : null}
                         onReplay={handleReplay}
                       />
@@ -1150,21 +1125,19 @@ const SidePanel = () => {
                         onBookmarkUpdateTitle={handleBookmarkUpdateTitle}
                         onBookmarkDelete={handleBookmarkDelete}
                         onBookmarkReorder={handleBookmarkReorder}
-                        isDarkMode={isDarkMode}
                       />
                     </div>
                   </>
                 )}
                 {messages.length > 0 && (
                   <div
-                    className={`scrollbar-gutter-stable flex-1 overflow-x-hidden overflow-y-scroll scroll-smooth p-2 ${isDarkMode ? 'bg-slate-900/80' : ''}`}>
-                    <MessageList messages={messages} isDarkMode={isDarkMode} />
+                    className={`scrollbar-gutter-stable flex-1 overflow-x-hidden overflow-y-scroll scroll-smooth p-2 ${''}`}>
+                    <MessageList messages={messages} />
                     <div ref={messagesEndRef} />
                   </div>
                 )}
                 {messages.length > 0 && (
-                  <div
-                    className={`border-t ${isDarkMode ? 'border-sky-900' : 'border-sky-100'} p-2 shadow-sm backdrop-blur-sm`}>
+                  <div className={`border-t p-2 shadow-sm backdrop-blur-sm ${contentBorderClassName}`}>
                     <ChatInput
                       onSendMessage={handleSendMessage}
                       onStopTask={handleStopTask}
@@ -1176,7 +1149,6 @@ const SidePanel = () => {
                       setContent={setter => {
                         setInputTextRef.current = setter;
                       }}
-                      isDarkMode={isDarkMode}
                       historicalSessionId={isHistoricalSession && replayEnabled ? currentSessionId : null}
                       onReplay={handleReplay}
                     />
