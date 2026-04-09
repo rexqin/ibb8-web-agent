@@ -42,11 +42,11 @@ export const AnalyticsSettings: React.FC = () => {
   if (loading) {
     return (
       <section className="space-y-6">
-        <div className={`rounded-lg border ${''} p-6 text-left shadow-sm`}>
-          <h2 className={`mb-4 text-xl font-semibold ${''}`}>Analytics Settings</h2>
+        <div className="rounded-lg border border-[#fd9b41]/25 bg-[#fffaf5] p-6 text-left shadow-sm">
+          <h2 className="mb-4 text-xl font-semibold text-[#7f420b]">Analytics Settings</h2>
           <div className="animate-pulse">
-            <div className={`mb-2 h-4 w-3/4 rounded ${''}`}></div>
-            <div className={`h-4 w-1/2 rounded ${''}`}></div>
+            <div className="mb-2 h-4 w-3/4 rounded bg-[#ffe3c6]"></div>
+            <div className="h-4 w-1/2 rounded bg-[#ffe3c6]"></div>
           </div>
         </div>
       </section>
@@ -56,9 +56,9 @@ export const AnalyticsSettings: React.FC = () => {
   if (!settings) {
     return (
       <section className="space-y-6">
-        <div className={`rounded-lg border ${''} p-6 text-left shadow-sm`}>
-          <h2 className={`mb-4 text-xl font-semibold ${''}`}>Analytics Settings</h2>
-          <p className={`${''}`}>Failed to load analytics settings.</p>
+        <div className="rounded-lg border border-[#fd9b41]/25 bg-[#fffaf5] p-6 text-left shadow-sm">
+          <h2 className="mb-4 text-xl font-semibold text-[#7f420b]">Analytics Settings</h2>
+          <p className="text-red-600">Failed to load analytics settings.</p>
         </div>
       </section>
     );
@@ -66,14 +66,14 @@ export const AnalyticsSettings: React.FC = () => {
 
   return (
     <section className="space-y-6">
-      <div className={`rounded-lg border ${''} p-6 text-left shadow-sm`}>
-        <h2 className={`mb-4 text-xl font-semibold ${''}`}>Analytics Settings</h2>
+      <div className="rounded-lg border border-[#fd9b41]/25 bg-[#fffaf5] p-6 text-left shadow-sm">
+        <h2 className="mb-4 text-xl font-semibold text-[#7f420b]">Analytics Settings</h2>
 
         <div className="space-y-6">
           {/* Main toggle */}
-          <div className={`my-6 rounded-lg border p-4 ${''}`}>
+          <div className="my-6 rounded-lg border border-[#fd9b41]/20 bg-[#fff4e8] p-4">
             <div className="flex items-center justify-between">
-              <label htmlFor="analytics-enabled" className={`text-base font-medium ${''}`}>
+              <label htmlFor="analytics-enabled" className="text-base font-medium text-[#8a490d]">
                 Help improve Nanobrowser
               </label>
               <div className="relative inline-block w-12 select-none">
@@ -86,9 +86,7 @@ export const AnalyticsSettings: React.FC = () => {
                 />
                 <label
                   htmlFor="analytics-enabled"
-                  className={`block h-6 cursor-pointer overflow-hidden rounded-full ${
-                    settings.enabled ? 'bg-[#fd9b41]' : ''
-                  }`}>
+                  className={`block h-6 cursor-pointer overflow-hidden rounded-full ${settings.enabled ? 'bg-[#fd9b41]' : 'bg-gray-300'}`}>
                   <span className="sr-only">Toggle analytics</span>
                   <span
                     className={`block size-6 rounded-full bg-white shadow transition-transform ${
@@ -98,21 +96,21 @@ export const AnalyticsSettings: React.FC = () => {
                 </label>
               </div>
             </div>
-            <p className={`mt-2 text-sm ${''}`}>Share anonymous usage data to help us improve the extension</p>
+            <p className="mt-2 text-sm text-[#a35b19]">Share anonymous usage data to help us improve the extension</p>
           </div>
 
           {/* Information about what we collect */}
-          <div className={`rounded-md border p-4 ${''}`}>
-            <h3 className={`text-base font-medium ${''} mb-4`}>What we collect:</h3>
-            <ul className={`list-disc space-y-2 pl-5 text-left text-sm ${''}`}>
+          <div className="rounded-md border border-[#fd9b41]/20 bg-[#fff4e8] p-4">
+            <h3 className="mb-4 text-base font-medium text-[#8a490d]">What we collect:</h3>
+            <ul className="list-disc space-y-2 pl-5 text-left text-sm text-[#8a490d]">
               <li>Task execution metrics (start, completion, failure counts and duration)</li>
               <li>Domain names of websites visited (e.g., &quot;amazon.com&quot;, not full URLs)</li>
               <li>Error categories for failed tasks (no sensitive details)</li>
               <li>Anonymous usage statistics</li>
             </ul>
 
-            <h3 className={`mb-4 mt-6 text-base font-medium ${''}`}>What we DON&apos;T collect:</h3>
-            <ul className={`list-disc space-y-2 pl-5 text-left text-sm ${''}`}>
+            <h3 className="mb-4 mt-6 text-base font-medium text-[#8a490d]">What we DON&apos;T collect:</h3>
+            <ul className="list-disc space-y-2 pl-5 text-left text-sm text-[#8a490d]">
               <li>Personal information or login credentials</li>
               <li>Full URLs or page content</li>
               <li>Task instructions or user prompts</li>
@@ -123,8 +121,8 @@ export const AnalyticsSettings: React.FC = () => {
 
           {/* Opt-out message */}
           {!settings.enabled && (
-            <div className={`rounded-md border p-4 ${''}`}>
-              <p className={`text-sm ${''}`}>
+            <div className="rounded-md border border-yellow-200 bg-yellow-50 p-4">
+              <p className="text-sm text-yellow-700">
                 Analytics disabled. You can re-enable it anytime to help improve Nanobrowser.
               </p>
             </div>

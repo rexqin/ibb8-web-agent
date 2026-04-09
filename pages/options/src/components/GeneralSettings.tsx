@@ -25,14 +25,14 @@ export const GeneralSettings = () => {
 
   return (
     <section className="space-y-6">
-      <div className={`rounded-lg border ${''} p-6 text-left shadow-sm`}>
-        <h2 className={`mb-4 text-left text-xl font-semibold ${''}`}>{t('options_general_header')}</h2>
+      <div className="rounded-lg border border-[#fd9b41]/25 bg-[#fffaf5] p-6 text-left shadow-sm">
+        <h2 className="mb-4 text-left text-xl font-semibold text-[#7f420b]">{t('options_general_header')}</h2>
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className={`text-base font-medium ${''}`}>{t('options_general_maxSteps')}</h3>
-              <p className={`text-sm font-normal ${''}`}>{t('options_general_maxSteps_desc')}</p>
+              <h3 className="text-base font-medium text-[#8a490d]">{t('options_general_maxSteps')}</h3>
+              <p className="text-sm font-normal text-[#a35b19]">{t('options_general_maxSteps_desc')}</p>
             </div>
             <label htmlFor="maxSteps" className="sr-only">
               {t('options_general_maxSteps')}
@@ -44,14 +44,14 @@ export const GeneralSettings = () => {
               max={50}
               value={settings.maxSteps}
               onChange={e => updateSetting('maxSteps', Number.parseInt(e.target.value, 10))}
-              className={`w-20 rounded-md border ${''} px-3 py-2`}
+              className="w-20 rounded-md border border-[#fd9b41]/30 bg-white px-3 py-2 text-[#6f3909]"
             />
           </div>
 
           <div className="flex items-center justify-between">
             <div>
-              <h3 className={`text-base font-medium ${''}`}>{t('options_general_maxActions')}</h3>
-              <p className={`text-sm font-normal ${''}`}>{t('options_general_maxActions_desc')}</p>
+              <h3 className="text-base font-medium text-[#8a490d]">{t('options_general_maxActions')}</h3>
+              <p className="text-sm font-normal text-[#a35b19]">{t('options_general_maxActions_desc')}</p>
             </div>
             <label htmlFor="maxActionsPerStep" className="sr-only">
               {t('options_general_maxActions')}
@@ -63,14 +63,14 @@ export const GeneralSettings = () => {
               max={50}
               value={settings.maxActionsPerStep}
               onChange={e => updateSetting('maxActionsPerStep', Number.parseInt(e.target.value, 10))}
-              className={`w-20 rounded-md border ${''} px-3 py-2`}
+              className="w-20 rounded-md border border-[#fd9b41]/30 bg-white px-3 py-2 text-[#6f3909]"
             />
           </div>
 
           <div className="flex items-center justify-between">
             <div>
-              <h3 className={`text-base font-medium ${''}`}>{t('options_general_maxFailures')}</h3>
-              <p className={`text-sm font-normal ${''}`}>{t('options_general_maxFailures_desc')}</p>
+              <h3 className="text-base font-medium text-[#8a490d]">{t('options_general_maxFailures')}</h3>
+              <p className="text-sm font-normal text-[#a35b19]">{t('options_general_maxFailures_desc')}</p>
             </div>
             <label htmlFor="maxFailures" className="sr-only">
               {t('options_general_maxFailures')}
@@ -82,14 +82,14 @@ export const GeneralSettings = () => {
               max={10}
               value={settings.maxFailures}
               onChange={e => updateSetting('maxFailures', Number.parseInt(e.target.value, 10))}
-              className={`w-20 rounded-md border ${''} px-3 py-2`}
+              className="w-20 rounded-md border border-[#fd9b41]/30 bg-white px-3 py-2 text-[#6f3909]"
             />
           </div>
 
           <div className="flex items-center justify-between">
             <div>
-              <h3 className={`text-base font-medium ${''}`}>{t('options_general_enableVision')}</h3>
-              <p className={`text-sm font-normal ${''}`}>{t('options_general_enableVision_desc')}</p>
+              <h3 className="text-base font-medium text-[#8a490d]">{t('options_general_enableVision')}</h3>
+              <p className="text-sm font-normal text-[#a35b19]">{t('options_general_enableVision_desc')}</p>
             </div>
             <div className="relative inline-flex cursor-pointer items-center">
               <input
@@ -101,7 +101,7 @@ export const GeneralSettings = () => {
               />
               <label
                 htmlFor="useVision"
-                className={`peer h-6 w-11 rounded-full ${''} after:absolute after:left-[2px] after:top-[2px] after:size-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-[#fd9b41] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#fd9b41]/30`}>
+                className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:size-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-[#fd9b41] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#fd9b41]/30">
                 <span className="sr-only">{t('options_general_enableVision')}</span>
               </label>
             </div>
@@ -109,8 +109,8 @@ export const GeneralSettings = () => {
 
           <div className="flex items-center justify-between">
             <div>
-              <h3 className={`text-base font-medium ${''}`}>{t('options_general_displayHighlights')}</h3>
-              <p className={`text-sm font-normal ${''}`}>{t('options_general_displayHighlights_desc')}</p>
+              <h3 className="text-base font-medium text-[#8a490d]">{t('options_general_displayHighlights')}</h3>
+              <p className="text-sm font-normal text-[#a35b19]">{t('options_general_displayHighlights_desc')}</p>
             </div>
             <div className="relative inline-flex cursor-pointer items-center">
               <input
@@ -122,7 +122,7 @@ export const GeneralSettings = () => {
               />
               <label
                 htmlFor="displayHighlights"
-                className={`peer h-6 w-11 rounded-full ${''} after:absolute after:left-[2px] after:top-[2px] after:size-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-[#fd9b41] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#fd9b41]/30`}>
+                className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:size-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-[#fd9b41] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#fd9b41]/30">
                 <span className="sr-only">{t('options_general_displayHighlights')}</span>
               </label>
             </div>
@@ -130,8 +130,8 @@ export const GeneralSettings = () => {
 
           <div className="flex items-center justify-between">
             <div>
-              <h3 className={`text-base font-medium ${''}`}>{t('options_general_planningInterval')}</h3>
-              <p className={`text-sm font-normal ${''}`}>{t('options_general_planningInterval_desc')}</p>
+              <h3 className="text-base font-medium text-[#8a490d]">{t('options_general_planningInterval')}</h3>
+              <p className="text-sm font-normal text-[#a35b19]">{t('options_general_planningInterval_desc')}</p>
             </div>
             <label htmlFor="planningInterval" className="sr-only">
               {t('options_general_planningInterval')}
@@ -143,14 +143,14 @@ export const GeneralSettings = () => {
               max={20}
               value={settings.planningInterval}
               onChange={e => updateSetting('planningInterval', Number.parseInt(e.target.value, 10))}
-              className={`w-20 rounded-md border ${''} px-3 py-2`}
+              className="w-20 rounded-md border border-[#fd9b41]/30 bg-white px-3 py-2 text-[#6f3909]"
             />
           </div>
 
           <div className="flex items-center justify-between">
             <div>
-              <h3 className={`text-base font-medium ${''}`}>{t('options_general_minWaitPageLoad')}</h3>
-              <p className={`text-sm font-normal ${''}`}>{t('options_general_minWaitPageLoad_desc')}</p>
+              <h3 className="text-base font-medium text-[#8a490d]">{t('options_general_minWaitPageLoad')}</h3>
+              <p className="text-sm font-normal text-[#a35b19]">{t('options_general_minWaitPageLoad_desc')}</p>
             </div>
             <div className="flex items-center space-x-2">
               <label htmlFor="minWaitPageLoad" className="sr-only">
@@ -164,15 +164,15 @@ export const GeneralSettings = () => {
                 step={50}
                 value={settings.minWaitPageLoad}
                 onChange={e => updateSetting('minWaitPageLoad', Number.parseInt(e.target.value, 10))}
-                className={`w-20 rounded-md border ${''} px-3 py-2`}
+                className="w-20 rounded-md border border-[#fd9b41]/30 bg-white px-3 py-2 text-[#6f3909]"
               />
             </div>
           </div>
 
           <div className="flex items-center justify-between">
             <div>
-              <h3 className={`text-base font-medium ${''}`}>{t('options_general_replayHistoricalTasks')}</h3>
-              <p className={`text-sm font-normal ${''}`}>{t('options_general_replayHistoricalTasks_desc')}</p>
+              <h3 className="text-base font-medium text-[#8a490d]">{t('options_general_replayHistoricalTasks')}</h3>
+              <p className="text-sm font-normal text-[#a35b19]">{t('options_general_replayHistoricalTasks_desc')}</p>
             </div>
             <div className="relative inline-flex cursor-pointer items-center">
               <input
@@ -184,7 +184,7 @@ export const GeneralSettings = () => {
               />
               <label
                 htmlFor="replayHistoricalTasks"
-                className={`peer h-6 w-11 rounded-full ${''} after:absolute after:left-[2px] after:top-[2px] after:size-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-[#fd9b41] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#fd9b41]/30`}>
+                className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:size-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-[#fd9b41] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#fd9b41]/30">
                 <span className="sr-only">{t('options_general_replayHistoricalTasks')}</span>
               </label>
             </div>

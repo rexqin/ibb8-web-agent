@@ -40,7 +40,7 @@ function withOperaSidebar(manifest) {
     sidebar_action: {
       default_panel: 'side-panel/index.html',
       default_title: 'Nanobrowser',
-      default_icon: 'icon-32.png',
+      default_icon: 'logo.png',
     },
   });
 }
@@ -68,10 +68,10 @@ const manifest = withOperaSidebar(
       type: 'module',
     },
     action: {
-      default_icon: 'icon-32.png',
+      default_icon: 'logo.png',
     },
     icons: {
-      128: 'icon-128.png',
+      128: 'logo.png',
     },
     content_scripts: [
       {
@@ -87,7 +87,7 @@ const manifest = withOperaSidebar(
           '*.css',
           '*.svg',
           'icon-128.png',
-          'icon-32.png',
+          'logo.png',
           'permission/index.html',
           'permission/permission.js',
         ],

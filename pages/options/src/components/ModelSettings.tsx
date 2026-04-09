@@ -707,19 +707,19 @@ export const ModelSettings = () => {
   };
 
   const renderModelSelect = (agentName: AgentNameEnum) => (
-    <div className={`rounded-lg border ${''} p-4`}>
-      <h3 className={`mb-2 text-lg font-medium ${''}`}>{agentName.charAt(0).toUpperCase() + agentName.slice(1)}</h3>
-      <p className={`mb-4 text-sm font-normal ${''}`}>{getAgentDescription(agentName)}</p>
+    <div className={`rounded-lg border  p-4`}>
+      <h3 className={`mb-2 text-lg font-medium `}>{agentName.charAt(0).toUpperCase() + agentName.slice(1)}</h3>
+      <p className={`mb-4 text-sm font-normal `}>{getAgentDescription(agentName)}</p>
 
       <div className="space-y-4">
         {/* Model Selection */}
         <div className="flex items-center">
-          <label htmlFor={`${agentName}-model`} className={`w-24 text-sm font-medium ${''}`}>
+          <label htmlFor={`${agentName}-model`} className={`w-24 text-sm font-medium `}>
             {t('options_models_labels_model')}
           </label>
           <select
             id={`${agentName}-model`}
-            className={`flex-1 rounded-md border text-sm ${''} px-3 py-2`}
+            className={`flex-1 rounded-md border text-sm  px-3 py-2`}
             disabled={availableModels.length === 0}
             value={selectedModels[agentName] || ''} // Use the stored provider>model value directly
             onChange={e => handleModelChange(agentName, e.target.value)}>
@@ -737,7 +737,7 @@ export const ModelSettings = () => {
         {/* Temperature Slider - Only show for non-reasoning models */}
         {selectedModels[agentName] && !isOpenAIReasoningModel(selectedModels[agentName]) && (
           <div className="flex items-center">
-            <label htmlFor={`${agentName}-temperature`} className={`w-24 text-sm font-medium ${''}`}>
+            <label htmlFor={`${agentName}-temperature`} className={`w-24 text-sm font-medium `}>
               {t('options_models_labels_temperature')}
             </label>
             <div className="flex flex-1 items-center space-x-2">
@@ -750,12 +750,12 @@ export const ModelSettings = () => {
                 value={modelParameters[agentName].temperature}
                 onChange={e => handleParameterChange(agentName, 'temperature', Number.parseFloat(e.target.value))}
                 style={{
-                  background: `linear-gradient(to right, ${''} 0%, ${''} ${(modelParameters[agentName].temperature / 2) * 100}%, ${''} ${(modelParameters[agentName].temperature / 2) * 100}%, ${''} 100%)`,
+                  background: `linear-gradient(to right,  0%,  ${(modelParameters[agentName].temperature / 2) * 100}%,  ${(modelParameters[agentName].temperature / 2) * 100}%,  100%)`,
                 }}
-                className={`flex-1 ${''} h-1 appearance-none rounded-full`}
+                className={`flex-1  h-1 appearance-none rounded-full`}
               />
               <div className="flex items-center space-x-2">
-                <span className={`w-12 text-sm ${''}`}>{modelParameters[agentName].temperature.toFixed(2)}</span>
+                <span className={`w-12 text-sm `}>{modelParameters[agentName].temperature.toFixed(2)}</span>
                 <input
                   type="number"
                   min="0"
@@ -768,7 +768,7 @@ export const ModelSettings = () => {
                       handleParameterChange(agentName, 'temperature', value);
                     }
                   }}
-                  className={`w-20 rounded-md border ${''} px-2 py-1 text-sm`}
+                  className={`w-20 rounded-md border  px-2 py-1 text-sm`}
                   aria-label={`${agentName} temperature number input`}
                 />
               </div>
@@ -781,7 +781,7 @@ export const ModelSettings = () => {
           !isOpenAIReasoningModel(selectedModels[agentName]) &&
           !isAnthropicModel(selectedModels[agentName]) && (
             <div className="flex items-center">
-              <label htmlFor={`${agentName}-topP`} className={`w-24 text-sm font-medium ${''}`}>
+              <label htmlFor={`${agentName}-topP`} className={`w-24 text-sm font-medium `}>
                 {t('options_models_labels_topP')}
               </label>
               <div className="flex flex-1 items-center space-x-2">
@@ -794,12 +794,12 @@ export const ModelSettings = () => {
                   value={modelParameters[agentName].topP}
                   onChange={e => handleParameterChange(agentName, 'topP', Number.parseFloat(e.target.value))}
                   style={{
-                    background: `linear-gradient(to right, ${''} 0%, ${''} ${modelParameters[agentName].topP * 100}%, ${''} ${modelParameters[agentName].topP * 100}%, ${''} 100%)`,
+                    background: `linear-gradient(to right,  0%,  ${modelParameters[agentName].topP * 100}%,  ${modelParameters[agentName].topP * 100}%,  100%)`,
                   }}
-                  className={`flex-1 ${''} h-1 appearance-none rounded-full`}
+                  className={`flex-1  h-1 appearance-none rounded-full`}
                 />
                 <div className="flex items-center space-x-2">
-                  <span className={`w-12 text-sm ${''}`}>{modelParameters[agentName].topP.toFixed(3)}</span>
+                  <span className={`w-12 text-sm `}>{modelParameters[agentName].topP.toFixed(3)}</span>
                   <input
                     type="number"
                     min="0"
@@ -812,7 +812,7 @@ export const ModelSettings = () => {
                         handleParameterChange(agentName, 'topP', value);
                       }
                     }}
-                    className={`w-20 rounded-md border ${''} px-2 py-1 text-sm`}
+                    className={`w-20 rounded-md border  px-2 py-1 text-sm`}
                     aria-label={`${agentName} top P number input`}
                   />
                 </div>
@@ -823,7 +823,7 @@ export const ModelSettings = () => {
         {/* Reasoning Effort Selector (only for O-series models) */}
         {selectedModels[agentName] && isOpenAIReasoningModel(selectedModels[agentName]) && (
           <div className="flex items-center">
-            <label htmlFor={`${agentName}-reasoning-effort`} className={`w-24 text-sm font-medium ${''}`}>
+            <label htmlFor={`${agentName}-reasoning-effort`} className={`w-24 text-sm font-medium `}>
               {t('options_models_labels_reasoning')}
             </label>
             <div className="flex flex-1 items-center space-x-2">
@@ -833,7 +833,7 @@ export const ModelSettings = () => {
                 onChange={e =>
                   handleReasoningEffortChange(agentName, e.target.value as 'minimal' | 'low' | 'medium' | 'high')
                 }
-                className={`flex-1 rounded-md border text-sm ${''} px-3 py-2`}>
+                className={`flex-1 rounded-md border text-sm  px-3 py-2`}>
                 <option value="minimal/none">Minimal</option>
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -1106,8 +1106,8 @@ export const ModelSettings = () => {
   return (
     <section className="space-y-6">
       {/* LLM Providers Section */}
-      <div className={`rounded-lg border ${''} p-6 text-left shadow-sm`}>
-        <h2 className={`mb-4 text-xl font-semibold ${''}`}>{t('options_models_providers_header')}</h2>
+      <div className={`rounded-lg border  p-6 text-left shadow-sm`}>
+        <h2 className={`mb-4 text-xl font-semibold `}>{t('options_models_providers_header')}</h2>
         <div className="space-y-6">
           {getSortedProviders().length === 0 ? (
             <div className="py-8 text-center text-gray-500">
@@ -1125,9 +1125,9 @@ export const ModelSettings = () => {
                 <div
                   key={providerId}
                   id={`provider-${providerId}`}
-                  className={`space-y-4 ${modifiedProviders.has(providerId) && !providersFromStorage.has(providerId) ? `rounded-lg border p-4 ${''}` : ''}`}>
+                  className={`space-y-4 ${modifiedProviders.has(providerId) && !providersFromStorage.has(providerId) ? `rounded-lg border p-4 ` : ''}`}>
                   <div className="flex items-center justify-between">
-                    <h3 className={`text-lg font-medium ${''}`}>{providerConfig.name || providerId}</h3>
+                    <h3 className={`text-lg font-medium `}>{providerConfig.name || providerId}</h3>
                     <div className="flex space-x-2">
                       {/* Show Cancel button for newly added providers */}
                       {modifiedProviders.has(providerId) && !providersFromStorage.has(providerId) && (
@@ -1150,7 +1150,7 @@ export const ModelSettings = () => {
 
                   {/* Show message for newly added providers */}
                   {modifiedProviders.has(providerId) && !providersFromStorage.has(providerId) && (
-                    <div className={`mb-2 text-sm ${''}`}>
+                    <div className={`mb-2 text-sm `}>
                       <p>{t('options_models_providers_setupInstructions')}</p>
                     </div>
                   )}
@@ -1160,7 +1160,7 @@ export const ModelSettings = () => {
                     {providerConfig.type === ProviderTypeEnum.CustomOpenAI && (
                       <div className="flex flex-col">
                         <div className="flex items-center">
-                          <label htmlFor={`${providerId}-name`} className={`w-20 text-sm font-medium ${''}`}>
+                          <label htmlFor={`${providerId}-name`} className={`w-20 text-sm font-medium `}>
                             {t('options_models_providers_custom_name')}
                           </label>
                           <input
@@ -1184,16 +1184,16 @@ export const ModelSettings = () => {
                           />
                         </div>
                         {nameErrors[providerId] ? (
-                          <p className={`ml-20 mt-1 text-xs ${''}`}>{nameErrors[providerId]}</p>
+                          <p className={`ml-20 mt-1 text-xs `}>{nameErrors[providerId]}</p>
                         ) : (
-                          <p className={`ml-20 mt-1 text-xs ${''}`}>{t('options_models_providers_custom_name_desc')}</p>
+                          <p className={`ml-20 mt-1 text-xs `}>{t('options_models_providers_custom_name_desc')}</p>
                         )}
                       </div>
                     )}
 
                     {/* API Key input with label */}
                     <div className="flex items-center">
-                      <label htmlFor={`${providerId}-api-key`} className={`w-20 text-sm font-medium ${''}`}>
+                      <label htmlFor={`${providerId}-api-key`} className={`w-20 text-sm font-medium `}>
                         {t('options_models_providers_apiKey')}
                         {/* Show asterisk only if required */}
                         {providerConfig.type !== ProviderTypeEnum.CustomOpenAI &&
@@ -1214,13 +1214,13 @@ export const ModelSettings = () => {
                           }
                           value={providerConfig.apiKey || ''}
                           onChange={e => handleApiKeyChange(providerId, e.target.value, providerConfig.baseUrl)}
-                          className={`w-full rounded-md border text-sm ${''} p-2 outline-none`}
+                          className={`w-full rounded-md border text-sm  p-2 outline-none`}
                         />
                         {/* Show eye button only for newly added providers */}
                         {modifiedProviders.has(providerId) && !providersFromStorage.has(providerId) && (
                           <button
                             type="button"
-                            className={`absolute right-2 top-1/2 -translate-y-1/2 ${''}`}
+                            className={`absolute right-2 top-1/2 -translate-y-1/2 `}
                             onClick={() => toggleApiKeyVisibility(providerId)}
                             aria-label={
                               visibleApiKeys[providerId]
@@ -1266,7 +1266,7 @@ export const ModelSettings = () => {
                       visibleApiKeys[providerId] &&
                       providerConfig.apiKey && (
                         <div className="ml-20 mt-1">
-                          <p className={`break-words font-mono text-sm ${''}`}>{providerConfig.apiKey}</p>
+                          <p className={`break-words font-mono text-sm `}>{providerConfig.apiKey}</p>
                         </div>
                       )}
 
@@ -1278,7 +1278,7 @@ export const ModelSettings = () => {
                       providerConfig.type === ProviderTypeEnum.Llama) && (
                       <div className="flex flex-col">
                         <div className="flex items-center">
-                          <label htmlFor={`${providerId}-base-url`} className={`w-20 text-sm font-medium ${''}`}>
+                          <label htmlFor={`${providerId}-base-url`} className={`w-20 text-sm font-medium `}>
                             {/* Adjust Label based on provider */}
                             {providerConfig.type === ProviderTypeEnum.AzureOpenAI
                               ? t('options_models_providers_endpoint')
@@ -1306,7 +1306,7 @@ export const ModelSettings = () => {
                             }
                             value={providerConfig.baseUrl || ''}
                             onChange={e => handleApiKeyChange(providerId, providerConfig.apiKey || '', e.target.value)}
-                            className={`flex-1 rounded-md border text-sm ${''} p-2 outline-none`}
+                            className={`flex-1 rounded-md border text-sm  p-2 outline-none`}
                           />
                         </div>
                       </div>
@@ -1315,24 +1315,22 @@ export const ModelSettings = () => {
                     {/* Azure Deployment Name input as tags/chips like OpenRouter models */}
                     {(providerConfig.type as ProviderTypeEnum) === ProviderTypeEnum.AzureOpenAI && (
                       <div className="flex items-start">
-                        <label
-                          htmlFor={`${providerId}-azure-deployment`}
-                          className={`w-20 pt-2 text-sm font-medium ${''}`}>
+                        <label htmlFor={`${providerId}-azure-deployment`} className={`w-20 pt-2 text-sm font-medium `}>
                           {t('options_models_providers_deployment')}*
                         </label>
                         <div className="flex-1 space-y-2">
-                          <div className={`flex min-h-[42px] flex-wrap items-center gap-2 rounded-md border ${''} p-2`}>
+                          <div className={`flex min-h-[42px] flex-wrap items-center gap-2 rounded-md border  p-2`}>
                             {/* Show azure deployments */}
                             {(providerConfig.azureDeploymentNames || []).length > 0
                               ? (providerConfig.azureDeploymentNames || []).map((deploymentName: string) => (
                                   <div
                                     key={deploymentName}
-                                    className={`flex items-center rounded-full ${''} px-2 py-1 text-sm`}>
+                                    className={`flex items-center rounded-full  px-2 py-1 text-sm`}>
                                     <span>{deploymentName}</span>
                                     <button
                                       type="button"
                                       onClick={() => removeAzureDeployment(providerId, deploymentName)}
-                                      className={`ml-1 font-bold ${''}`}
+                                      className={`ml-1 font-bold `}
                                       aria-label={`Remove ${deploymentName}`}>
                                       ×
                                     </button>
@@ -1359,10 +1357,10 @@ export const ModelSettings = () => {
                                   }
                                 }
                               }}
-                              className={`min-w-[150px] flex-1 border-none text-sm ${''} p-1 outline-none`}
+                              className={`min-w-[150px] flex-1 border-none text-sm  p-1 outline-none`}
                             />
                           </div>
-                          <p className={`mt-1 text-xs ${''}`}>{t('options_models_providers_deployment_desc')}</p>
+                          <p className={`mt-1 text-xs `}>{t('options_models_providers_deployment_desc')}</p>
                         </div>
                       </div>
                     )}
@@ -1370,7 +1368,7 @@ export const ModelSettings = () => {
                     {/* NEW: Azure API Version input */}
                     {(providerConfig.type as ProviderTypeEnum) === ProviderTypeEnum.AzureOpenAI && (
                       <div className="flex items-center">
-                        <label htmlFor={`${providerId}-azure-version`} className={`w-20 text-sm font-medium ${''}`}>
+                        <label htmlFor={`${providerId}-azure-version`} className={`w-20 text-sm font-medium `}>
                           {t('options_models_providers_apiVersion')}*
                         </label>
                         <input
@@ -1379,7 +1377,7 @@ export const ModelSettings = () => {
                           placeholder={t('options_models_providers_placeholders_azureApiVersion')}
                           value={providerConfig.azureApiVersion || ''}
                           onChange={e => handleAzureApiVersionChange(providerId, e.target.value)}
-                          className={`flex-1 rounded-md border text-sm ${''} p-2 outline-none`}
+                          className={`flex-1 rounded-md border text-sm  p-2 outline-none`}
                         />
                       </div>
                     )}
@@ -1387,32 +1385,29 @@ export const ModelSettings = () => {
                     {/* Models input section (for non-Azure providers) */}
                     {(providerConfig.type as ProviderTypeEnum) !== ProviderTypeEnum.AzureOpenAI && (
                       <div className="flex items-start">
-                        <label htmlFor={`${providerId}-models-label`} className={`w-20 pt-2 text-sm font-medium ${''}`}>
+                        <label htmlFor={`${providerId}-models-label`} className={`w-20 pt-2 text-sm font-medium `}>
                           {t('options_models_providers_models')}
                         </label>
                         <div className="flex-1 space-y-2">
                           {/* Conditional UI for OpenRouter */}
                           {(providerConfig.type as ProviderTypeEnum) === ProviderTypeEnum.OpenRouter ? (
                             <>
-                              <div
-                                className={`flex min-h-[42px] flex-wrap items-center gap-2 rounded-md border ${''} p-2`}>
+                              <div className={`flex min-h-[42px] flex-wrap items-center gap-2 rounded-md border  p-2`}>
                                 {providerConfig.modelNames && providerConfig.modelNames.length > 0 ? (
                                   providerConfig.modelNames.map(model => (
-                                    <div
-                                      key={model}
-                                      className={`flex items-center rounded-full ${''} px-2 py-1 text-sm`}>
+                                    <div key={model} className={`flex items-center rounded-full  px-2 py-1 text-sm`}>
                                       <span>{model}</span>
                                       <button
                                         type="button"
                                         onClick={() => removeModel(providerId, model)}
-                                        className={`ml-1 font-bold ${''}`}
+                                        className={`ml-1 font-bold `}
                                         aria-label={`Remove ${model}`}>
                                         ×
                                       </button>
                                     </div>
                                   ))
                                 ) : (
-                                  <span className={`text-xs ${''}`}>
+                                  <span className={`text-xs `}>
                                     {t('options_models_providers_models_openrouter_empty')}
                                   </span>
                                 )}
@@ -1423,32 +1418,27 @@ export const ModelSettings = () => {
                                   value={newModelInputs[providerId] || ''}
                                   onChange={e => handleModelsChange(providerId, e.target.value)}
                                   onKeyDown={e => handleKeyDown(e, providerId)}
-                                  className={`min-w-[150px] flex-1 border-none text-sm ${''} p-1 outline-none`}
+                                  className={`min-w-[150px] flex-1 border-none text-sm  p-1 outline-none`}
                                 />
                               </div>
-                              <p className={`mt-1 text-xs ${''}`}>
-                                {t('options_models_providers_models_instructions')}
-                              </p>
+                              <p className={`mt-1 text-xs `}>{t('options_models_providers_models_instructions')}</p>
                             </>
                           ) : (
                             /* Default Tag Input for other providers */
                             <>
-                              <div
-                                className={`flex min-h-[42px] flex-wrap items-center gap-2 rounded-md border ${''} p-2`}>
+                              <div className={`flex min-h-[42px] flex-wrap items-center gap-2 rounded-md border  p-2`}>
                                 {(() => {
                                   const models =
                                     providerConfig.modelNames !== undefined
                                       ? providerConfig.modelNames
                                       : llmProviderModelNames[providerId as keyof typeof llmProviderModelNames] || [];
                                   return models.map(model => (
-                                    <div
-                                      key={model}
-                                      className={`flex items-center rounded-full ${''} px-2 py-1 text-sm`}>
+                                    <div key={model} className={`flex items-center rounded-full  px-2 py-1 text-sm`}>
                                       <span>{model}</span>
                                       <button
                                         type="button"
                                         onClick={() => removeModel(providerId, model)}
-                                        className={`ml-1 font-bold ${''}`}
+                                        className={`ml-1 font-bold `}
                                         aria-label={`Remove ${model}`}>
                                         ×
                                       </button>
@@ -1462,12 +1452,10 @@ export const ModelSettings = () => {
                                   value={newModelInputs[providerId] || ''}
                                   onChange={e => handleModelsChange(providerId, e.target.value)}
                                   onKeyDown={e => handleKeyDown(e, providerId)}
-                                  className={`min-w-[150px] flex-1 border-none text-sm ${''} p-1 outline-none`}
+                                  className={`min-w-[150px] flex-1 border-none text-sm  p-1 outline-none`}
                                 />
                               </div>
-                              <p className={`mt-1 text-xs ${''}`}>
-                                {t('options_models_providers_models_instructions')}
-                              </p>
+                              <p className={`mt-1 text-xs `}>{t('options_models_providers_models_instructions')}</p>
                             </>
                           )}
                           {/* === END: Conditional UI === */}
@@ -1477,18 +1465,18 @@ export const ModelSettings = () => {
 
                     {/* Ollama reminder at the bottom of the section */}
                     {providerConfig.type === ProviderTypeEnum.Ollama && (
-                      <div className={`mt-4 rounded-md border ${''} p-3`}>
-                        <p className={`text-sm ${''}`}>
+                      <div className={`mt-4 rounded-md border  p-3`}>
+                        <p className={`text-sm `}>
                           <strong>
                             {' '}
-                            <code className={`rounded italic ${''}`}>OLLAMA_ORIGINS=chrome-extension://*</code>{' '}
+                            <code className={`rounded italic `}>OLLAMA_ORIGINS=chrome-extension://*</code>{' '}
                           </strong>
                           {t('options_models_providers_ollama_reminder')}
                           <a
                             href="https://github.com/ollama/ollama/blob/main/docs/faq.md#how-can-i-allow-additional-web-origins-to-access-ollama"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className={`ml-1 ${''}`}>
+                            className={`ml-1 `}>
                             {t('options_models_providers_ollama_learnMore')}
                           </a>
                         </p>
@@ -1498,7 +1486,7 @@ export const ModelSettings = () => {
 
                   {/* Add divider except for the last item */}
                   {Object.keys(providers).indexOf(providerId) < Object.keys(providers).length - 1 && (
-                    <div className={`mt-4 border-t ${''}`} />
+                    <div className={`mt-4 border-t `} />
                   )}
                 </div>
               );
@@ -1570,8 +1558,8 @@ export const ModelSettings = () => {
       </div>
 
       {/* Updated Agent Models Section */}
-      <div className={`rounded-lg border ${''} p-6 text-left shadow-sm`}>
-        <h2 className={`mb-4 text-left text-xl font-semibold ${''}`}>{t('options_models_selection_header')}</h2>
+      <div className={`rounded-lg border  p-6 text-left shadow-sm`}>
+        <h2 className={`mb-4 text-left text-xl font-semibold `}>{t('options_models_selection_header')}</h2>
         <div className="space-y-4">
           {[AgentNameEnum.Planner, AgentNameEnum.Navigator].map(agentName => (
             <div key={agentName}>{renderModelSelect(agentName)}</div>
@@ -1580,18 +1568,18 @@ export const ModelSettings = () => {
       </div>
 
       {/* Speech-to-Text Model Selection */}
-      <div className={`rounded-lg border ${''} p-6 text-left shadow-sm`}>
-        <h2 className={`mb-4 text-left text-xl font-semibold ${''}`}>{t('options_models_speechToText_header')}</h2>
-        <p className={`mb-4 text-sm ${''}`}>{t('options_models_stt_desc')}</p>
+      <div className={`rounded-lg border  p-6 text-left shadow-sm`}>
+        <h2 className={`mb-4 text-left text-xl font-semibold `}>{t('options_models_speechToText_header')}</h2>
+        <p className={`mb-4 text-sm `}>{t('options_models_stt_desc')}</p>
 
-        <div className={`rounded-lg border ${''} p-4`}>
+        <div className={`rounded-lg border  p-4`}>
           <div className="flex items-center">
-            <label htmlFor="speech-to-text-model" className={`w-24 text-sm font-medium ${''}`}>
+            <label htmlFor="speech-to-text-model" className={`w-24 text-sm font-medium `}>
               {t('options_models_labels_model')}
             </label>
             <select
               id="speech-to-text-model"
-              className={`flex-1 rounded-md border text-sm ${''} px-3 py-2`}
+              className={`flex-1 rounded-md border text-sm  px-3 py-2`}
               value={selectedSpeechToTextModel}
               onChange={e => handleSpeechToTextModelChange(e.target.value)}>
               <option value="">{t('options_models_chooseModel')}</option>

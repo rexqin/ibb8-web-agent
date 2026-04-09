@@ -51,13 +51,13 @@ export const FirewallSettings = () => {
 
   return (
     <section className="space-y-6">
-      <div className={`rounded-lg border ${''} p-6 text-left shadow-sm`}>
-        <h2 className={`mb-4 text-xl font-semibold ${''}`}>{t('options_firewall_header')}</h2>
+      <div className="rounded-lg border border-[#fd9b41]/25 bg-[#fffaf5] p-6 text-left shadow-sm">
+        <h2 className="mb-4 text-xl font-semibold text-[#7f420b]">{t('options_firewall_header')}</h2>
 
         <div className="space-y-6">
-          <div className={`my-6 rounded-lg border p-4 ${''}`}>
+          <div className="my-6 rounded-lg border border-[#fd9b41]/20 bg-[#fff4e8] p-4">
             <div className="flex items-center justify-between">
-              <label htmlFor="toggle-firewall" className={`text-base font-medium ${''}`}>
+              <label htmlFor="toggle-firewall" className="text-base font-medium text-[#8a490d]">
                 {t('options_firewall_enableToggle')}
               </label>
               <div className="relative inline-block w-12 select-none">
@@ -70,9 +70,7 @@ export const FirewallSettings = () => {
                 />
                 <label
                   htmlFor="toggle-firewall"
-                  className={`block h-6 cursor-pointer overflow-hidden rounded-full ${
-                    isEnabled ? 'bg-[#fd9b41]' : ''
-                  }`}>
+                  className={`block h-6 cursor-pointer overflow-hidden rounded-full ${isEnabled ? 'bg-[#fd9b41]' : 'bg-gray-300'}`}>
                   <span className="sr-only">{t('options_firewall_toggleFirewall_a11y')}</span>
                   <span
                     className={`block size-6 rounded-full bg-white shadow transition-transform ${
@@ -89,26 +87,14 @@ export const FirewallSettings = () => {
               <Button
                 onClick={() => setActiveList('allow')}
                 className={`px-4 py-2 text-base ${
-                  activeList === 'allow'
-                    ? false
-                      ? 'bg-[#fd9b41] text-white'
-                      : 'bg-[#fd9b41] text-white'
-                    : false
-                      ? 'bg-slate-700 text-gray-200'
-                      : 'bg-gray-200 text-gray-700'
+                  activeList === 'allow' ? 'bg-[#fd9b41] text-white' : 'bg-[#ffe3c6] text-[#8a490d]'
                 }`}>
                 {t('options_firewall_allowList_header')}
               </Button>
               <Button
                 onClick={() => setActiveList('deny')}
                 className={`px-4 py-2 text-base ${
-                  activeList === 'deny'
-                    ? false
-                      ? 'bg-[#fd9b41] text-white'
-                      : 'bg-[#fd9b41] text-white'
-                    : false
-                      ? 'bg-slate-700 text-gray-200'
-                      : 'bg-gray-200 text-gray-700'
+                  activeList === 'deny' ? 'bg-[#fd9b41] text-white' : 'bg-[#ffe3c6] text-[#8a490d]'
                 }`}>
                 {t('options_firewall_denyList_header')}
               </Button>
@@ -127,9 +113,9 @@ export const FirewallSettings = () => {
                 }
               }}
               placeholder={t('options_firewall_placeholders_domainUrl')}
-              className={`flex-1 rounded-md border px-3 py-2 text-sm ${''}`}
+              className="flex-1 rounded-md border border-[#fd9b41]/30 bg-white px-3 py-2 text-sm text-[#6f3909]"
             />
-            <Button onClick={handleAddUrl} className={`px-4 py-2 text-sm ${''}`}>
+            <Button onClick={handleAddUrl} className="bg-[#fd9b41] px-4 py-2 text-sm text-white hover:bg-[#e98023]">
               {t('options_firewall_btnAdd')}
             </Button>
           </div>
@@ -139,44 +125,42 @@ export const FirewallSettings = () => {
               allowList.length > 0 ? (
                 <ul className="space-y-2">
                   {allowList.map(url => (
-                    <li key={url} className={`flex items-center justify-between rounded-md p-2 pr-0 ${''}`}>
-                      <span className={`text-sm ${''}`}>{url}</span>
+                    <li key={url} className="flex items-center justify-between rounded-md bg-[#fff4e8] p-2 pr-0">
+                      <span className="text-sm text-[#8a490d]">{url}</span>
                       <Button
                         onClick={() => handleRemoveUrl(url, 'allow')}
-                        className={`rounded-l-none px-2 py-1 text-xs ${
-                          false ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-red-500 text-white hover:bg-red-600'
-                        }`}>
+                        className="rounded-l-none bg-red-500 px-2 py-1 text-xs text-white hover:bg-red-600">
                         {t('options_firewall_btnRemove')}
                       </Button>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className={`text-center text-sm ${''}`}>{t('options_firewall_allowList_empty')}</p>
+                <p className="text-center text-sm text-[#a35b19]">{t('options_firewall_allowList_empty')}</p>
               )
             ) : denyList.length > 0 ? (
               <ul className="space-y-2">
                 {denyList.map(url => (
-                  <li key={url} className={`flex items-center justify-between rounded-md p-2 pr-0 ${''}`}>
-                    <span className={`text-sm ${''}`}>{url}</span>
+                  <li key={url} className="flex items-center justify-between rounded-md bg-[#fff4e8] p-2 pr-0">
+                    <span className="text-sm text-[#8a490d]">{url}</span>
                     <Button
                       onClick={() => handleRemoveUrl(url, 'deny')}
-                      className={`rounded-l-none px-2 py-1 text-xs ${''}`}>
+                      className="rounded-l-none bg-red-500 px-2 py-1 text-xs text-white hover:bg-red-600">
                       Remove
                     </Button>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className={`text-center text-sm ${''}`}>{t('options_firewall_denyList_empty')}</p>
+              <p className="text-center text-sm text-[#a35b19]">{t('options_firewall_denyList_empty')}</p>
             )}
           </div>
         </div>
       </div>
 
-      <div className={`rounded-lg border ${''} p-6 text-left shadow-sm`}>
-        <h2 className={`mb-4 text-xl font-semibold ${''}`}>{t('options_firewall_howItWorks_header')}</h2>
-        <ul className={`list-disc space-y-2 pl-5 text-left text-sm ${''}`}>
+      <div className="rounded-lg border border-[#fd9b41]/25 bg-[#fffaf5] p-6 text-left shadow-sm">
+        <h2 className="mb-4 text-xl font-semibold text-[#7f420b]">{t('options_firewall_howItWorks_header')}</h2>
+        <ul className="list-disc space-y-2 pl-5 text-left text-sm text-[#8a490d]">
           {t('options_firewall_howItWorks')
             .split('\n')
             .map((rule, index) => (
