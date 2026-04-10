@@ -45,7 +45,7 @@ const SidePanel = () => {
 
   const progressMessage = 'Showing progress...';
   const [messages, setMessages] = useState<Message[]>([]);
-  const [mode, setMode] = useState<PanelMode>('chat');
+  const [mode, setMode] = useState<PanelMode>('plan');
   const [inputEnabled, setInputEnabled] = useState(true);
   const [showStopButton, setShowStopButton] = useState(false);
   const [showCreateMenu, setShowCreateMenu] = useState(false);
@@ -359,6 +359,15 @@ const SidePanel = () => {
             timestamp: Date.now(),
           });
           setIsProcessingSpeech(false);
+        } else if (message && message.type === 'external_publish_received') {
+          console.log('external_publish_received', message);
+          setMode('chat');
+          setShowHistory(false);
+          appendMessage({
+            actor: Actors.SYSTEM,
+            content: message.message || '收到发布指令',
+            timestamp: message.timestamp || Date.now(),
+          });
         } else if (message && message.type === 'heartbeat_ack') {
           console.log('Heartbeat acknowledged');
         }
@@ -422,6 +431,11 @@ const SidePanel = () => {
     },
     [stopConnection],
   );
+
+  // Connect as soon as side panel is opened
+  useEffect(() => {
+    setupConnection();
+  }, [setupConnection]);
 
   // Handle replay command
   const handleReplay = async (historySessionId: string): Promise<void> => {
@@ -1198,15 +1212,15 @@ const SidePanel = () => {
             <div className="flex gap-2 border-t border-[#fdb56f]/20 px-2 pt-2">
               <button
                 type="button"
-                onClick={() => setHistoryMode('chat')}
-                className={`rounded-md px-3 py-1 text-sm ${historyMode === 'chat' ? 'bg-[#fdb56f] text-white' : 'text-[#8a490d]'}`}>
-                Chat History
-              </button>
-              <button
-                type="button"
                 onClick={() => setHistoryMode('plan')}
                 className={`rounded-md px-3 py-1 text-sm ${historyMode === 'plan' ? 'bg-[#fdb56f] text-white' : 'text-[#8a490d]'}`}>
                 Plan History
+              </button>
+              <button
+                type="button"
+                onClick={() => setHistoryMode('chat')}
+                className={`rounded-md px-3 py-1 text-sm ${historyMode === 'chat' ? 'bg-[#fdb56f] text-white' : 'text-[#8a490d]'}`}>
+                Chat History
               </button>
             </div>
             {historyMode === 'chat' ? (
@@ -1232,15 +1246,15 @@ const SidePanel = () => {
             <div className="flex gap-2 border-t border-[#fdb56f]/20 px-2 pt-2">
               <button
                 type="button"
-                onClick={() => setMode('chat')}
-                className={`rounded-md px-3 py-1 text-sm ${mode === 'chat' ? 'bg-[#fdb56f] text-white' : 'text-[#8a490d]'}`}>
-                Chat
-              </button>
-              <button
-                type="button"
                 onClick={() => setMode('plan')}
                 className={`rounded-md px-3 py-1 text-sm ${mode === 'plan' ? 'bg-[#fdb56f] text-white' : 'text-[#8a490d]'}`}>
                 Plan
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('chat')}
+                className={`rounded-md px-3 py-1 text-sm ${mode === 'chat' ? 'bg-[#fdb56f] text-white' : 'text-[#8a490d]'}`}>
+                Chat
               </button>
             </div>
 

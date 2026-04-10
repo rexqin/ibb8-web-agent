@@ -36,6 +36,7 @@ function isHzgmTechSenderUrl(urlStr: string | undefined): boolean {
 const browserContext = new BrowserContext({});
 let currentExecutor: Executor | null = null;
 let currentPort: chrome.runtime.Port | null = null;
+const pendingSidePanelMessages: Array<Record<string, unknown>> = [];
 const SIDE_PANEL_URL = chrome.runtime.getURL('side-panel/index.html');
 
 // Setup side panel behavior
@@ -86,7 +87,7 @@ chrome.runtime.onMessage.addListener(() => {
 });
 
 // Web pages under https://*.hzgm.tech (see manifest externally_connectable)
-chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessageExternal.addListener(async (message, sender, sendResponse) => {
   if (!isHzgmTechSenderUrl(sender.url)) {
     logger.warning('Blocked external message', sender.url);
     sendResponse({ ok: false, error: 'forbidden' });
@@ -95,6 +96,37 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
 
   if (message && typeof message === 'object' && (message as { type?: string }).type === 'ping') {
     sendResponse({ ok: true, type: 'pong' });
+    return false;
+  }
+
+  if (message && typeof message === 'object' && (message as { type?: string }).type === 'publish') {
+    logger.info('External publish message from hzgm.tech', { url: sender.url, message });
+    try {
+      const targetTabId = sender.tab?.id;
+      if (targetTabId) {
+        await chrome.sidePanel.open({ tabId: targetTabId });
+      } else {
+        const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (activeTab?.id) {
+          await chrome.sidePanel.open({ tabId: activeTab.id });
+        }
+      }
+    } catch (error) {
+      logger.warning('Failed to auto-open side panel for external publish message', error);
+    }
+    const sidePanelMessage = {
+      type: 'external_publish_received',
+      message: '收到发布指令',
+      payload: message,
+      from: sender.url,
+      timestamp: Date.now(),
+    };
+    if (currentPort) {
+      currentPort.postMessage(sidePanelMessage);
+    } else {
+      pendingSidePanelMessages.push(sidePanelMessage);
+    }
+    sendResponse({ ok: true, type: 'publish_received' });
     return false;
   }
 
@@ -116,6 +148,17 @@ chrome.runtime.onConnect.addListener(port => {
     }
 
     currentPort = port;
+    if (pendingSidePanelMessages.length > 0) {
+      const bufferedMessages = [...pendingSidePanelMessages];
+      pendingSidePanelMessages.length = 0;
+      for (const sidePanelMessage of bufferedMessages) {
+        try {
+          currentPort.postMessage(sidePanelMessage);
+        } catch (error) {
+          logger.warning('Failed to flush buffered side panel message', error);
+        }
+      }
+    }
 
     port.onMessage.addListener(async message => {
       try {
