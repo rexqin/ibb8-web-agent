@@ -3,12 +3,25 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { FiSettings } from 'react-icons/fi';
 import { PiPlusBold } from 'react-icons/pi';
 import { GrHistory } from 'react-icons/gr';
-import { type Message, Actors, chatHistoryStore, agentModelStore, generalSettingsStore } from '@extension/storage';
+import {
+  type Message,
+  Actors,
+  chatHistoryStore,
+  agentModelStore,
+  generalSettingsStore,
+  planHistoryStore,
+  type PlanRun,
+  type PlanSession,
+  type PlanSessionMetadata,
+  type PlanStep,
+} from '@extension/storage';
 import favoritesStorage from '@extension/storage/lib/prompt/favorites';
 import { t } from '@extension/i18n';
 import MessageList from './components/MessageList';
 import ChatInput from './components/ChatInput';
 import ChatHistoryList from './components/ChatHistoryList';
+import PlanBuilder from './components/PlanBuilder';
+import PlanHistoryList from './components/PlanHistoryList';
 import { EventType, type AgentEvent, ExecutionState } from './types/event';
 import './SidePanel.css';
 
@@ -20,13 +33,31 @@ declare global {
 }
 
 const SidePanel = () => {
+  type PanelMode = 'chat' | 'plan';
+  type HistoryMode = 'chat' | 'plan';
+  interface PlanExecutionState {
+    runId: string;
+    planId: string;
+    steps: PlanStep[];
+    currentStepIndex: number;
+    hadFailure: boolean;
+  }
+
   const progressMessage = 'Showing progress...';
   const [messages, setMessages] = useState<Message[]>([]);
+  const [mode, setMode] = useState<PanelMode>('chat');
   const [inputEnabled, setInputEnabled] = useState(true);
   const [showStopButton, setShowStopButton] = useState(false);
+  const [showCreateMenu, setShowCreateMenu] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [historyMode, setHistoryMode] = useState<HistoryMode>('chat');
   const [chatSessions, setChatSessions] = useState<Array<{ id: string; title: string; createdAt: number }>>([]);
+  const [planMetadatas, setPlanMetadatas] = useState<PlanSessionMetadata[]>([]);
+  const [planRunsByPlanId, setPlanRunsByPlanId] = useState<Record<string, PlanRun[]>>({});
+  const [currentPlan, setCurrentPlan] = useState<PlanSession | null>(null);
+  const [planExecution, setPlanExecution] = useState<PlanExecutionState | null>(null);
+  const [lastTaskTerminal, setLastTaskTerminal] = useState<ExecutionState | null>(null);
   const [isFollowUpMode, setIsFollowUpMode] = useState(false);
   const [isHistoricalSession, setIsHistoricalSession] = useState(false);
   const [hasConfiguredModels, setHasConfiguredModels] = useState<boolean | null>(null); // null = loading, false = no models, true = has models
@@ -36,6 +67,7 @@ const SidePanel = () => {
   const [replayEnabled, setReplayEnabled] = useState(false);
   const sessionIdRef = useRef<string | null>(null);
   const isReplayingRef = useRef<boolean>(false);
+  const planExecutionRef = useRef<PlanExecutionState | null>(null);
   const portRef = useRef<chrome.runtime.Port | null>(null);
   const heartbeatIntervalRef = useRef<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -107,6 +139,10 @@ const SidePanel = () => {
   useEffect(() => {
     isReplayingRef.current = isReplaying;
   }, [isReplaying]);
+
+  useEffect(() => {
+    planExecutionRef.current = planExecution;
+  }, [planExecution]);
 
   const appendMessage = useCallback((newMessage: Message, sessionId?: string | null) => {
     // Don't save progress messages
@@ -245,6 +281,13 @@ const SidePanel = () => {
         default:
           console.error('Unknown actor', actor);
           return;
+      }
+
+      if (
+        actor === Actors.SYSTEM &&
+        (state === ExecutionState.TASK_OK || state === ExecutionState.TASK_FAIL || state === ExecutionState.TASK_CANCEL)
+      ) {
+        setLastTaskTerminal(state);
       }
 
       if (!skip) {
@@ -644,6 +687,61 @@ const SidePanel = () => {
     setShowStopButton(false);
   };
 
+  useEffect(() => {
+    const run = async () => {
+      if (!planExecutionRef.current || !lastTaskTerminal) return;
+
+      const execution = planExecutionRef.current;
+      const currentStep = execution.steps[execution.currentStepIndex];
+      if (!currentStep) return;
+
+      const stepStatus =
+        lastTaskTerminal === ExecutionState.TASK_OK
+          ? 'ok'
+          : lastTaskTerminal === ExecutionState.TASK_FAIL
+            ? 'fail'
+            : 'cancel';
+
+      await planHistoryStore.setStepRunFinished(execution.runId, currentStep.id, stepStatus);
+
+      if (lastTaskTerminal === ExecutionState.TASK_CANCEL) {
+        await planHistoryStore.finishRun(execution.runId, 'cancel');
+        setPlanExecution(null);
+        setLastTaskTerminal(null);
+        await loadPlanRuns();
+        return;
+      }
+
+      const hadFailure = execution.hadFailure || stepStatus === 'fail';
+      const nextStepIndex = execution.currentStepIndex + 1;
+
+      if (nextStepIndex >= execution.steps.length) {
+        await planHistoryStore.finishRun(execution.runId, hadFailure ? 'fail' : 'ok');
+        setPlanExecution(null);
+        setLastTaskTerminal(null);
+        await loadPlanRuns();
+        return;
+      }
+
+      const nextExecution: PlanExecutionState = {
+        ...execution,
+        currentStepIndex: nextStepIndex,
+        hadFailure,
+      };
+      setPlanExecution(nextExecution);
+      await handleSendMessage(nextExecution.steps[nextStepIndex].content);
+      await planHistoryStore.setStepRunStarted(
+        nextExecution.runId,
+        nextExecution.steps[nextStepIndex].id,
+        sessionIdRef.current ?? undefined,
+      );
+      setLastTaskTerminal(null);
+      await loadPlanRuns();
+    };
+
+    void run();
+  }, [handleSendMessage, lastTaskTerminal, loadPlanRuns]);
+
   const handleNewChat = () => {
     // Clear messages and start a new chat
     setMessages([]);
@@ -653,6 +751,8 @@ const SidePanel = () => {
     setShowStopButton(false);
     setIsFollowUpMode(false);
     setIsHistoricalSession(false);
+    setMode('chat');
+    setShowCreateMenu(false);
 
     // Disconnect any existing connection
     stopConnection();
@@ -667,8 +767,79 @@ const SidePanel = () => {
     }
   }, []);
 
+  const loadPlanMetadatas = useCallback(async () => {
+    try {
+      const metas = await planHistoryStore.getPlanMetadatas();
+      setPlanMetadatas(metas.sort((a, b) => b.updatedAt - a.updatedAt));
+    } catch (error) {
+      console.error('Failed to load plan sessions:', error);
+    }
+  }, []);
+
+  async function loadPlanRuns() {
+    try {
+      const allRuns = await planHistoryStore.getPlanRuns();
+      const grouped = allRuns.reduce<Record<string, PlanRun[]>>((acc, run) => {
+        if (!acc[run.planId]) acc[run.planId] = [];
+        acc[run.planId].push(run);
+        return acc;
+      }, {});
+      setPlanRunsByPlanId(grouped);
+    } catch (error) {
+      console.error('Failed to load plan runs:', error);
+    }
+  }
+
+  const handleCreatePlan = async () => {
+    const newPlan = await planHistoryStore.createPlan('New Plan');
+    setCurrentPlan(newPlan);
+    setMode('plan');
+    setShowHistory(false);
+    await loadPlanMetadatas();
+  };
+
+  const handleSavePlan = async (steps: PlanStep[], title: string) => {
+    let targetPlan = currentPlan;
+    if (!targetPlan) {
+      targetPlan = await planHistoryStore.createPlan(title || 'New Plan');
+    }
+    if (title.trim() && title !== targetPlan.title) {
+      await planHistoryStore.updatePlanTitle(targetPlan.id, title.trim());
+    }
+    const savedPlan = await planHistoryStore.savePlanSteps(targetPlan.id, steps);
+    setCurrentPlan({
+      ...savedPlan,
+      title: title.trim() || savedPlan.title,
+    });
+    await loadPlanMetadatas();
+  };
+
+  const handleExecutePlan = async (steps: PlanStep[]) => {
+    if (!currentPlan) return;
+    const cleanedSteps = steps.filter(step => step.content.trim() !== '').map((step, order) => ({ ...step, order }));
+    if (cleanedSteps.length === 0) return;
+
+    await planHistoryStore.savePlanSteps(currentPlan.id, cleanedSteps);
+    const run = await planHistoryStore.startRun(currentPlan.id, cleanedSteps);
+    const execution: PlanExecutionState = {
+      runId: run.id,
+      planId: currentPlan.id,
+      steps: cleanedSteps,
+      currentStepIndex: 0,
+      hadFailure: false,
+    };
+    setPlanExecution(execution);
+    setMode('chat');
+    setShowHistory(false);
+    await handleSendMessage(cleanedSteps[0].content);
+    await planHistoryStore.setStepRunStarted(run.id, cleanedSteps[0].id, sessionIdRef.current ?? undefined);
+    await loadPlanRuns();
+  };
+
   const handleLoadHistory = async () => {
     await loadChatSessions();
+    await loadPlanMetadatas();
+    await loadPlanRuns();
     setShowHistory(true);
   };
 
@@ -708,6 +879,32 @@ const SidePanel = () => {
       }
     } catch (error) {
       console.error('Failed to delete session:', error);
+    }
+  };
+
+  const handlePlanSelect = async (planId: string) => {
+    try {
+      const plan = await planHistoryStore.getPlan(planId);
+      if (plan) {
+        setCurrentPlan(plan);
+        setMode('plan');
+        setShowHistory(false);
+      }
+    } catch (error) {
+      console.error('Failed to load plan:', error);
+    }
+  };
+
+  const handlePlanDelete = async (planId: string) => {
+    try {
+      await planHistoryStore.deletePlan(planId);
+      await loadPlanMetadatas();
+      await loadPlanRuns();
+      if (currentPlan?.id === planId) {
+        setCurrentPlan(null);
+      }
+    } catch (error) {
+      console.error('Failed to delete plan:', error);
     }
   };
 
@@ -944,8 +1141,8 @@ const SidePanel = () => {
               <>
                 <button
                   type="button"
-                  onClick={handleNewChat}
-                  onKeyDown={e => e.key === 'Enter' && handleNewChat()}
+                  onClick={() => setShowCreateMenu(prev => !prev)}
+                  onKeyDown={e => e.key === 'Enter' && setShowCreateMenu(prev => !prev)}
                   className={`header-icon ${iconClassName} cursor-pointer`}
                   aria-label={t('nav_newChat_a11y')}
                   tabIndex={0}>
@@ -972,19 +1169,81 @@ const SidePanel = () => {
               <FiSettings size={20} />
             </button>
           </div>
+          {showCreateMenu && !showHistory && (
+            <div className="absolute right-12 top-10 z-10 min-w-[140px] rounded-md border border-[#fdb56f]/25 bg-white p-1 shadow">
+              <button
+                type="button"
+                onClick={() => {
+                  handleNewChat();
+                  setMode('chat');
+                  setShowCreateMenu(false);
+                }}
+                className="block w-full rounded px-3 py-2 text-left text-sm text-[#6f3909] hover:bg-[#fff4e8]">
+                New Chat
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  void handleCreatePlan();
+                  setShowCreateMenu(false);
+                }}
+                className="block w-full rounded px-3 py-2 text-left text-sm text-[#6f3909] hover:bg-[#fff4e8]">
+                New Plan
+              </button>
+            </div>
+          )}
         </header>
         {showHistory ? (
           <div className="flex-1 overflow-hidden">
-            <ChatHistoryList
-              sessions={chatSessions}
-              onSessionSelect={handleSessionSelect}
-              onSessionDelete={handleSessionDelete}
-              onSessionBookmark={handleSessionBookmark}
-              visible={true}
-            />
+            <div className="flex gap-2 border-t border-[#fdb56f]/20 px-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setHistoryMode('chat')}
+                className={`rounded-md px-3 py-1 text-sm ${historyMode === 'chat' ? 'bg-[#fdb56f] text-white' : 'text-[#8a490d]'}`}>
+                Chat History
+              </button>
+              <button
+                type="button"
+                onClick={() => setHistoryMode('plan')}
+                className={`rounded-md px-3 py-1 text-sm ${historyMode === 'plan' ? 'bg-[#fdb56f] text-white' : 'text-[#8a490d]'}`}>
+                Plan History
+              </button>
+            </div>
+            {historyMode === 'chat' ? (
+              <ChatHistoryList
+                sessions={chatSessions}
+                onSessionSelect={handleSessionSelect}
+                onSessionDelete={handleSessionDelete}
+                onSessionBookmark={handleSessionBookmark}
+                visible={true}
+              />
+            ) : (
+              <PlanHistoryList
+                plans={planMetadatas}
+                runsByPlanId={planRunsByPlanId}
+                onPlanSelect={handlePlanSelect}
+                onPlanDelete={handlePlanDelete}
+                visible={true}
+              />
+            )}
           </div>
         ) : (
           <>
+            <div className="flex gap-2 border-t border-[#fdb56f]/20 px-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setMode('chat')}
+                className={`rounded-md px-3 py-1 text-sm ${mode === 'chat' ? 'bg-[#fdb56f] text-white' : 'text-[#8a490d]'}`}>
+                Chat
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('plan')}
+                className={`rounded-md px-3 py-1 text-sm ${mode === 'plan' ? 'bg-[#fdb56f] text-white' : 'text-[#8a490d]'}`}>
+                Plan
+              </button>
+            </div>
+
             {/* Show loading state while checking model configuration */}
             {hasConfiguredModels === null && (
               <div className={`flex flex-1 items-center justify-center p-8 ${helperTextClassName}`}>
@@ -1012,12 +1271,40 @@ const SidePanel = () => {
               </div>
             )}
 
-            {/* Show normal chat interface when models are configured */}
-            {hasConfiguredModels === true && (
-              <>
-                {messages.length === 0 && (
-                  <>
-                    <div className={`mb-2 border-t p-2 shadow-sm backdrop-blur-sm ${contentBorderClassName}`}>
+            {/* Show mode content when models are configured */}
+            {hasConfiguredModels === true &&
+              (mode === 'chat' ? (
+                <>
+                  {messages.length === 0 && (
+                    <>
+                      <div className={`mb-2 border-t p-2 shadow-sm backdrop-blur-sm ${contentBorderClassName}`}>
+                        <ChatInput
+                          onSendMessage={handleSendMessage}
+                          onStopTask={handleStopTask}
+                          onMicClick={handleMicClick}
+                          isRecording={isRecording}
+                          isProcessingSpeech={isProcessingSpeech}
+                          disabled={!inputEnabled || isHistoricalSession}
+                          showStopButton={showStopButton}
+                          setContent={setter => {
+                            setInputTextRef.current = setter;
+                          }}
+                          historicalSessionId={isHistoricalSession && replayEnabled ? currentSessionId : null}
+                          onReplay={handleReplay}
+                        />
+                      </div>
+                      <div className="flex-1" />
+                    </>
+                  )}
+                  {messages.length > 0 && (
+                    <div
+                      className={`scrollbar-gutter-stable flex-1 overflow-x-hidden overflow-y-scroll scroll-smooth p-2 ${''}`}>
+                      <MessageList messages={messages} />
+                      <div ref={messagesEndRef} />
+                    </div>
+                  )}
+                  {messages.length > 0 && (
+                    <div className={`border-t p-2 shadow-sm backdrop-blur-sm ${contentBorderClassName}`}>
                       <ChatInput
                         onSendMessage={handleSendMessage}
                         onStopTask={handleStopTask}
@@ -1033,36 +1320,19 @@ const SidePanel = () => {
                         onReplay={handleReplay}
                       />
                     </div>
-                    <div className="flex-1" />
-                  </>
-                )}
-                {messages.length > 0 && (
-                  <div
-                    className={`scrollbar-gutter-stable flex-1 overflow-x-hidden overflow-y-scroll scroll-smooth p-2 ${''}`}>
-                    <MessageList messages={messages} />
-                    <div ref={messagesEndRef} />
-                  </div>
-                )}
-                {messages.length > 0 && (
-                  <div className={`border-t p-2 shadow-sm backdrop-blur-sm ${contentBorderClassName}`}>
-                    <ChatInput
-                      onSendMessage={handleSendMessage}
-                      onStopTask={handleStopTask}
-                      onMicClick={handleMicClick}
-                      isRecording={isRecording}
-                      isProcessingSpeech={isProcessingSpeech}
-                      disabled={!inputEnabled || isHistoricalSession}
-                      showStopButton={showStopButton}
-                      setContent={setter => {
-                        setInputTextRef.current = setter;
-                      }}
-                      historicalSessionId={isHistoricalSession && replayEnabled ? currentSessionId : null}
-                      onReplay={handleReplay}
-                    />
-                  </div>
-                )}
-              </>
-            )}
+                  )}
+                </>
+              ) : (
+                <div className="flex-1 overflow-hidden border-t border-[#fdb56f]/20">
+                  <PlanBuilder
+                    plan={currentPlan}
+                    executing={!!planExecution}
+                    onCreatePlan={handleCreatePlan}
+                    onSave={handleSavePlan}
+                    onExecute={handleExecutePlan}
+                  />
+                </div>
+              ))}
           </>
         )}
       </div>
