@@ -21,6 +21,18 @@ import { analytics } from './services/analytics';
 
 const logger = createLogger('background');
 
+/** Matches manifest externally_connectable (https only, hzgm.tech and subdomains). */
+function isHzgmTechSenderUrl(urlStr: string | undefined): boolean {
+  if (!urlStr) return false;
+  try {
+    const { protocol, hostname } = new URL(urlStr);
+    if (protocol !== 'https:') return false;
+    return hostname === 'hzgm.tech' || hostname.endsWith('.hzgm.tech');
+  } catch {
+    return false;
+  }
+}
+
 const browserContext = new BrowserContext({});
 let currentExecutor: Executor | null = null;
 let currentPort: chrome.runtime.Port | null = null;
@@ -71,6 +83,24 @@ chrome.runtime.onMessage.addListener(() => {
   // Handle other message types if needed in the future
   // Return false if response is not sent asynchronously
   // return false;
+});
+
+// Web pages under https://*.hzgm.tech (see manifest externally_connectable)
+chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
+  if (!isHzgmTechSenderUrl(sender.url)) {
+    logger.warning('Blocked external message', sender.url);
+    sendResponse({ ok: false, error: 'forbidden' });
+    return false;
+  }
+
+  if (message && typeof message === 'object' && (message as { type?: string }).type === 'ping') {
+    sendResponse({ ok: true, type: 'pong' });
+    return false;
+  }
+
+  logger.info('External message from hzgm.tech', { url: sender.url, message });
+  sendResponse({ ok: true, received: true });
+  return false;
 });
 
 // Setup connection listener for long-lived connections (e.g., side panel)
