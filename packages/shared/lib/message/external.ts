@@ -8,6 +8,7 @@ export const externalPublishMessageSchema = z.object({
   type: z.literal('publish'),
   touchpointUrl: z.string().url().optional(),
   markdown: z.string().optional(),
+  publishSteps: z.array(z.string().trim().min(1)),
 });
 
 export const externalIncomingMessageSchema = z.union([externalPingMessageSchema, externalPublishMessageSchema]);

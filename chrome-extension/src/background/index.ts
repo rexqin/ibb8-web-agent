@@ -9,8 +9,8 @@ import {
 } from '@extension/storage';
 import { t } from '@extension/i18n';
 import {
+  type ExternalPublishMessage,
   externalIncomingMessageSchema,
-  ExternalPublishMessage,
   externalPublishMessageSchema,
   type ExternalIncomingMessage,
   type SidePanelPublishReceivedMessage,
@@ -123,13 +123,14 @@ chrome.runtime.onMessageExternal.addListener(async (message, sender, sendRespons
     }
     const externalPublishMessage: ExternalPublishMessage = parsedExternalPublishMessage.data;
     try {
-      const targetUrl = externalPublishMessage.touchpointUrl || sender.url;
-      const createdTab = await chrome.tabs.create({
-        url: targetUrl,
-        active: true,
-      });
-      if (createdTab.id) {
-        await chrome.sidePanel.open({ tabId: createdTab.id });
+      const targetTabId = sender.tab?.id;
+      if (targetTabId) {
+        await chrome.sidePanel.open({ tabId: targetTabId });
+      } else {
+        const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (activeTab?.id) {
+          await chrome.sidePanel.open({ tabId: activeTab.id });
+        }
       }
     } catch (error) {
       logger.warning('Failed to auto-open side panel for external publish message', error);
@@ -137,7 +138,7 @@ chrome.runtime.onMessageExternal.addListener(async (message, sender, sendRespons
     const sidePanelMessage: SidePanelPublishReceivedMessage = {
       type: 'external_publish_received',
       message: '收到发布指令',
-      payload: externalMessage,
+      payload: externalPublishMessage,
       from: sender.url,
       timestamp: Date.now(),
     };

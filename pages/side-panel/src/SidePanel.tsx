@@ -333,7 +333,7 @@ const SidePanel = () => {
     try {
       portRef.current = chrome.runtime.connect({ name: 'side-panel-connection' });
 
-      portRef.current.onMessage.addListener((rawMessage: unknown) => {
+      portRef.current.onMessage.addListener(async (rawMessage: unknown) => {
         const parsed = sidePanelInternalMessageSchema.safeParse(rawMessage);
         if (!parsed.success) {
           console.warn('Ignoring unknown side-panel internal message', rawMessage);
@@ -377,13 +377,33 @@ const SidePanel = () => {
           });
           setIsProcessingSpeech(false);
         } else if (message.type === 'external_publish_received') {
-          setMode('chat');
-          setShowHistory(false);
-          appendMessage({
-            actor: Actors.SYSTEM,
-            content: message.message || '收到发布指令',
-            timestamp: message.timestamp || Date.now(),
-          });
+          const publishSteps = message.payload.publishSteps ?? [];
+          const normalizedSteps = publishSteps
+            .map(step => step.trim())
+            .filter(step => step.length > 0)
+            .map((content, order) => ({
+              id: crypto.randomUUID(),
+              content,
+              order,
+            }));
+
+          if (normalizedSteps.length > 0) {
+            try {
+              const parsedUrl = message.payload.touchpointUrl ? new URL(message.payload.touchpointUrl) : null;
+              const host = parsedUrl?.hostname ?? 'external';
+              const autoTitle = `Auto Publish Plan (${host})`;
+              const plan = await planHistoryStore.createPlan(autoTitle);
+              const savedPlan = await planHistoryStore.savePlanSteps(plan.id, normalizedSteps);
+              setCurrentPlan(savedPlan);
+              setMode('plan');
+              setShowHistory(false);
+              await loadPlanMetadatas();
+            } catch (error) {
+              console.error('Failed to create plan from external publish steps:', error);
+              setMode('chat');
+              setShowHistory(false);
+            }
+          }
         } else if (message.type === 'heartbeat_ack') {
           console.log('Heartbeat acknowledged');
         }
