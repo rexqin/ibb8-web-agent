@@ -51,6 +51,9 @@
   "chat_buttons_stop": {
     "message": "停止"
   },
+  "chat_buttons_resume": {
+    "message": "繼續執行"
+  },
   "chat_buttons_replay": {
     "message": "重播"
   },
@@ -501,6 +504,12 @@
   },
   "exec_task_pause": {
     "message": "任務已暫停"
+  },
+  "exec_awaitUserLogin": {
+    "message": "完成登入或驗證後，請務必點選「繼續執行」。僅登入而不按鈕，任務會一直保持暫停。"
+  },
+  "exec_task_resumed": {
+    "message": "任務已繼續"
   },
   "exec_task_fail": {
     "message": "任務失敗：\n\n$ERROR_MESSAGE$",

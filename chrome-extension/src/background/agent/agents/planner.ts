@@ -16,6 +16,8 @@ import {
   RequestCancelledError,
 } from './errors';
 import { filterExternalContent } from '../messages/utils';
+import { t } from '@extension/i18n';
+
 const logger = createLogger('PlannerAgent');
 
 // Define Zod schema for planner output
@@ -41,6 +43,19 @@ export const plannerOutputSchema = z.object({
       throw new Error('Invalid boolean string');
     }),
   ]),
+  awaiting_user: z
+    .union([
+      z.boolean(),
+      z.string().transform(val => {
+        const v = val.toLowerCase().trim();
+        if (v === 'true') return true;
+        if (v === 'false') return false;
+        throw new Error('Invalid boolean string');
+      }),
+    ])
+    .optional()
+    .default(false),
+  user_action_hint: z.string().optional().default(''),
 });
 
 export type PlannerOutput = z.infer<typeof plannerOutputSchema>;
@@ -89,7 +104,7 @@ export class PlannerAgent extends BaseAgent<typeof plannerOutputSchema, PlannerO
       const challenges = filterExternalContent(modelOutput.challenges);
       const reasoning = filterExternalContent(modelOutput.reasoning);
 
-      const cleanedPlan: PlannerOutput = {
+      let cleanedPlan: PlannerOutput = {
         ...modelOutput,
         observation,
         challenges,
@@ -98,8 +113,26 @@ export class PlannerAgent extends BaseAgent<typeof plannerOutputSchema, PlannerO
         next_steps,
       };
 
-      // If task is done, emit the final answer; otherwise emit next steps
-      const eventMessage = cleanedPlan.done ? cleanedPlan.final_answer : cleanedPlan.next_steps;
+      if (cleanedPlan.awaiting_user) {
+        cleanedPlan = {
+          ...cleanedPlan,
+          done: false,
+          final_answer: '',
+        };
+        if (!cleanedPlan.user_action_hint?.trim()) {
+          cleanedPlan = {
+            ...cleanedPlan,
+            user_action_hint: observation.trim() || t('exec_awaitUserLogin'),
+          };
+        }
+      }
+
+      // If task is done, emit the final answer; otherwise emit next steps or login/verify hint
+      const eventMessage = cleanedPlan.done
+        ? cleanedPlan.final_answer
+        : cleanedPlan.awaiting_user
+          ? cleanedPlan.user_action_hint || cleanedPlan.next_steps
+          : cleanedPlan.next_steps;
       this.context.emitEvent(Actors.PLANNER, ExecutionState.STEP_OK, eventMessage);
       logger.info('Planner output', JSON.stringify(cleanedPlan, null, 2));
 

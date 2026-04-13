@@ -51,6 +51,9 @@
   "chat_buttons_stop": {
     "message": "Parar"
   },
+  "chat_buttons_resume": {
+    "message": "Retomar"
+  },
   "chat_buttons_replay": {
     "message": "Reproduzir"
   },
@@ -506,6 +509,12 @@
   },
   "exec_task_pause": {
     "message": "Tarefa pausada"
+  },
+  "exec_awaitUserLogin": {
+    "message": "Depois de entrar ou concluir a verificação, clique em Retomar. A tarefa permanece pausada até você fazer isso."
+  },
+  "exec_task_resumed": {
+    "message": "Tarefa retomada"
   },
   "exec_task_fail": {
     "message": "Tarefa falhou: \n\n$ERROR_MESSAGE$",

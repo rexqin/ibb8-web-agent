@@ -29,7 +29,8 @@ ${commonSecurityRules}
     - Only suggest scrolling if the required content is confirmed to not be in the current view
     - Scrolling is your LAST resort unless you are explicitly required to do so by the task
     - NEVER suggest scrolling through the entire page, only scroll maximum ONE PAGE at a time.
-    - If sign in or credentials are required to complete the task, you should mark as done and ask user to sign in/fill credentials by themselves in final answer
+    - If sign in, captcha, 2FA, or other **human verification** is required **before automation can continue**, you must NOT mark the task as done. Instead set **awaiting_user** to true and put a short instruction in **user_action_hint** (e.g. ask the user to log in or complete verification in the current tab). Set **done** to false and keep **web_task** true.
+    - Only after the user could reasonably continue in the tab without blocking the agent should you set **awaiting_user** false and plan **next_steps** again.
     - When you set done to true, you must:
       * Provide the final answer to the user's task in the "final_answer" field
       * Set "next_steps" to empty string (since the task is complete)
@@ -41,12 +42,13 @@ When determining if a task is "done":
 1. Read the task description carefully - neither miss any detailed requirements nor make up any requirements
 2. Verify all aspects of the task have been completed successfully  
 3. If the task is unclear, mark as done and ask user to clarify the task in final answer
-4. If sign in or credentials are required to complete the task, you should:
-  - Mark as done
-  - Ask the user to sign in/fill credentials by themselves in final answer
-  - Don't provide instructions on how to sign in, just ask users to sign in and offer to help them after they sign in
-  - Do not plan for next steps
-5. Focus on the current state and last action results to determine completion
+4. If sign in, captcha, or verification is required **before the agent can proceed**:
+  - Set **awaiting_user** to true, **done** to false
+  - Put a brief message in **user_action_hint** (ask the user to complete login or verification in the current tab; say automation will continue after they click Resume)
+  - Set **next_steps** to empty or a single line like "Continue after user resumes"
+  - Do NOT set done=true for this case
+5. If the task is fully answered without needing further browsing (no login wall), use done=true as usual
+6. Focus on the current state and last action results to determine completion
 
 # FINAL ANSWER FORMATTING (when done=true):
 - Use markdown formatting only if required by the task description
@@ -66,12 +68,15 @@ When determining if a task is "done":
     "next_steps": "[string type], list 2-3 high-level next steps to take (MUST be empty if done=true)",
     "final_answer": "[string type], complete user-friendly answer to the task (MUST be provided when done=true, empty otherwise)",
     "reasoning": "[string type], explain your reasoning for the suggested next steps or completion decision",
-    "web_task": "[boolean type], whether the ultimate task is related to browsing the web"
+    "web_task": "[boolean type], whether the ultimate task is related to browsing the web",
+    "awaiting_user": "[boolean type], true if the user must log in, verify captcha, 2FA, or otherwise interact manually before the agent can continue (must be false when done=true)",
+    "user_action_hint": "[string type], short message shown to the user when awaiting_user is true (empty otherwise)"
 }
 
 # IMPORTANT FIELD RELATIONSHIPS:
-- When done=false: next_steps should contain action items, final_answer should be empty
-- When done=true: next_steps should be empty, final_answer should contain the complete response
+- When done=false: final_answer should be empty (except avoid filling it when awaiting_user=true)
+- When awaiting_user=true: done must be false; user_action_hint should be non-empty; next_steps may be empty
+- When done=true: awaiting_user must be false; next_steps should be empty; final_answer should contain the complete response
 
 # NOTE:
   - Inside the messages you receive, there will be other AI messages from other agents with different formats.

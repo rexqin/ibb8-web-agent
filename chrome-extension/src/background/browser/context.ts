@@ -283,6 +283,42 @@ export default class BrowserContext {
     return page;
   }
 
+  /**
+   * Open a tab in the background (does not activate) and attach Puppeteer.
+   * Used for plan runs so the user's current tab stays focused.
+   */
+  public async openInactiveTab(url?: string): Promise<Page> {
+    const targetUrl = url ?? this._config.homePageUrl;
+    if (!isUrlAllowed(targetUrl, this._config.allowedUrls, this._config.deniedUrls)) {
+      throw new URLNotAllowedError(`Open tab failed. URL: ${targetUrl} is not allowed`);
+    }
+
+    const tab = await chrome.tabs.create({ url: targetUrl, active: false });
+    if (!tab.id) {
+      throw new Error('No tab ID available');
+    }
+    // Blank tabs may never get a non-empty title; skip full URL/title/complete wait used by openTab.
+    await this.waitForTabEvents(tab.id, { waitForUpdate: false, waitForActivation: false });
+
+    const updatedTab = await chrome.tabs.get(tab.id);
+    const page = await this._getOrCreatePage(updatedTab);
+    await this.attachPage(page);
+    this._currentTabId = tab.id;
+
+    return page;
+  }
+
+  /**
+   * Attach to an existing tab without focusing it (e.g. resume plan on the dedicated background tab).
+   */
+  public async attachToTabInBackground(tabId: number): Promise<Page> {
+    const tab = await chrome.tabs.get(tabId);
+    const page = await this._getOrCreatePage(tab);
+    await this.attachPage(page);
+    this._currentTabId = tabId;
+    return page;
+  }
+
   public async closeTab(tabId: number): Promise<void> {
     await this.detachPage(tabId);
     await chrome.tabs.remove(tabId);

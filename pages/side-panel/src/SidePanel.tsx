@@ -4,11 +4,8 @@ import { FiSettings } from 'react-icons/fi';
 import { PiPlusBold } from 'react-icons/pi';
 import { GrHistory } from 'react-icons/gr';
 import {
-  type Message,
   Actors,
-  chatHistoryStore,
   agentModelStore,
-  generalSettingsStore,
   planHistoryStore,
   type PlanRun,
   type PlanSession,
@@ -17,11 +14,7 @@ import {
 } from '@extension/storage';
 import { sidePanelExecutionAgentEventSchema, sidePanelInternalMessageSchema } from '@extension/shared';
 import type { SidePanelInternalMessage } from '@extension/shared';
-import favoritesStorage from '@extension/storage/lib/prompt/favorites';
 import { t } from '@extension/i18n';
-import MessageList from './components/MessageList';
-import ChatInput from './components/ChatInput';
-import ChatHistoryList from './components/ChatHistoryList';
 import PlanBuilder, { type PlanStepActivityLine } from './components/PlanBuilder';
 import PlanHistoryList from './components/PlanHistoryList';
 import { EventType, type AgentEvent, ExecutionState } from './types/event';
@@ -35,8 +28,6 @@ declare global {
 }
 
 const SidePanel = () => {
-  type PanelMode = 'chat' | 'plan';
-  type HistoryMode = 'chat' | 'plan';
   type PlanStepExecUiStatus = 'pending' | 'running' | 'ok' | 'fail' | 'cancel';
 
   interface PlanExecutionState {
@@ -50,38 +41,23 @@ const SidePanel = () => {
 
   const progressMessage = 'Showing progress...';
   const MAX_PLAN_STEP_ACTIVITY = 200;
-  const [messages, setMessages] = useState<Message[]>([]);
   const [planStepActivity, setPlanStepActivity] = useState<Record<string, PlanStepActivityLine[]>>({});
-  const [mode, setMode] = useState<PanelMode>('plan');
-  const [inputEnabled, setInputEnabled] = useState(true);
-  const [showStopButton, setShowStopButton] = useState(false);
+  const [panelNotice, setPanelNotice] = useState<string | null>(null);
   const [showCreateMenu, setShowCreateMenu] = useState(false);
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
-  const [historyMode, setHistoryMode] = useState<HistoryMode>('chat');
-  const [chatSessions, setChatSessions] = useState<Array<{ id: string; title: string; createdAt: number }>>([]);
   const [planMetadatas, setPlanMetadatas] = useState<PlanSessionMetadata[]>([]);
   const [planRunsByPlanId, setPlanRunsByPlanId] = useState<Record<string, PlanRun[]>>({});
   const [currentPlan, setCurrentPlan] = useState<PlanSession | null>(null);
   const [planExecution, setPlanExecution] = useState<PlanExecutionState | null>(null);
   const [lastTaskTerminal, setLastTaskTerminal] = useState<ExecutionState | null>(null);
   const [isFollowUpMode, setIsFollowUpMode] = useState(false);
-  const [isHistoricalSession, setIsHistoricalSession] = useState(false);
   const [hasConfiguredModels, setHasConfiguredModels] = useState<boolean | null>(null); // null = loading, false = no models, true = has models
-  const [isRecording, setIsRecording] = useState(false);
-  const [isProcessingSpeech, setIsProcessingSpeech] = useState(false);
-  const [isReplaying, setIsReplaying] = useState(false);
-  const [replayEnabled, setReplayEnabled] = useState(false);
+  const [taskAwaitingUserResume, setTaskAwaitingUserResume] = useState(false);
+  const [userPauseHint, setUserPauseHint] = useState<string | null>(null);
   const sessionIdRef = useRef<string | null>(null);
-  const isReplayingRef = useRef<boolean>(false);
   const planExecutionRef = useRef<PlanExecutionState | null>(null);
   const portRef = useRef<chrome.runtime.Port | null>(null);
   const heartbeatIntervalRef = useRef<number | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const setInputTextRef = useRef<((text: string) => void) | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const recordingTimerRef = useRef<number | null>(null);
 
   // Check if models are configured
   const checkModelConfiguration = useCallback(async () => {
@@ -97,37 +73,21 @@ const SidePanel = () => {
     }
   }, []);
 
-  // Load general settings to check if replay is enabled
-  const loadGeneralSettings = useCallback(async () => {
-    try {
-      const settings = await generalSettingsStore.getSettings();
-      setReplayEnabled(settings.replayHistoricalTasks);
-    } catch (error) {
-      console.error('Error loading general settings:', error);
-      setReplayEnabled(false);
-    }
-  }, []);
-
   // Check model configuration on mount
   useEffect(() => {
     checkModelConfiguration();
-    loadGeneralSettings();
-  }, [checkModelConfiguration, loadGeneralSettings]);
+  }, [checkModelConfiguration]);
 
   // Re-check model configuration when the side panel becomes visible again
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        // Panel became visible, re-check configuration and settings
         checkModelConfiguration();
-        loadGeneralSettings();
       }
     };
 
     const handleFocus = () => {
-      // Panel gained focus, re-check configuration and settings
       checkModelConfiguration();
-      loadGeneralSettings();
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -137,19 +97,20 @@ const SidePanel = () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
     };
-  }, [checkModelConfiguration, loadGeneralSettings]);
-
-  useEffect(() => {
-    sessionIdRef.current = currentSessionId;
-  }, [currentSessionId]);
-
-  useEffect(() => {
-    isReplayingRef.current = isReplaying;
-  }, [isReplaying]);
+  }, [checkModelConfiguration]);
 
   useEffect(() => {
     planExecutionRef.current = planExecution;
   }, [planExecution]);
+
+  const releasePlanDedicatedTab = useCallback(() => {
+    try {
+      if (portRef.current?.name !== 'side-panel-connection') return;
+      portRef.current.postMessage({ type: 'plan_dedicated_tab_close' });
+    } catch (e) {
+      console.error('plan_dedicated_tab_close failed:', e);
+    }
+  }, []);
 
   useEffect(() => {
     setPlanStepActivity({});
@@ -164,28 +125,6 @@ const SidePanel = () => {
     });
   }, []);
 
-  const appendMessage = useCallback((newMessage: Message, sessionId?: string | null) => {
-    // Don't save progress messages
-    const isProgressMessage = newMessage.content === progressMessage;
-
-    setMessages(prev => {
-      const filteredMessages = prev.filter((msg, idx) => !(msg.content === progressMessage && idx === prev.length - 1));
-      return [...filteredMessages, newMessage];
-    });
-
-    // Use provided sessionId if available, otherwise fall back to sessionIdRef.current
-    const effectiveSessionId = sessionId !== undefined ? sessionId : sessionIdRef.current;
-
-    console.log('sessionId', effectiveSessionId);
-
-    // Save message to storage if we have a session and it's not a progress message
-    if (effectiveSessionId && !isProgressMessage) {
-      chatHistoryStore
-        .addMessage(effectiveSessionId, newMessage)
-        .catch(err => console.error('Failed to save message to history:', err));
-    }
-  }, []);
-
   const handleTaskState = useCallback(
     (event: AgentEvent) => {
       const { actor, state, timestamp, data } = event;
@@ -197,32 +136,35 @@ const SidePanel = () => {
         case Actors.SYSTEM:
           switch (state) {
             case ExecutionState.TASK_START:
-              // Reset historical session flag when a new task starts
-              setIsHistoricalSession(false);
+              setTaskAwaitingUserResume(false);
+              setUserPauseHint(null);
               break;
             case ExecutionState.TASK_OK:
               setIsFollowUpMode(true);
-              setInputEnabled(true);
-              setShowStopButton(false);
-              setIsReplaying(false);
+              setTaskAwaitingUserResume(false);
+              setUserPauseHint(null);
               break;
             case ExecutionState.TASK_FAIL:
               setIsFollowUpMode(true);
-              setInputEnabled(true);
-              setShowStopButton(false);
-              setIsReplaying(false);
+              setTaskAwaitingUserResume(false);
+              setUserPauseHint(null);
               skip = false;
               break;
             case ExecutionState.TASK_CANCEL:
               setIsFollowUpMode(false);
-              setInputEnabled(true);
-              setShowStopButton(false);
-              setIsReplaying(false);
+              setTaskAwaitingUserResume(false);
+              setUserPauseHint(null);
               skip = false;
               break;
             case ExecutionState.TASK_PAUSE:
+              setTaskAwaitingUserResume(true);
+              setUserPauseHint(content?.trim() ? content : null);
+              skip = false;
               break;
             case ExecutionState.TASK_RESUME:
+              setTaskAwaitingUserResume(false);
+              setUserPauseHint(null);
+              skip = false;
               break;
             default:
               console.error('Invalid task state', state);
@@ -271,7 +213,7 @@ const SidePanel = () => {
               }
               break;
             case ExecutionState.ACT_OK:
-              skip = !isReplayingRef.current;
+              skip = true;
               break;
             case ExecutionState.ACT_FAIL:
               skip = false;
@@ -363,23 +305,14 @@ const SidePanel = () => {
         }
       } else {
         if (!skip) {
-          appendMessage({
-            actor,
-            content: content || '',
-            timestamp: timestamp,
-          });
-        }
-
-        if (displayProgress) {
-          appendMessage({
-            actor,
-            content: progressMessage,
-            timestamp: timestamp,
-          });
+          const msg = content && String(content).trim() ? String(content) : `${actor}: ${state}`;
+          setPanelNotice(msg);
+        } else if (displayProgress) {
+          setPanelNotice(progressMessage);
         }
       }
     },
-    [appendMessage, appendPlanStepActivityLine],
+    [appendPlanStepActivityLine],
   );
 
   // Stop heartbeat and close connection
@@ -391,6 +324,29 @@ const SidePanel = () => {
     if (portRef.current) {
       portRef.current.disconnect();
       portRef.current = null;
+    }
+  }, []);
+
+  const loadPlanMetadatas = useCallback(async () => {
+    try {
+      const metas = await planHistoryStore.getPlanMetadatas();
+      setPlanMetadatas(metas.sort((a, b) => b.updatedAt - a.updatedAt));
+    } catch (error) {
+      console.error('Failed to load plan sessions:', error);
+    }
+  }, []);
+
+  const loadPlanRuns = useCallback(async () => {
+    try {
+      const allRuns = await planHistoryStore.getPlanRuns();
+      const grouped = allRuns.reduce<Record<string, PlanRun[]>>((acc, run) => {
+        if (!acc[run.planId]) acc[run.planId] = [];
+        acc[run.planId].push(run);
+        return acc;
+      }, {});
+      setPlanRunsByPlanId(grouped);
+    } catch (error) {
+      console.error('Failed to load plan runs:', error);
     }
   }, []);
 
@@ -415,38 +371,13 @@ const SidePanel = () => {
         if (message.type === EventType.EXECUTION) {
           const parsedExecution = sidePanelExecutionAgentEventSchema.safeParse(message);
           if (!parsedExecution.success) {
-            appendMessage({
-              actor: Actors.SYSTEM,
-              content: t('errors_unknown'),
-              timestamp: Date.now(),
-            });
+            setPanelNotice(t('errors_unknown'));
             console.error('Invalid execution message payload', parsedExecution.error.flatten());
             return;
           }
           handleTaskState(parsedExecution.data as unknown as AgentEvent);
         } else if (message.type === 'error') {
-          // Handle error messages from service worker
-          appendMessage({
-            actor: Actors.SYSTEM,
-            content: message.error || t('errors_unknown'),
-            timestamp: Date.now(),
-          });
-          setInputEnabled(true);
-          setShowStopButton(false);
-        } else if (message.type === 'speech_to_text_result') {
-          // Handle speech-to-text result
-          if (message.text && setInputTextRef.current) {
-            setInputTextRef.current(message.text);
-          }
-          setIsProcessingSpeech(false);
-        } else if (message.type === 'speech_to_text_error') {
-          // Handle speech-to-text error
-          appendMessage({
-            actor: Actors.SYSTEM,
-            content: message.error || t('chat_stt_recognitionFailed'),
-            timestamp: Date.now(),
-          });
-          setIsProcessingSpeech(false);
+          setPanelNotice(message.error || t('errors_unknown'));
         } else if (message.type === 'external_publish_received') {
           const publishSteps = message.payload.publishSteps ?? [];
           const normalizedSteps = publishSteps
@@ -466,12 +397,11 @@ const SidePanel = () => {
               const plan = await planHistoryStore.createPlan(autoTitle);
               const savedPlan = await planHistoryStore.savePlanSteps(plan.id, normalizedSteps);
               setCurrentPlan(savedPlan);
-              setMode('plan');
               setShowHistory(false);
               await loadPlanMetadatas();
             } catch (error) {
               console.error('Failed to create plan from external publish steps:', error);
-              setMode('chat');
+              setPanelNotice(error instanceof Error ? error.message : t('errors_unknown'));
               setShowHistory(false);
             }
           }
@@ -488,8 +418,8 @@ const SidePanel = () => {
           clearInterval(heartbeatIntervalRef.current);
           heartbeatIntervalRef.current = null;
         }
-        setInputEnabled(true);
-        setShowStopButton(false);
+        setTaskAwaitingUserResume(false);
+        setUserPauseHint(null);
       });
 
       // Setup heartbeat interval
@@ -511,15 +441,10 @@ const SidePanel = () => {
       }, 25000);
     } catch (error) {
       console.error('Failed to establish connection:', error);
-      appendMessage({
-        actor: Actors.SYSTEM,
-        content: t('errors_conn_serviceWorker'),
-        timestamp: Date.now(),
-      });
-      // Clear any references since connection failed
+      setPanelNotice(t('errors_conn_serviceWorker'));
       portRef.current = null;
     }
-  }, [handleTaskState, appendMessage, stopConnection]);
+  }, [handleTaskState, stopConnection, loadPlanMetadatas]);
 
   // Add safety check for message sending
   const sendMessage = useCallback(
@@ -544,273 +469,88 @@ const SidePanel = () => {
     setupConnection();
   }, [setupConnection]);
 
-  // Handle replay command
-  const handleReplay = async (historySessionId: string): Promise<void> => {
-    try {
-      // Check if replay is enabled in settings
-      if (!replayEnabled) {
-        appendMessage({
-          actor: Actors.SYSTEM,
-          content: t('chat_replay_disabled'),
-          timestamp: Date.now(),
-        });
-        return;
-      }
+  const handleSendMessage = useCallback(
+    async (text: string, displayText?: string) => {
+      console.log('handleSendMessage', text);
 
-      // Check if history exists using loadAgentStepHistory
-      const historyData = await chatHistoryStore.loadAgentStepHistory(historySessionId);
-      if (!historyData) {
-        appendMessage({
-          actor: Actors.SYSTEM,
-          content: t('chat_replay_noHistory', historySessionId.substring(0, 20)),
-          timestamp: Date.now(),
-        });
-        return;
-      }
+      const trimmedText = text.trim();
 
-      // Get current tab ID
-      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-      const tabId = tabs[0]?.id;
-      if (!tabId) {
-        throw new Error('No active tab found');
-      }
+      if (!trimmedText) return;
 
-      // Clear messages if we're in a historical session
-      if (isHistoricalSession) {
-        setMessages([]);
-      }
-
-      // Create a new chat session for this replay task
-      const newSession = await chatHistoryStore.createSession(`Replay of ${historySessionId.substring(0, 20)}...`);
-      console.log('newSession for replay', newSession);
-
-      // Store the new session ID in both state and ref
-      const newTaskId = newSession.id;
-      setCurrentSessionId(newTaskId);
-      sessionIdRef.current = newTaskId;
-
-      // Send replay command to background
-      setInputEnabled(false);
-      setShowStopButton(true);
-
-      // Reset follow-up mode and historical session flags
-      setIsFollowUpMode(false);
-      setIsHistoricalSession(false);
-
-      const userMessage = {
-        actor: Actors.USER,
-        content: `/replay ${historySessionId}`,
-        timestamp: Date.now(),
-      };
-
-      // Add the user message to the new session
-      appendMessage(userMessage, sessionIdRef.current);
-
-      // Setup connection if not exists
-      if (!portRef.current) {
-        setupConnection();
-      }
-
-      // Send replay command to background with the task from history
-      portRef.current?.postMessage({
-        type: 'replay',
-        taskId: newTaskId,
-        tabId: tabId,
-        historySessionId: historySessionId,
-        task: historyData.task, // Add the task from history
-      });
-
-      appendMessage({
-        actor: Actors.SYSTEM,
-        content: t('chat_replay_starting', historyData.task),
-        timestamp: Date.now(),
-      });
-      setIsReplaying(true);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      appendMessage({
-        actor: Actors.SYSTEM,
-        content: t('chat_replay_failed', errorMessage),
-        timestamp: Date.now(),
-      });
-    }
-  };
-
-  // Handle chat commands that start with /
-  const handleCommand = async (command: string): Promise<boolean> => {
-    try {
-      // Setup connection if not exists
-      if (!portRef.current) {
-        setupConnection();
-      }
-
-      // Handle different commands
-      if (command === '/state') {
-        portRef.current?.postMessage({
-          type: 'state',
-        });
-        return true;
-      }
-
-      if (command === '/nohighlight') {
-        portRef.current?.postMessage({
-          type: 'nohighlight',
-        });
-        return true;
-      }
-
-      if (command.startsWith('/replay ')) {
-        // Parse replay command: /replay <historySessionId>
-        // Handle multiple spaces by filtering out empty strings
-        const parts = command.split(' ').filter(part => part.trim() !== '');
-        if (parts.length !== 2) {
-          appendMessage({
-            actor: Actors.SYSTEM,
-            content: t('chat_replay_invalidArgs'),
-            timestamp: Date.now(),
-          });
-          return true;
+      try {
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        const tabId = tabs[0]?.id;
+        if (!tabId) {
+          throw new Error('No active tab found');
         }
 
-        const historySessionId = parts[1];
-        await handleReplay(historySessionId);
-        return true;
-      }
+        if (!isFollowUpMode) {
+          sessionIdRef.current = crypto.randomUUID();
+        }
 
-      // Unsupported command
-      appendMessage({
-        actor: Actors.SYSTEM,
-        content: t('errors_cmd_unknown', command),
-        timestamp: Date.now(),
-      });
-      return true;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      console.error('Command error', errorMessage);
-      appendMessage({
-        actor: Actors.SYSTEM,
-        content: errorMessage,
-        timestamp: Date.now(),
-      });
-      return true;
-    }
-  };
-
-  const handleSendMessage = async (text: string, displayText?: string) => {
-    console.log('handleSendMessage', text);
-
-    // Trim the input text first
-    const trimmedText = text.trim();
-
-    if (!trimmedText) return;
-
-    // Check if the input is a command (starts with /)
-    if (trimmedText.startsWith('/')) {
-      // Process command and return if it was handled
-      const wasHandled = await handleCommand(trimmedText);
-      if (wasHandled) return;
-    }
-
-    // Block sending messages in historical sessions
-    if (isHistoricalSession) {
-      console.log('Cannot send messages in historical sessions');
-      return;
-    }
-
-    try {
-      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-      const tabId = tabs[0]?.id;
-      if (!tabId) {
-        throw new Error('No active tab found');
-      }
-
-      setInputEnabled(false);
-      setShowStopButton(true);
-
-      // Create a new chat session for this task if not in follow-up mode
-      if (!isFollowUpMode) {
-        // Use display text for session title if available, otherwise use full text
-        const titleText = displayText || text;
-        const newSession = await chatHistoryStore.createSession(
-          titleText.substring(0, 50) + (titleText.length > 50 ? '...' : ''),
-        );
-        console.log('newSession', newSession);
-
-        // Store the session ID in both state and ref
-        const sessionId = newSession.id;
-        setCurrentSessionId(sessionId);
-        sessionIdRef.current = sessionId;
-      }
-
-      const userMessage = {
-        actor: Actors.USER,
-        content: displayText || text, // Use display text for chat UI, full text for background service
-        timestamp: Date.now(),
-      };
-
-      const planExecSnap = planExecutionRef.current;
-      const planStepIdForUser = planExecSnap?.steps[planExecSnap.currentStepIndex]?.id;
-      if (planStepIdForUser) {
-        appendPlanStepActivityLine(planStepIdForUser, {
+        const userMessage = {
           actor: Actors.USER,
-          content: userMessage.content,
-          timestamp: userMessage.timestamp,
-          isProgress: false,
-        });
-      } else {
-        appendMessage(userMessage, sessionIdRef.current);
-      }
-
-      // Setup connection if not exists
-      if (!portRef.current) {
-        setupConnection();
-      }
-
-      // Send message using the utility function
-      if (isFollowUpMode) {
-        // Send as follow-up task
-        await sendMessage({
-          type: 'follow_up_task',
-          task: text,
-          taskId: sessionIdRef.current,
-          tabId,
-        });
-        console.log('follow_up_task sent', text, tabId, sessionIdRef.current);
-      } else {
-        // Send as new task
-        await sendMessage({
-          type: 'new_task',
-          task: text,
-          taskId: sessionIdRef.current,
-          tabId,
-        });
-        console.log('new_task sent', text, tabId, sessionIdRef.current);
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      console.error('Task error', errorMessage);
-      const ex = planExecutionRef.current;
-      const sid = ex?.steps[ex.currentStepIndex]?.id;
-      if (sid) {
-        appendPlanStepActivityLine(sid, {
-          actor: Actors.SYSTEM,
-          state: ExecutionState.TASK_FAIL,
-          content: errorMessage,
+          content: displayText || text,
           timestamp: Date.now(),
-          isProgress: false,
-        });
-      } else {
-        appendMessage({
-          actor: Actors.SYSTEM,
-          content: errorMessage,
-          timestamp: Date.now(),
-        });
+        };
+
+        const planExecSnap = planExecutionRef.current;
+        const planStepIdForUser = planExecSnap?.steps[planExecSnap.currentStepIndex]?.id;
+        if (planStepIdForUser) {
+          appendPlanStepActivityLine(planStepIdForUser, {
+            actor: Actors.USER,
+            content: userMessage.content,
+            timestamp: userMessage.timestamp,
+            isProgress: false,
+          });
+        }
+
+        if (!portRef.current) {
+          setupConnection();
+        }
+
+        const planDedicatedTab = Boolean(planExecutionRef.current);
+
+        if (isFollowUpMode) {
+          await sendMessage({
+            type: 'follow_up_task',
+            task: text,
+            taskId: sessionIdRef.current,
+            tabId,
+            planDedicatedTab,
+          });
+          console.log('follow_up_task sent', text, tabId, sessionIdRef.current);
+        } else {
+          await sendMessage({
+            type: 'new_task',
+            task: text,
+            taskId: sessionIdRef.current,
+            tabId,
+            planDedicatedTab,
+          });
+          console.log('new_task sent', text, tabId, sessionIdRef.current);
+        }
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        console.error('Task error', errorMessage);
+        const ex = planExecutionRef.current;
+        const sid = ex?.steps[ex.currentStepIndex]?.id;
+        if (sid) {
+          appendPlanStepActivityLine(sid, {
+            actor: Actors.SYSTEM,
+            state: ExecutionState.TASK_FAIL,
+            content: errorMessage,
+            timestamp: Date.now(),
+            isProgress: false,
+          });
+        } else {
+          setPanelNotice(errorMessage);
+        }
+        stopConnection();
       }
-      setInputEnabled(true);
-      setShowStopButton(false);
-      stopConnection();
-    }
-  };
+    },
+    [appendPlanStepActivityLine, isFollowUpMode, sendMessage, setupConnection, stopConnection],
+  );
 
   const handleStopTask = async () => {
     try {
@@ -831,15 +571,34 @@ const SidePanel = () => {
           isProgress: false,
         });
       } else {
-        appendMessage({
-          actor: Actors.SYSTEM,
-          content: errorMessage,
-          timestamp: Date.now(),
-        });
+        setPanelNotice(errorMessage);
       }
     }
-    setInputEnabled(true);
-    setShowStopButton(false);
+  };
+
+  const handleResumeTask = () => {
+    try {
+      if (portRef.current?.name !== 'side-panel-connection') {
+        setupConnection();
+      }
+      portRef.current?.postMessage({ type: 'resume_task' });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.error('resume_task error', errorMessage);
+      const ex = planExecutionRef.current;
+      const sid = ex?.steps[ex.currentStepIndex]?.id;
+      if (sid) {
+        appendPlanStepActivityLine(sid, {
+          actor: Actors.SYSTEM,
+          state: ExecutionState.TASK_FAIL,
+          content: errorMessage,
+          timestamp: Date.now(),
+          isProgress: false,
+        });
+      } else {
+        setPanelNotice(errorMessage);
+      }
+    }
   };
 
   useEffect(() => {
@@ -865,6 +624,7 @@ const SidePanel = () => {
       if (lastTaskTerminal === ExecutionState.TASK_CANCEL) {
         await planHistoryStore.finishRun(execution.runId, 'cancel');
         setPlanExecution(null);
+        releasePlanDedicatedTab();
         setLastTaskTerminal(null);
         await loadPlanRuns();
         return;
@@ -876,6 +636,7 @@ const SidePanel = () => {
       if (nextStepIndex >= execution.steps.length) {
         await planHistoryStore.finishRun(execution.runId, hadFailure ? 'fail' : 'ok');
         setPlanExecution(null);
+        releasePlanDedicatedTab();
         setLastTaskTerminal(null);
         await loadPlanRuns();
         return;
@@ -900,60 +661,11 @@ const SidePanel = () => {
     };
 
     void run();
-  }, [handleSendMessage, lastTaskTerminal, loadPlanRuns]);
-
-  const handleNewChat = () => {
-    // Clear messages and start a new chat
-    setMessages([]);
-    setCurrentSessionId(null);
-    sessionIdRef.current = null;
-    setInputEnabled(true);
-    setShowStopButton(false);
-    setIsFollowUpMode(false);
-    setIsHistoricalSession(false);
-    setMode('chat');
-    setShowCreateMenu(false);
-
-    // Disconnect any existing connection
-    stopConnection();
-  };
-
-  const loadChatSessions = useCallback(async () => {
-    try {
-      const sessions = await chatHistoryStore.getSessionsMetadata();
-      setChatSessions(sessions.sort((a, b) => b.createdAt - a.createdAt));
-    } catch (error) {
-      console.error('Failed to load chat sessions:', error);
-    }
-  }, []);
-
-  const loadPlanMetadatas = useCallback(async () => {
-    try {
-      const metas = await planHistoryStore.getPlanMetadatas();
-      setPlanMetadatas(metas.sort((a, b) => b.updatedAt - a.updatedAt));
-    } catch (error) {
-      console.error('Failed to load plan sessions:', error);
-    }
-  }, []);
-
-  async function loadPlanRuns() {
-    try {
-      const allRuns = await planHistoryStore.getPlanRuns();
-      const grouped = allRuns.reduce<Record<string, PlanRun[]>>((acc, run) => {
-        if (!acc[run.planId]) acc[run.planId] = [];
-        acc[run.planId].push(run);
-        return acc;
-      }, {});
-      setPlanRunsByPlanId(grouped);
-    } catch (error) {
-      console.error('Failed to load plan runs:', error);
-    }
-  }
+  }, [handleSendMessage, lastTaskTerminal, loadPlanRuns, releasePlanDedicatedTab]);
 
   const handleCreatePlan = async () => {
     const newPlan = await planHistoryStore.createPlan('New Plan');
     setCurrentPlan(newPlan);
-    setMode('plan');
     setShowHistory(false);
     await loadPlanMetadatas();
   };
@@ -1006,57 +718,21 @@ const SidePanel = () => {
       stepStatuses,
     };
     setPlanExecution(execution);
-    setMode('plan');
     setShowHistory(false);
+    setIsFollowUpMode(false);
     await handleSendMessage(cleanedSteps[0].content);
     await planHistoryStore.setStepRunStarted(run.id, cleanedSteps[0].id, sessionIdRef.current ?? undefined);
     await loadPlanRuns();
   };
 
   const handleLoadHistory = async () => {
-    await loadChatSessions();
     await loadPlanMetadatas();
     await loadPlanRuns();
     setShowHistory(true);
   };
 
-  const handleBackToChat = (reset = false) => {
+  const handleCloseHistory = () => {
     setShowHistory(false);
-    if (reset) {
-      setCurrentSessionId(null);
-      setMessages([]);
-      setIsFollowUpMode(false);
-      setIsHistoricalSession(false);
-    }
-  };
-
-  const handleSessionSelect = async (sessionId: string) => {
-    try {
-      const fullSession = await chatHistoryStore.getSession(sessionId);
-      if (fullSession && fullSession.messages.length > 0) {
-        setCurrentSessionId(fullSession.id);
-        setMessages(fullSession.messages);
-        setIsFollowUpMode(false);
-        setIsHistoricalSession(true); // Mark this as a historical session
-        console.log('history session selected', sessionId);
-      }
-      setShowHistory(false);
-    } catch (error) {
-      console.error('Failed to load session:', error);
-    }
-  };
-
-  const handleSessionDelete = async (sessionId: string) => {
-    try {
-      await chatHistoryStore.deleteSession(sessionId);
-      await loadChatSessions();
-      if (sessionId === currentSessionId) {
-        setMessages([]);
-        setCurrentSessionId(null);
-      }
-    } catch (error) {
-      console.error('Failed to delete session:', error);
-    }
   };
 
   const handlePlanSelect = async (planId: string) => {
@@ -1064,7 +740,6 @@ const SidePanel = () => {
       const plan = await planHistoryStore.getPlan(planId);
       if (plan) {
         setCurrentPlan(plan);
-        setMode('plan');
         setShowHistory(false);
       }
     } catch (error) {
@@ -1085,210 +760,16 @@ const SidePanel = () => {
     }
   };
 
-  const handleSessionBookmark = async (sessionId: string) => {
-    try {
-      const fullSession = await chatHistoryStore.getSession(sessionId);
-      if (fullSession && fullSession.messages.length > 0) {
-        const title = fullSession.title.split(' ').slice(0, 8).join(' ');
-        const taskContent = fullSession.messages[0]?.content || '';
-        await favoritesStorage.addPrompt(title, taskContent);
-        handleBackToChat(true);
-      }
-    } catch (error) {
-      console.error('Failed to pin session to favorites:', error);
-    }
-  };
-
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      // Stop recording if active
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-        mediaRecorderRef.current.stop();
-      }
-      // Clear recording timer
-      if (recordingTimerRef.current) {
-        clearTimeout(recordingTimerRef.current);
-        recordingTimerRef.current = null;
-      }
       stopConnection();
     };
   }, [stopConnection]);
 
-  // Scroll to bottom when new messages arrive
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  const handleMicClick = async () => {
-    if (isRecording) {
-      // Stop recording
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-        mediaRecorderRef.current.stop();
-      }
-      // Clear the timer
-      if (recordingTimerRef.current) {
-        clearTimeout(recordingTimerRef.current);
-        recordingTimerRef.current = null;
-      }
-      setIsRecording(false);
-      return;
-    }
-
-    try {
-      // First check if permission is already granted
-      const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
-
-      if (permissionStatus.state === 'denied') {
-        appendMessage({
-          actor: Actors.SYSTEM,
-          content: t('chat_stt_microphone_permissionDenied'),
-          timestamp: Date.now(),
-        });
-        return;
-      }
-
-      // If permission is not granted, open permission page
-      if (permissionStatus.state !== 'granted') {
-        const permissionUrl = chrome.runtime.getURL('permission/index.html');
-
-        // Open permission page in a new window
-        chrome.windows.create(
-          {
-            url: permissionUrl,
-            type: 'popup',
-            width: 500,
-            height: 600,
-          },
-          createdWindow => {
-            if (createdWindow?.id) {
-              // Listen for window close to check permission status
-              chrome.windows.onRemoved.addListener(function onWindowClose(windowId) {
-                if (windowId === createdWindow.id) {
-                  chrome.windows.onRemoved.removeListener(onWindowClose);
-                  // Check permission status after window closes
-                  setTimeout(async () => {
-                    try {
-                      const newPermissionStatus = await navigator.permissions.query({
-                        name: 'microphone' as PermissionName,
-                      });
-                      // Only retry if permission was granted
-                      if (newPermissionStatus.state === 'granted') {
-                        handleMicClick();
-                      }
-                      // If denied or prompt, do nothing - let user manually try again
-                    } catch (error) {
-                      console.error('Failed to check permission status:', error);
-                    }
-                  }, 500);
-                }
-              });
-            }
-          },
-        );
-        return;
-      }
-
-      // Permission granted - proceed with recording
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      // Clear previous audio chunks
-      audioChunksRef.current = [];
-
-      // Create MediaRecorder
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-
-      // Handle data available event
-      mediaRecorder.ondataavailable = event => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      // Handle stop event
-      mediaRecorder.onstop = async () => {
-        // Stop all tracks to release microphone
-        stream.getTracks().forEach(track => track.stop());
-
-        if (audioChunksRef.current.length > 0) {
-          // Create audio blob
-          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-
-          // Convert blob to base64
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const base64Audio = reader.result as string;
-
-            // Setup connection if not exists
-            if (!portRef.current) {
-              setupConnection();
-            }
-
-            // Send audio to backend for speech-to-text conversion
-            try {
-              setIsProcessingSpeech(true);
-              portRef.current?.postMessage({
-                type: 'speech_to_text',
-                audio: base64Audio,
-              });
-            } catch (error) {
-              console.error('Failed to send audio for speech-to-text:', error);
-              appendMessage({
-                actor: Actors.SYSTEM,
-                content: t('chat_stt_processingFailed'),
-                timestamp: Date.now(),
-              });
-              setIsRecording(false);
-              setIsProcessingSpeech(false);
-            }
-          };
-          reader.readAsDataURL(audioBlob);
-        }
-      };
-
-      // Set up 2-minute duration limit
-      const maxDuration = 2 * 60 * 1000;
-      recordingTimerRef.current = window.setTimeout(() => {
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-          mediaRecorderRef.current.stop();
-        }
-        setIsRecording(false);
-        setIsProcessingSpeech(true);
-        recordingTimerRef.current = null;
-      }, maxDuration);
-
-      // Start recording
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (error) {
-      console.error('Error accessing microphone:', error);
-
-      let errorMessage = t('chat_stt_microphone_accessFailed');
-      if (error instanceof Error) {
-        if (error.name === 'NotAllowedError') {
-          errorMessage += t('chat_stt_microphone_grantPermission');
-        } else if (error.name === 'NotFoundError') {
-          errorMessage += t('chat_stt_microphone_notFound');
-        } else {
-          errorMessage += error.message;
-        }
-      }
-
-      appendMessage({
-        actor: Actors.SYSTEM,
-        content: errorMessage,
-        timestamp: Date.now(),
-      });
-      setIsRecording(false);
-    }
-  };
-
   const panelClassName =
     'bg-gradient-to-b from-[#fff4e8] via-[#ffedd9] to-[#ffe3c6] border-[#fdb56f]/35 shadow-[0_0_0_1px_rgba(253,181,111,0.15),0_10px_28px_rgba(253,181,111,0.18)]';
   const iconClassName = 'text-[#fdb56f] hover:text-[#ee9b47]';
-  const contentBorderClassName = '';
   const helperTextClassName = '';
   const spinnerBorderClassName = '';
   const setupButtonClassName = 'bg-[#fdb56f] text-white hover:bg-[#ee9b47]';
@@ -1304,7 +785,7 @@ const SidePanel = () => {
             {showHistory ? (
               <button
                 type="button"
-                onClick={() => handleBackToChat(false)}
+                onClick={() => handleCloseHistory()}
                 className={`${iconClassName} cursor-pointer`}
                 aria-label={t('nav_back_a11y')}>
                 {t('nav_back')}
@@ -1351,16 +832,6 @@ const SidePanel = () => {
               <button
                 type="button"
                 onClick={() => {
-                  handleNewChat();
-                  setMode('chat');
-                  setShowCreateMenu(false);
-                }}
-                className="block w-full rounded px-3 py-2 text-left text-sm text-[#6f3909] hover:bg-[#fff4e8]">
-                New Chat
-              </button>
-              <button
-                type="button"
-                onClick={() => {
                   void handleCreatePlan();
                   setShowCreateMenu(false);
                 }}
@@ -1372,55 +843,16 @@ const SidePanel = () => {
         </header>
         {showHistory ? (
           <div className="flex-1 overflow-hidden">
-            <div className="flex gap-2 border-t border-[#fdb56f]/20 px-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setHistoryMode('plan')}
-                className={`rounded-md px-3 py-1 text-sm ${historyMode === 'plan' ? 'bg-[#fdb56f] text-white' : 'text-[#8a490d]'}`}>
-                Plan History
-              </button>
-              <button
-                type="button"
-                onClick={() => setHistoryMode('chat')}
-                className={`rounded-md px-3 py-1 text-sm ${historyMode === 'chat' ? 'bg-[#fdb56f] text-white' : 'text-[#8a490d]'}`}>
-                Chat History
-              </button>
-            </div>
-            {historyMode === 'chat' ? (
-              <ChatHistoryList
-                sessions={chatSessions}
-                onSessionSelect={handleSessionSelect}
-                onSessionDelete={handleSessionDelete}
-                onSessionBookmark={handleSessionBookmark}
-                visible={true}
-              />
-            ) : (
-              <PlanHistoryList
-                plans={planMetadatas}
-                runsByPlanId={planRunsByPlanId}
-                onPlanSelect={handlePlanSelect}
-                onPlanDelete={handlePlanDelete}
-                visible={true}
-              />
-            )}
+            <PlanHistoryList
+              plans={planMetadatas}
+              runsByPlanId={planRunsByPlanId}
+              onPlanSelect={handlePlanSelect}
+              onPlanDelete={handlePlanDelete}
+              visible={true}
+            />
           </div>
         ) : (
           <>
-            <div className="flex gap-2 border-t border-[#fdb56f]/20 px-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setMode('plan')}
-                className={`rounded-md px-3 py-1 text-sm ${mode === 'plan' ? 'bg-[#fdb56f] text-white' : 'text-[#8a490d]'}`}>
-                Plan
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode('chat')}
-                className={`rounded-md px-3 py-1 text-sm ${mode === 'chat' ? 'bg-[#fdb56f] text-white' : 'text-[#8a490d]'}`}>
-                Chat
-              </button>
-            </div>
-
             {/* Show loading state while checking model configuration */}
             {hasConfiguredModels === null && (
               <div className={`flex flex-1 items-center justify-center p-8 ${helperTextClassName}`}>
@@ -1448,59 +880,24 @@ const SidePanel = () => {
               </div>
             )}
 
-            {/* Show mode content when models are configured */}
-            {hasConfiguredModels === true &&
-              (mode === 'chat' ? (
-                <>
-                  {messages.length === 0 && (
-                    <>
-                      <div className={`mb-2 border-t p-2 shadow-sm backdrop-blur-sm ${contentBorderClassName}`}>
-                        <ChatInput
-                          onSendMessage={handleSendMessage}
-                          onStopTask={handleStopTask}
-                          onMicClick={handleMicClick}
-                          isRecording={isRecording}
-                          isProcessingSpeech={isProcessingSpeech}
-                          disabled={!inputEnabled || isHistoricalSession}
-                          showStopButton={showStopButton}
-                          setContent={setter => {
-                            setInputTextRef.current = setter;
-                          }}
-                          historicalSessionId={isHistoricalSession && replayEnabled ? currentSessionId : null}
-                          onReplay={handleReplay}
-                        />
-                      </div>
-                      <div className="flex-1" />
-                    </>
-                  )}
-                  {messages.length > 0 && (
-                    <div
-                      className={`scrollbar-gutter-stable flex-1 overflow-x-hidden overflow-y-scroll scroll-smooth p-2 ${''}`}>
-                      <MessageList messages={messages} />
-                      <div ref={messagesEndRef} />
-                    </div>
-                  )}
-                  {messages.length > 0 && (
-                    <div className={`border-t p-2 shadow-sm backdrop-blur-sm ${contentBorderClassName}`}>
-                      <ChatInput
-                        onSendMessage={handleSendMessage}
-                        onStopTask={handleStopTask}
-                        onMicClick={handleMicClick}
-                        isRecording={isRecording}
-                        isProcessingSpeech={isProcessingSpeech}
-                        disabled={!inputEnabled || isHistoricalSession}
-                        showStopButton={showStopButton}
-                        setContent={setter => {
-                          setInputTextRef.current = setter;
-                        }}
-                        historicalSessionId={isHistoricalSession && replayEnabled ? currentSessionId : null}
-                        onReplay={handleReplay}
-                      />
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="flex-1 overflow-hidden border-t border-[#fdb56f]/20">
+            {/* Plan UI when models are configured */}
+            {hasConfiguredModels === true && (
+              <div className="flex flex-1 flex-col overflow-hidden border-t border-[#fdb56f]/20">
+                {panelNotice ? (
+                  <div
+                    role="status"
+                    className="mx-3 mt-2 flex items-start justify-between gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+                    <span className="min-w-0 flex-1 whitespace-pre-wrap break-words">{panelNotice}</span>
+                    <button
+                      type="button"
+                      onClick={() => setPanelNotice(null)}
+                      className="shrink-0 rounded px-1 text-amber-800 hover:bg-amber-100"
+                      aria-label="Dismiss">
+                      ×
+                    </button>
+                  </div>
+                ) : null}
+                <div className="min-h-0 flex-1 overflow-hidden">
                   <PlanBuilder
                     plan={currentPlan}
                     executing={!!planExecution}
@@ -1517,9 +914,13 @@ const SidePanel = () => {
                     onSave={handleSavePlan}
                     onExecute={handleExecutePlan}
                     onStopTask={handleStopTask}
+                    taskAwaitingUserResume={taskAwaitingUserResume}
+                    userPauseHint={userPauseHint}
+                    onResumeTask={handleResumeTask}
                   />
                 </div>
-              ))}
+              </div>
+            )}
           </>
         )}
       </div>

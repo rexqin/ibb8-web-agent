@@ -43,6 +43,8 @@ export class Executor {
   private readonly navigatorPrompt: NavigatorPrompt;
   private readonly generalSettings: GeneralSettingsConfig | undefined;
   private tasks: string[] = [];
+  /** After user resumes from awaiting_user, skip one planner cycle so Navigator refreshes DOM first. */
+  private skipPlannerAfterUserResume = false;
   constructor(
     task: string,
     taskId: string,
@@ -131,6 +133,7 @@ export class Executor {
     const context = this.context;
     context.nSteps = 0;
     const allowedMaxSteps = this.context.options.maxSteps;
+    this.skipPlannerAfterUserResume = false;
 
     try {
       this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_START, this.context.taskId);
@@ -153,10 +156,31 @@ export class Executor {
           break;
         }
 
-        // Run planner periodically for guidance
-        if (this.planner && (context.nSteps % context.options.planningInterval === 0 || navigatorDone)) {
+        // Run planner periodically for guidance (may skip one cycle after login/verify resume to refresh page first)
+        const skipPlannerThisCycle = this.skipPlannerAfterUserResume;
+        if (skipPlannerThisCycle) {
+          this.skipPlannerAfterUserResume = false;
+        }
+
+        if (
+          this.planner &&
+          !skipPlannerThisCycle &&
+          (context.nSteps % context.options.planningInterval === 0 || navigatorDone)
+        ) {
           navigatorDone = false;
           latestPlanOutput = await this.runPlanner();
+
+          if (latestPlanOutput?.result?.awaiting_user === true) {
+            const hint = latestPlanOutput.result.user_action_hint?.trim() || t('exec_awaitUserLogin');
+            this.context.pause();
+            await this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_PAUSE, hint);
+            await this.waitUntilUserResume();
+            if (this.context.stopped) {
+              break;
+            }
+            this.skipPlannerAfterUserResume = true;
+            continue;
+          }
 
           // Check if task is complete after planner run
           if (this.checkTaskCompletion(latestPlanOutput)) {
@@ -313,6 +337,15 @@ export class Executor {
     return false;
   }
 
+  /** Blocks until user calls resume() or task is cancelled. */
+  private async waitUntilUserResume(): Promise<void> {
+    while (this.context.paused && !this.context.stopped) {
+      await new Promise<void>(resolve => {
+        setTimeout(resolve, 200);
+      });
+    }
+  }
+
   private async shouldStop(): Promise<boolean> {
     if (this.context.stopped) {
       logger.info('Agent stopped');
@@ -340,6 +373,7 @@ export class Executor {
 
   async resume(): Promise<void> {
     this.context.resume();
+    await this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_RESUME, t('exec_task_resumed'));
   }
 
   async pause(): Promise<void> {

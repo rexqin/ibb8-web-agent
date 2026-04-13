@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Actors, type PlanSession, type PlanStep } from '@extension/storage';
+import { t } from '@extension/i18n';
 
 type PlanStepUiExecStatus = 'pending' | 'running' | 'ok' | 'fail' | 'cancel';
 
@@ -23,6 +24,10 @@ interface PlanBuilderProps {
   onSave: (steps: PlanStep[], title: string) => Promise<void>;
   onExecute: (steps: PlanStep[], title: string) => Promise<void>;
   onStopTask: () => void;
+  taskAwaitingUserResume?: boolean;
+  /** Latest TASK_PAUSE detail from backend (planner hint); fallback to generic i18n if empty. */
+  userPauseHint?: string | null;
+  onResumeTask?: () => void;
 }
 
 const createStep = (order: number): PlanStep => ({
@@ -115,6 +120,9 @@ export default function PlanBuilder({
   onSave,
   onExecute,
   onStopTask,
+  taskAwaitingUserResume = false,
+  userPauseHint = null,
+  onResumeTask,
 }: PlanBuilderProps) {
   const [title, setTitle] = useState(plan?.title ?? 'New Plan');
   const [steps, setSteps] = useState<PlanStep[]>(plan?.steps ?? []);
@@ -236,14 +244,36 @@ export default function PlanBuilder({
 
       <div className="flex-1 space-y-2 overflow-y-auto rounded-lg border border-[#fdb56f]/20 bg-[#fff8f1] p-3">
         {executing && (
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-[#fdb56f]/40 bg-white px-3 py-2">
-            <p className="text-sm font-medium text-[#8a490d]">Running plan — progress updates below each step.</p>
-            <button
-              type="button"
-              onClick={() => onStopTask()}
-              className="rounded-md border border-red-300 bg-white px-3 py-1.5 text-sm text-red-600 hover:bg-red-50">
-              Stop
-            </button>
+          <div
+            className={`flex flex-col gap-2 rounded-md border px-3 py-2 ${
+              taskAwaitingUserResume ? 'border-amber-400/80 bg-amber-50/90' : 'border-[#fdb56f]/40 bg-white'
+            }`}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-medium text-[#8a490d]">
+                {taskAwaitingUserResume ? t('exec_task_pause') : 'Running plan — progress updates below each step.'}
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                {taskAwaitingUserResume && onResumeTask ? (
+                  <button
+                    type="button"
+                    onClick={() => onResumeTask()}
+                    className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm text-white hover:bg-emerald-700">
+                    {t('chat_buttons_resume')}
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => onStopTask()}
+                  className="rounded-md border border-red-300 bg-white px-3 py-1.5 text-sm text-red-600 hover:bg-red-50">
+                  Stop
+                </button>
+              </div>
+            </div>
+            {taskAwaitingUserResume ? (
+              <p className="text-xs text-[#6f3909]/90">
+                {userPauseHint?.trim() ? userPauseHint : t('exec_awaitUserLogin')}
+              </p>
+            ) : null}
           </div>
         )}
         {sortedSteps.length === 0 && <p className="text-sm text-[#a35b19]">No steps yet. Add your first step.</p>}

@@ -43,6 +43,19 @@ function isHzgmTechSenderUrl(urlStr: string | undefined): boolean {
 const browserContext = new BrowserContext({});
 let currentExecutor: Executor | null = null;
 let currentPort: chrome.runtime.Port | null = null;
+/** Background tab used for multi-step plan execution; closed when the plan ends or a normal task uses the active tab. */
+let planDedicatedTabId: number | null = null;
+
+async function closePlanDedicatedTabIfAny(): Promise<void> {
+  if (planDedicatedTabId === null) return;
+  const id = planDedicatedTabId;
+  planDedicatedTabId = null;
+  try {
+    await browserContext.closeTab(id);
+  } catch (e) {
+    logger.warning('closePlanDedicatedTab failed', e);
+  }
+}
 const pendingSidePanelMessages: SidePanelPublishReceivedMessage[] = [];
 const SIDE_PANEL_URL = chrome.runtime.getURL('side-panel/index.html');
 
@@ -194,7 +207,24 @@ chrome.runtime.onConnect.addListener(port => {
             if (!message.task) return port.postMessage({ type: 'error', error: t('bg_cmd_newTask_noTask') });
             if (!message.tabId) return port.postMessage({ type: 'error', error: t('bg_errors_noTabId') });
 
-            logger.info('new_task', message.tabId, message.task);
+            logger.info('new_task', message.tabId, message.task, { planDedicatedTab: message.planDedicatedTab });
+            try {
+              if (message.planDedicatedTab) {
+                await closePlanDedicatedTabIfAny();
+                const dedicatedPage = await browserContext.openInactiveTab();
+                planDedicatedTabId = dedicatedPage.tabId;
+              } else {
+                await closePlanDedicatedTabIfAny();
+                await browserContext.switchTab(message.tabId);
+              }
+            } catch (error) {
+              logger.error('new_task tab setup failed:', error);
+              return port.postMessage({
+                type: 'error',
+                error: error instanceof Error ? error.message : t('errors_unknown'),
+              });
+            }
+
             currentExecutor = await setupExecutor(message.taskId, message.task, browserContext);
             subscribeToExecutorEvents(currentExecutor);
 
@@ -207,7 +237,22 @@ chrome.runtime.onConnect.addListener(port => {
             if (!message.task) return port.postMessage({ type: 'error', error: t('bg_cmd_followUpTask_noTask') });
             if (!message.tabId) return port.postMessage({ type: 'error', error: t('bg_errors_noTabId') });
 
-            logger.info('follow_up_task', message.tabId, message.task);
+            logger.info('follow_up_task', message.tabId, message.task, { planDedicatedTab: message.planDedicatedTab });
+
+            try {
+              if (message.planDedicatedTab && planDedicatedTabId !== null) {
+                await browserContext.attachToTabInBackground(planDedicatedTabId);
+              } else {
+                await closePlanDedicatedTabIfAny();
+                await browserContext.switchTab(message.tabId);
+              }
+            } catch (error) {
+              logger.error('follow_up_task tab setup failed:', error);
+              return port.postMessage({
+                type: 'error',
+                error: error instanceof Error ? error.message : t('errors_unknown'),
+              });
+            }
 
             // If executor exists, add follow-up task
             if (currentExecutor) {
@@ -221,6 +266,11 @@ chrome.runtime.onConnect.addListener(port => {
               logger.info('follow_up_task: executor was cleaned up, can not add follow-up task');
               return port.postMessage({ type: 'error', error: t('bg_cmd_followUpTask_cleaned') });
             }
+            break;
+          }
+
+          case 'plan_dedicated_tab_close': {
+            await closePlanDedicatedTabIfAny();
             break;
           }
 
@@ -320,6 +370,7 @@ chrome.runtime.onConnect.addListener(port => {
             logger.info('replay', message.tabId, message.taskId, message.historySessionId);
 
             try {
+              await closePlanDedicatedTabIfAny();
               // Switch to the specified tab
               await browserContext.switchTab(message.tabId);
               // Setup executor with the new taskId and a dummy task description
@@ -355,6 +406,7 @@ chrome.runtime.onConnect.addListener(port => {
       // this event is also triggered when the side panel is closed, so we need to cancel the task
       console.log('Side panel disconnected');
       currentPort = null;
+      void closePlanDedicatedTabIfAny();
       currentExecutor?.cancel();
     });
   }

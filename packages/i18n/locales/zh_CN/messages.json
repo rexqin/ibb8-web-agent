@@ -49,6 +49,9 @@
   "chat_buttons_stop": {
     "message": "停止"
   },
+  "chat_buttons_resume": {
+    "message": "继续执行"
+  },
   "chat_buttons_replay": {
     "message": "回放"
   },
@@ -498,6 +501,12 @@
   },
   "exec_task_pause": {
     "message": "任务已暂停"
+  },
+  "exec_awaitUserLogin": {
+    "message": "完成登录或验证后，请务必点击「继续执行」。仅登录而不点按钮，任务会一直保持暂停。"
+  },
+  "exec_task_resumed": {
+    "message": "任务已继续"
   },
   "exec_task_fail": {
     "message": "任务失败：\n\n$ERROR_MESSAGE$",
