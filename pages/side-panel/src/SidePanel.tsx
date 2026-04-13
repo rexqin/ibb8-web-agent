@@ -37,12 +37,15 @@ declare global {
 const SidePanel = () => {
   type PanelMode = 'chat' | 'plan';
   type HistoryMode = 'chat' | 'plan';
+  type PlanStepExecUiStatus = 'pending' | 'running' | 'ok' | 'fail' | 'cancel';
+
   interface PlanExecutionState {
     runId: string;
     planId: string;
     steps: PlanStep[];
     currentStepIndex: number;
     hadFailure: boolean;
+    stepStatuses: PlanStepExecUiStatus[];
   }
 
   const progressMessage = 'Showing progress...';
@@ -752,6 +755,9 @@ const SidePanel = () => {
             ? 'fail'
             : 'cancel';
 
+      const nextStepStatuses = [...execution.stepStatuses];
+      nextStepStatuses[execution.currentStepIndex] = stepStatus;
+
       await planHistoryStore.setStepRunFinished(execution.runId, currentStep.id, stepStatus);
 
       if (lastTaskTerminal === ExecutionState.TASK_CANCEL) {
@@ -773,10 +779,12 @@ const SidePanel = () => {
         return;
       }
 
+      nextStepStatuses[nextStepIndex] = 'running';
       const nextExecution: PlanExecutionState = {
         ...execution,
         currentStepIndex: nextStepIndex,
         hadFailure,
+        stepStatuses: nextStepStatuses,
       };
       setPlanExecution(nextExecution);
       await handleSendMessage(nextExecution.steps[nextStepIndex].content);
@@ -848,38 +856,54 @@ const SidePanel = () => {
     await loadPlanMetadatas();
   };
 
-  const handleSavePlan = async (steps: PlanStep[], title: string) => {
-    let targetPlan = currentPlan;
-    if (!targetPlan) {
-      targetPlan = await planHistoryStore.createPlan(title || 'New Plan');
-    }
-    if (title.trim() && title !== targetPlan.title) {
-      await planHistoryStore.updatePlanTitle(targetPlan.id, title.trim());
-    }
-    const savedPlan = await planHistoryStore.savePlanSteps(targetPlan.id, steps);
-    setCurrentPlan({
-      ...savedPlan,
-      title: title.trim() || savedPlan.title,
-    });
-    await loadPlanMetadatas();
-  };
+  const handleSavePlan = useCallback(
+    async (steps: PlanStep[], title: string) => {
+      let targetPlan = currentPlan;
+      if (!targetPlan) {
+        targetPlan = await planHistoryStore.createPlan(title.trim() || 'New Plan');
+      }
+      const trimmedTitle = title.trim();
+      if (trimmedTitle && trimmedTitle !== targetPlan.title.trim()) {
+        await planHistoryStore.updatePlanTitle(targetPlan.id, trimmedTitle);
+      }
+      const savedPlan = await planHistoryStore.savePlanSteps(targetPlan.id, steps);
+      setCurrentPlan({
+        ...savedPlan,
+        title: trimmedTitle || savedPlan.title,
+      });
+      await loadPlanMetadatas();
+    },
+    [currentPlan, loadPlanMetadatas],
+  );
 
-  const handleExecutePlan = async (steps: PlanStep[]) => {
+  const handleExecutePlan = async (steps: PlanStep[], title: string) => {
     if (!currentPlan) return;
     const cleanedSteps = steps.filter(step => step.content.trim() !== '').map((step, order) => ({ ...step, order }));
     if (cleanedSteps.length === 0) return;
 
-    await planHistoryStore.savePlanSteps(currentPlan.id, cleanedSteps);
+    const titleTrimmed = title.trim();
+    if (titleTrimmed && titleTrimmed !== currentPlan.title) {
+      await planHistoryStore.updatePlanTitle(currentPlan.id, titleTrimmed);
+    }
+    const savedPlan = await planHistoryStore.savePlanSteps(currentPlan.id, cleanedSteps);
+    setCurrentPlan({
+      ...savedPlan,
+      title: titleTrimmed || savedPlan.title,
+    });
+    await loadPlanMetadatas();
+
     const run = await planHistoryStore.startRun(currentPlan.id, cleanedSteps);
+    const stepStatuses: PlanStepExecUiStatus[] = cleanedSteps.map((_, i) => (i === 0 ? 'running' : 'pending'));
     const execution: PlanExecutionState = {
       runId: run.id,
       planId: currentPlan.id,
       steps: cleanedSteps,
       currentStepIndex: 0,
       hadFailure: false,
+      stepStatuses,
     };
     setPlanExecution(execution);
-    setMode('chat');
+    setMode('plan');
     setShowHistory(false);
     await handleSendMessage(cleanedSteps[0].content);
     await planHistoryStore.setStepRunStarted(run.id, cleanedSteps[0].id, sessionIdRef.current ?? undefined);
@@ -1377,9 +1401,15 @@ const SidePanel = () => {
                   <PlanBuilder
                     plan={currentPlan}
                     executing={!!planExecution}
+                    stepStatusByStepId={
+                      planExecution
+                        ? Object.fromEntries(planExecution.steps.map((s, i) => [s.id, planExecution.stepStatuses[i]]))
+                        : undefined
+                    }
                     onCreatePlan={handleCreatePlan}
                     onSave={handleSavePlan}
                     onExecute={handleExecutePlan}
+                    onStopTask={handleStopTask}
                   />
                 </div>
               ))}
