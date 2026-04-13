@@ -28,6 +28,14 @@ import { analytics } from '../services/analytics';
 
 const logger = createLogger('Executor');
 
+function isRequestCancelledLike(error: unknown): boolean {
+  if (error instanceof RequestCancelledError) return true;
+  if (error && typeof error === 'object' && 'name' in error) {
+    return (error as { name?: string }).name === 'RequestCancelledError';
+  }
+  return false;
+}
+
 export interface ExecutorExtraArgs {
   plannerLLM?: BaseChatModel;
   extractorLLM?: BaseChatModel;
@@ -226,7 +234,7 @@ export class Executor {
         // Note: We don't track pause as it's not a final state
       }
     } catch (error) {
-      if (error instanceof RequestCancelledError) {
+      if (isRequestCancelledLike(error)) {
         this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_CANCEL, t('exec_task_cancel'));
 
         // Track task cancellation
@@ -276,13 +284,17 @@ export class Executor {
       }
       return planOutput;
     } catch (error) {
-      logger.error(`Failed to execute planner: ${error}`);
+      if (isRequestCancelledLike(error)) {
+        logger.info('Planner request cancelled');
+      } else {
+        logger.error(`Failed to execute planner: ${error}`);
+      }
       if (
         error instanceof ChatModelAuthError ||
         error instanceof ChatModelBadRequestError ||
         error instanceof ChatModelForbiddenError ||
         error instanceof URLNotAllowedError ||
-        error instanceof RequestCancelledError ||
+        isRequestCancelledLike(error) ||
         error instanceof ExtensionConflictError
       ) {
         throw error;
@@ -318,13 +330,17 @@ export class Executor {
         return true;
       }
     } catch (error) {
-      logger.error(`Failed to execute step: ${error}`);
+      if (isRequestCancelledLike(error)) {
+        logger.info('Step request cancelled');
+      } else {
+        logger.error(`Failed to execute step: ${error}`);
+      }
       if (
         error instanceof ChatModelAuthError ||
         error instanceof ChatModelBadRequestError ||
         error instanceof ChatModelForbiddenError ||
         error instanceof URLNotAllowedError ||
-        error instanceof RequestCancelledError ||
+        isRequestCancelledLike(error) ||
         error instanceof ExtensionConflictError
       ) {
         throw error;

@@ -28,6 +28,23 @@ import { analytics } from './services/analytics';
 
 const logger = createLogger('background');
 
+function isScriptableTabUrl(urlStr: string | undefined): boolean {
+  if (!urlStr) return false;
+  try {
+    const url = new URL(urlStr);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
+
+    // Chrome blocks scripting on extension gallery/store pages.
+    const blockedHosts = new Set(['chrome.google.com', 'chromewebstore.google.com']);
+    if (blockedHosts.has(url.hostname) && url.pathname.startsWith('/webstore')) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Matches manifest externally_connectable (https only, hzgm.tech and subdomains). */
 function isHzgmTechSenderUrl(urlStr: string | undefined): boolean {
   if (!urlStr) return false;
@@ -63,7 +80,7 @@ const SIDE_PANEL_URL = chrome.runtime.getURL('side-panel/index.html');
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(error => console.error(error));
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  if (tabId && changeInfo.status === 'complete' && tab.url?.startsWith('http')) {
+  if (tabId && changeInfo.status === 'complete' && isScriptableTabUrl(tab.url)) {
     await injectBuildDomTreeScripts(tabId);
   }
 });
