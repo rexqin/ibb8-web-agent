@@ -37,6 +37,27 @@
   "nav_back_a11y": {
     "message": "Back to chat"
   },
+  "nav_planList_title": {
+    "message": "Saved plans"
+  },
+  "nav_planList_empty": {
+    "message": "No saved plans yet. Use + to create one."
+  },
+  "nav_planList_steps": {
+    "message": "Steps: $1"
+  },
+  "nav_planList_toggle_show_a11y": {
+    "message": "Show plans list"
+  },
+  "nav_planList_toggle_hide_a11y": {
+    "message": "Hide plans list"
+  },
+  "nav_planList_delete_a11y": {
+    "message": "Delete plan"
+  },
+  "nav_planList_create": {
+    "message": "Create Plan"
+  },
 
   "welcome_instruction": {
     "message": "To get started, please configure your API keys in the settings page."

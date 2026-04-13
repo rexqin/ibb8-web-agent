@@ -37,6 +37,27 @@
   "nav_back_a11y": {
     "message": "Voltar para o chat"
   },
+  "nav_planList_title": {
+    "message": "Planos salvos"
+  },
+  "nav_planList_empty": {
+    "message": "Nenhum plano salvo. Use + para criar."
+  },
+  "nav_planList_steps": {
+    "message": "Etapas: $1"
+  },
+  "nav_planList_toggle_show_a11y": {
+    "message": "Mostrar lista de planos"
+  },
+  "nav_planList_toggle_hide_a11y": {
+    "message": "Ocultar lista de planos"
+  },
+  "nav_planList_delete_a11y": {
+    "message": "Excluir plano"
+  },
+  "nav_planList_create": {
+    "message": "Criar plano"
+  },
 
   "welcome_instruction": {
     "message": "Para começar, por favor, configure suas chaves de API na página de configurações."

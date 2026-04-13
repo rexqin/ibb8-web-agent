@@ -37,6 +37,27 @@
   "nav_back_a11y": {
     "message": "回到對話"
   },
+  "nav_planList_title": {
+    "message": "已儲存計畫"
+  },
+  "nav_planList_empty": {
+    "message": "尚無計畫。點 + 新增。"
+  },
+  "nav_planList_steps": {
+    "message": "步驟：$1"
+  },
+  "nav_planList_toggle_show_a11y": {
+    "message": "顯示計畫清單"
+  },
+  "nav_planList_toggle_hide_a11y": {
+    "message": "隱藏計畫清單"
+  },
+  "nav_planList_delete_a11y": {
+    "message": "刪除計畫"
+  },
+  "nav_planList_create": {
+    "message": "建立計畫"
+  },
 
   "welcome_instruction": {
     "message": "開始使用前，請先完成 API 金鑰的設定。"

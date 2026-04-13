@@ -1,11 +1,11 @@
 {
   "app_metadata_description": {
     "description": "Extension description",
-    "message": "使用 AI 自动化网页任务！iBB8 是一款开源的浏览器扩展，能协助您提取数据、填写表单等。"
+    "message": "iBB8 是一款浏览器自动化扩展，定制自定义计划列表，自动化执行网页任务。"
   },
   "app_metadata_name": {
     "description": "Extension name",
-    "message": "iBB8：AI 网页代理与自动化"
+    "message": "iBB8：AI网页自动化工具"
   },
   "errors_unknown": {
     "message": "发生未知错误"
@@ -36,6 +36,27 @@
   },
   "nav_back_a11y": {
     "message": "回到对话"
+  },
+  "nav_planList_title": {
+    "message": "已保存计划"
+  },
+  "nav_planList_empty": {
+    "message": "暂无计划。点 + 新建。"
+  },
+  "nav_planList_steps": {
+    "message": "步骤：$1"
+  },
+  "nav_planList_toggle_show_a11y": {
+    "message": "显示计划列表"
+  },
+  "nav_planList_toggle_hide_a11y": {
+    "message": "隐藏计划列表"
+  },
+  "nav_planList_delete_a11y": {
+    "message": "删除计划"
+  },
+  "nav_planList_create": {
+    "message": "创建计划"
   },
   "welcome_instruction": {
     "message": "开始使用前，请先完成 API 密钥的设置。"

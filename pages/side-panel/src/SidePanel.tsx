@@ -17,6 +17,7 @@ import type { SidePanelInternalMessage } from '@extension/shared';
 import { t } from '@extension/i18n';
 import PlanBuilder, { type PlanStepActivityLine } from './components/PlanBuilder';
 import PlanHistoryList from './components/PlanHistoryList';
+import PlanListSidebar from './components/PlanListSidebar';
 import { EventType, type AgentEvent, ExecutionState } from './types/event';
 import './SidePanel.css';
 
@@ -29,6 +30,7 @@ declare global {
 
 const SidePanel = () => {
   type PlanStepExecUiStatus = 'pending' | 'running' | 'ok' | 'fail' | 'cancel';
+  type PanelPage = 'plan_list' | 'plan_builder' | 'plan_history';
 
   interface PlanExecutionState {
     runId: string;
@@ -43,8 +45,7 @@ const SidePanel = () => {
   const MAX_PLAN_STEP_ACTIVITY = 200;
   const [planStepActivity, setPlanStepActivity] = useState<Record<string, PlanStepActivityLine[]>>({});
   const [panelNotice, setPanelNotice] = useState<string | null>(null);
-  const [showCreateMenu, setShowCreateMenu] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
+  const [panelPage, setPanelPage] = useState<PanelPage>('plan_list');
   const [planMetadatas, setPlanMetadatas] = useState<PlanSessionMetadata[]>([]);
   const [planRunsByPlanId, setPlanRunsByPlanId] = useState<Record<string, PlanRun[]>>({});
   const [currentPlan, setCurrentPlan] = useState<PlanSession | null>(null);
@@ -336,6 +337,12 @@ const SidePanel = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (hasConfiguredModels === true) {
+      void loadPlanMetadatas();
+    }
+  }, [hasConfiguredModels, loadPlanMetadatas]);
+
   const loadPlanRuns = useCallback(async () => {
     try {
       const allRuns = await planHistoryStore.getPlanRuns();
@@ -397,12 +404,12 @@ const SidePanel = () => {
               const plan = await planHistoryStore.createPlan(autoTitle);
               const savedPlan = await planHistoryStore.savePlanSteps(plan.id, normalizedSteps);
               setCurrentPlan(savedPlan);
-              setShowHistory(false);
+              setPanelPage('plan_builder');
               await loadPlanMetadatas();
             } catch (error) {
               console.error('Failed to create plan from external publish steps:', error);
               setPanelNotice(error instanceof Error ? error.message : t('errors_unknown'));
-              setShowHistory(false);
+              setPanelPage('plan_list');
             }
           }
         } else if (message.type === 'heartbeat_ack') {
@@ -666,7 +673,7 @@ const SidePanel = () => {
   const handleCreatePlan = async () => {
     const newPlan = await planHistoryStore.createPlan('New Plan');
     setCurrentPlan(newPlan);
-    setShowHistory(false);
+    setPanelPage('plan_builder');
     await loadPlanMetadatas();
   };
 
@@ -718,7 +725,7 @@ const SidePanel = () => {
       stepStatuses,
     };
     setPlanExecution(execution);
-    setShowHistory(false);
+    setPanelPage('plan_builder');
     setIsFollowUpMode(false);
     await handleSendMessage(cleanedSteps[0].content);
     await planHistoryStore.setStepRunStarted(run.id, cleanedSteps[0].id, sessionIdRef.current ?? undefined);
@@ -728,11 +735,15 @@ const SidePanel = () => {
   const handleLoadHistory = async () => {
     await loadPlanMetadatas();
     await loadPlanRuns();
-    setShowHistory(true);
+    setPanelPage('plan_history');
   };
 
   const handleCloseHistory = () => {
-    setShowHistory(false);
+    setPanelPage('plan_list');
+  };
+
+  const handleBackToPlanList = () => {
+    setPanelPage('plan_list');
   };
 
   const handlePlanSelect = async (planId: string) => {
@@ -740,7 +751,7 @@ const SidePanel = () => {
       const plan = await planHistoryStore.getPlan(planId);
       if (plan) {
         setCurrentPlan(plan);
-        setShowHistory(false);
+        setPanelPage('plan_list');
       }
     } catch (error) {
       console.error('Failed to load plan:', error);
@@ -782,10 +793,10 @@ const SidePanel = () => {
         style={panelBackgroundStyle}>
         <header className="header relative">
           <div className="header-logo">
-            {showHistory ? (
+            {panelPage === 'plan_history' || panelPage === 'plan_builder' ? (
               <button
                 type="button"
-                onClick={() => handleCloseHistory()}
+                onClick={() => handleBackToPlanList()}
                 className={`${iconClassName} cursor-pointer`}
                 aria-label={t('nav_back_a11y')}>
                 {t('nav_back')}
@@ -795,12 +806,18 @@ const SidePanel = () => {
             )}
           </div>
           <div className="header-icons">
-            {!showHistory && (
+            {panelPage === 'plan_list' && (
               <>
                 <button
                   type="button"
-                  onClick={() => setShowCreateMenu(prev => !prev)}
-                  onKeyDown={e => e.key === 'Enter' && setShowCreateMenu(prev => !prev)}
+                  onClick={() => {
+                    void handleCreatePlan();
+                  }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      void handleCreatePlan();
+                    }
+                  }}
                   className={`header-icon ${iconClassName} cursor-pointer`}
                   aria-label={t('nav_newChat_a11y')}
                   tabIndex={0}>
@@ -827,21 +844,8 @@ const SidePanel = () => {
               <FiSettings size={20} />
             </button>
           </div>
-          {showCreateMenu && !showHistory && (
-            <div className="absolute right-12 top-10 z-10 min-w-[140px] rounded-md border border-[#fdb56f]/25 bg-white p-1 shadow">
-              <button
-                type="button"
-                onClick={() => {
-                  void handleCreatePlan();
-                  setShowCreateMenu(false);
-                }}
-                className="block w-full rounded px-3 py-2 text-left text-sm text-[#6f3909] hover:bg-[#fff4e8]">
-                New Plan
-              </button>
-            </div>
-          )}
         </header>
-        {showHistory ? (
+        {panelPage === 'plan_history' ? (
           <div className="flex-1 overflow-hidden">
             <PlanHistoryList
               plans={planMetadatas}
@@ -881,43 +885,77 @@ const SidePanel = () => {
             )}
 
             {/* Plan UI when models are configured */}
-            {hasConfiguredModels === true && (
-              <div className="flex flex-1 flex-col overflow-hidden border-t border-[#fdb56f]/20">
-                {panelNotice ? (
-                  <div
-                    role="status"
-                    className="mx-3 mt-2 flex items-start justify-between gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
-                    <span className="min-w-0 flex-1 whitespace-pre-wrap break-words">{panelNotice}</span>
-                    <button
-                      type="button"
-                      onClick={() => setPanelNotice(null)}
-                      className="shrink-0 rounded px-1 text-amber-800 hover:bg-amber-100"
-                      aria-label="Dismiss">
-                      ×
-                    </button>
+            {hasConfiguredModels === true && panelPage === 'plan_list' && (
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden border-t border-[#fdb56f]/20">
+                <PlanListSidebar
+                  plans={planMetadatas}
+                  currentPlanId={currentPlan?.id ?? null}
+                  disabled={!!planExecution}
+                  onCreatePlan={() => {
+                    void handleCreatePlan();
+                  }}
+                  onSelectPlan={planId => {
+                    void handlePlanSelect(planId);
+                  }}
+                  onDeletePlan={handlePlanDelete}
+                />
+              </div>
+            )}
+
+            {hasConfiguredModels === true && panelPage === 'plan_builder' && (
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden border-t border-[#fdb56f]/20">
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+                  {panelNotice ? (
+                    <div
+                      role="status"
+                      className="mx-3 mt-2 flex items-start justify-between gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+                      <span className="min-w-0 flex-1 whitespace-pre-wrap break-words">{panelNotice}</span>
+                      <button
+                        type="button"
+                        onClick={() => setPanelNotice(null)}
+                        className="shrink-0 rounded px-1 text-amber-800 hover:bg-amber-100"
+                        aria-label="Dismiss">
+                        ×
+                      </button>
+                    </div>
+                  ) : null}
+                  <div className="min-h-0 flex-1 overflow-hidden">
+                    {currentPlan ? (
+                      <PlanBuilder
+                        plan={currentPlan}
+                        executing={!!planExecution}
+                        runningStepId={
+                          planExecution ? (planExecution.steps[planExecution.currentStepIndex]?.id ?? null) : null
+                        }
+                        stepStatusByStepId={
+                          planExecution
+                            ? Object.fromEntries(
+                                planExecution.steps.map((s, i) => [s.id, planExecution.stepStatuses[i]]),
+                              )
+                            : undefined
+                        }
+                        activityByStepId={planStepActivity}
+                        onCreatePlan={handleCreatePlan}
+                        onSave={handleSavePlan}
+                        onExecute={handleExecutePlan}
+                        onStopTask={handleStopTask}
+                        taskAwaitingUserResume={taskAwaitingUserResume}
+                        userPauseHint={userPauseHint}
+                        onResumeTask={handleResumeTask}
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center p-6">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void handleCreatePlan();
+                          }}
+                          className="rounded-md bg-[#fdb56f] px-4 py-2 text-sm font-medium text-white hover:bg-[#ee9b47]">
+                          {t('nav_planList_create')}
+                        </button>
+                      </div>
+                    )}
                   </div>
-                ) : null}
-                <div className="min-h-0 flex-1 overflow-hidden">
-                  <PlanBuilder
-                    plan={currentPlan}
-                    executing={!!planExecution}
-                    runningStepId={
-                      planExecution ? (planExecution.steps[planExecution.currentStepIndex]?.id ?? null) : null
-                    }
-                    stepStatusByStepId={
-                      planExecution
-                        ? Object.fromEntries(planExecution.steps.map((s, i) => [s.id, planExecution.stepStatuses[i]]))
-                        : undefined
-                    }
-                    activityByStepId={planStepActivity}
-                    onCreatePlan={handleCreatePlan}
-                    onSave={handleSavePlan}
-                    onExecute={handleExecutePlan}
-                    onStopTask={handleStopTask}
-                    taskAwaitingUserResume={taskAwaitingUserResume}
-                    userPauseHint={userPauseHint}
-                    onResumeTask={handleResumeTask}
-                  />
                 </div>
               </div>
             )}

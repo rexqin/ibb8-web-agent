@@ -208,7 +208,7 @@ export default function PlanBuilder({
           type="button"
           onClick={() => void onCreatePlan()}
           className="rounded-md bg-[#fdb56f] px-4 py-2 font-medium text-white hover:bg-[#ee9b47]">
-          Create Plan
+          {t('nav_planList_create')}
         </button>
       </div>
     );
