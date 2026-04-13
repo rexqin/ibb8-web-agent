@@ -171,7 +171,8 @@ export class Executor {
           latestPlanOutput = await this.runPlanner();
 
           if (latestPlanOutput?.result?.awaiting_user === true) {
-            const hint = latestPlanOutput.result.user_action_hint?.trim() || t('exec_awaitUserLogin');
+            const hint =
+              latestPlanOutput.result.user_action_hint?.trim() || t('exec_awaitUserLogin' as Parameters<typeof t>[0]);
             this.context.pause();
             await this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_PAUSE, hint);
             await this.waitUntilUserResume();
@@ -373,7 +374,11 @@ export class Executor {
 
   async resume(): Promise<void> {
     this.context.resume();
-    await this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_RESUME, t('exec_task_resumed'));
+    await this.context.emitEvent(
+      Actors.SYSTEM,
+      ExecutionState.TASK_RESUME,
+      t('exec_task_resumed' as Parameters<typeof t>[0]),
+    );
   }
 
   async pause(): Promise<void> {

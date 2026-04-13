@@ -738,23 +738,25 @@ const SidePanel = () => {
     setPanelPage('plan_history');
   };
 
-  const handleCloseHistory = () => {
-    setPanelPage('plan_list');
-  };
-
   const handleBackToPlanList = () => {
     setPanelPage('plan_list');
   };
 
   const handlePlanSelect = async (planId: string) => {
+    // Switch page immediately so users get instant feedback on click.
+    setPanelPage('plan_builder');
     try {
       const plan = await planHistoryStore.getPlan(planId);
       if (plan) {
         setCurrentPlan(plan);
+      } else {
         setPanelPage('plan_list');
+        setPanelNotice('Plan not found');
       }
     } catch (error) {
       console.error('Failed to load plan:', error);
+      setPanelPage('plan_list');
+      setPanelNotice(error instanceof Error ? error.message : t('errors_unknown'));
     }
   };
 

@@ -40,7 +40,7 @@ function withOperaSidebar(manifest) {
     sidebar_action: {
       default_panel: 'side-panel/index.html',
       default_title: 'iBB8',
-      default_icon: 'logo.png',
+      default_icon: 'logo-32.png',
     },
   });
 }
@@ -81,10 +81,10 @@ const manifest = withExternallyConnectableHzgm(
         type: 'module',
       },
       action: {
-        default_icon: 'logo.png',
+        default_icon: 'logo-32.png',
       },
       icons: {
-        128: 'logo.png',
+        128: 'logo-128.png',
       },
       content_scripts: [
         {
@@ -95,15 +95,7 @@ const manifest = withExternallyConnectableHzgm(
       ],
       web_accessible_resources: [
         {
-          resources: [
-            '*.js',
-            '*.css',
-            '*.svg',
-            'icon-128.png',
-            'logo.png',
-            'permission/index.html',
-            'permission/permission.js',
-          ],
+          resources: ['*.js', '*.css', '*.svg', 'logo-128.png', 'permission/index.html', 'permission/permission.js'],
           matches: ['*://*/*'],
         },
       ],
