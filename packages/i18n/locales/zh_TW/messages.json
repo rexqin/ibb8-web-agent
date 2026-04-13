@@ -58,6 +58,84 @@
   "nav_planList_create": {
     "message": "建立計畫"
   },
+  "nav_planBuilder_activity": {
+    "message": "活動"
+  },
+  "nav_planBuilder_actor_user": {
+    "message": "使用者"
+  },
+  "nav_planBuilder_actor_planner": {
+    "message": "規劃器"
+  },
+  "nav_planBuilder_actor_navigator": {
+    "message": "導覽器"
+  },
+  "nav_planBuilder_actor_system": {
+    "message": "系統"
+  },
+  "nav_planBuilder_actor_validator": {
+    "message": "驗證器"
+  },
+  "nav_planBuilder_status_pending": {
+    "message": "待執行"
+  },
+  "nav_planBuilder_status_running": {
+    "message": "執行中"
+  },
+  "nav_planBuilder_status_done": {
+    "message": "已完成"
+  },
+  "nav_planBuilder_status_failed": {
+    "message": "失敗"
+  },
+  "nav_planBuilder_status_cancelled": {
+    "message": "已取消"
+  },
+  "nav_planBuilder_defaultTitle": {
+    "message": "新計畫"
+  },
+  "nav_planBuilder_saveSuccess": {
+    "message": "已儲存"
+  },
+  "nav_planBuilder_saveFail": {
+    "message": "儲存失敗"
+  },
+  "nav_planBuilder_titleLabel": {
+    "message": "計畫標題"
+  },
+  "nav_planBuilder_titlePlaceholder": {
+    "message": "請輸入計畫標題"
+  },
+  "nav_planBuilder_runningHint": {
+    "message": "計畫執行中——每個步驟下方會顯示進度更新。"
+  },
+  "nav_planBuilder_emptySteps": {
+    "message": "尚無步驟，先新增一個步驟吧。"
+  },
+  "nav_planBuilder_stepLabel": {
+    "message": "步驟 $1"
+  },
+  "nav_planBuilder_remove": {
+    "message": "刪除"
+  },
+  "nav_planBuilder_stepPlaceholder": {
+    "message": "描述這個步驟需要執行的內容..."
+  },
+  "nav_planBuilder_addStep": {
+    "message": "+ 新增步驟"
+  },
+  "nav_planBuilder_saving": {
+    "message": "儲存中..."
+  },
+  "nav_planBuilder_save": {
+    "message": "儲存"
+  },
+  "nav_planBuilder_executing": {
+    "message": "執行中..."
+  },
+  "nav_planBuilder_execute": {
+    "message": "執行"
+  },
 
   "welcome_instruction": {
     "message": "開始使用前，請先完成 API 金鑰的設定。"

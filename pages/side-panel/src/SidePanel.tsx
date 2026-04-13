@@ -743,12 +743,12 @@ const SidePanel = () => {
   };
 
   const handlePlanSelect = async (planId: string) => {
-    // Switch page immediately so users get instant feedback on click.
-    setPanelPage('plan_builder');
     try {
       const plan = await planHistoryStore.getPlan(planId);
       if (plan) {
+        setPanelNotice(null);
         setCurrentPlan(plan);
+        setPanelPage('plan_builder');
       } else {
         setPanelPage('plan_list');
         setPanelNotice('Plan not found');

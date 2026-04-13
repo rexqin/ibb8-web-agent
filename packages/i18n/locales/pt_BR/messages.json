@@ -58,6 +58,84 @@
   "nav_planList_create": {
     "message": "Criar plano"
   },
+  "nav_planBuilder_activity": {
+    "message": "Atividade"
+  },
+  "nav_planBuilder_actor_user": {
+    "message": "Usuário"
+  },
+  "nav_planBuilder_actor_planner": {
+    "message": "Planejador"
+  },
+  "nav_planBuilder_actor_navigator": {
+    "message": "Navegador"
+  },
+  "nav_planBuilder_actor_system": {
+    "message": "Sistema"
+  },
+  "nav_planBuilder_actor_validator": {
+    "message": "Validador"
+  },
+  "nav_planBuilder_status_pending": {
+    "message": "Pendente"
+  },
+  "nav_planBuilder_status_running": {
+    "message": "Em execução"
+  },
+  "nav_planBuilder_status_done": {
+    "message": "Concluído"
+  },
+  "nav_planBuilder_status_failed": {
+    "message": "Falhou"
+  },
+  "nav_planBuilder_status_cancelled": {
+    "message": "Cancelado"
+  },
+  "nav_planBuilder_defaultTitle": {
+    "message": "Novo plano"
+  },
+  "nav_planBuilder_saveSuccess": {
+    "message": "Salvo"
+  },
+  "nav_planBuilder_saveFail": {
+    "message": "Falha ao salvar"
+  },
+  "nav_planBuilder_titleLabel": {
+    "message": "Título do plano"
+  },
+  "nav_planBuilder_titlePlaceholder": {
+    "message": "Título do plano"
+  },
+  "nav_planBuilder_runningHint": {
+    "message": "Plano em execução — atualizações de progresso abaixo de cada etapa."
+  },
+  "nav_planBuilder_emptySteps": {
+    "message": "Ainda não há etapas. Adicione a primeira etapa."
+  },
+  "nav_planBuilder_stepLabel": {
+    "message": "Etapa $1"
+  },
+  "nav_planBuilder_remove": {
+    "message": "Remover"
+  },
+  "nav_planBuilder_stepPlaceholder": {
+    "message": "Descreva o que esta etapa deve fazer..."
+  },
+  "nav_planBuilder_addStep": {
+    "message": "+ Adicionar etapa"
+  },
+  "nav_planBuilder_saving": {
+    "message": "Salvando..."
+  },
+  "nav_planBuilder_save": {
+    "message": "Salvar"
+  },
+  "nav_planBuilder_executing": {
+    "message": "Executando..."
+  },
+  "nav_planBuilder_execute": {
+    "message": "Executar"
+  },
 
   "welcome_instruction": {
     "message": "Para começar, por favor, configure suas chaves de API na página de configurações."

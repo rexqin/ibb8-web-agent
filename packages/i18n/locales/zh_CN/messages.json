@@ -58,6 +58,84 @@
   "nav_planList_create": {
     "message": "创建计划"
   },
+  "nav_planBuilder_activity": {
+    "message": "活动"
+  },
+  "nav_planBuilder_actor_user": {
+    "message": "用户"
+  },
+  "nav_planBuilder_actor_planner": {
+    "message": "规划器"
+  },
+  "nav_planBuilder_actor_navigator": {
+    "message": "导航器"
+  },
+  "nav_planBuilder_actor_system": {
+    "message": "系统"
+  },
+  "nav_planBuilder_actor_validator": {
+    "message": "校验器"
+  },
+  "nav_planBuilder_status_pending": {
+    "message": "待执行"
+  },
+  "nav_planBuilder_status_running": {
+    "message": "执行中"
+  },
+  "nav_planBuilder_status_done": {
+    "message": "已完成"
+  },
+  "nav_planBuilder_status_failed": {
+    "message": "失败"
+  },
+  "nav_planBuilder_status_cancelled": {
+    "message": "已取消"
+  },
+  "nav_planBuilder_defaultTitle": {
+    "message": "新计划"
+  },
+  "nav_planBuilder_saveSuccess": {
+    "message": "已保存"
+  },
+  "nav_planBuilder_saveFail": {
+    "message": "保存失败"
+  },
+  "nav_planBuilder_titleLabel": {
+    "message": "计划标题"
+  },
+  "nav_planBuilder_titlePlaceholder": {
+    "message": "请输入计划标题"
+  },
+  "nav_planBuilder_runningHint": {
+    "message": "计划执行中——每个步骤下方会显示进度更新。"
+  },
+  "nav_planBuilder_emptySteps": {
+    "message": "还没有步骤，先添加一个步骤吧。"
+  },
+  "nav_planBuilder_stepLabel": {
+    "message": "步骤 $1"
+  },
+  "nav_planBuilder_remove": {
+    "message": "删除"
+  },
+  "nav_planBuilder_stepPlaceholder": {
+    "message": "描述这个步骤需要执行的内容..."
+  },
+  "nav_planBuilder_addStep": {
+    "message": "+ 添加步骤"
+  },
+  "nav_planBuilder_saving": {
+    "message": "保存中..."
+  },
+  "nav_planBuilder_save": {
+    "message": "保存"
+  },
+  "nav_planBuilder_executing": {
+    "message": "执行中..."
+  },
+  "nav_planBuilder_execute": {
+    "message": "执行"
+  },
   "welcome_instruction": {
     "message": "开始使用前，请先完成 API 密钥的设置。"
   },

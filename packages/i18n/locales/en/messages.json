@@ -58,6 +58,84 @@
   "nav_planList_create": {
     "message": "Create Plan"
   },
+  "nav_planBuilder_activity": {
+    "message": "Activity"
+  },
+  "nav_planBuilder_actor_user": {
+    "message": "User"
+  },
+  "nav_planBuilder_actor_planner": {
+    "message": "Planner"
+  },
+  "nav_planBuilder_actor_navigator": {
+    "message": "Navigator"
+  },
+  "nav_planBuilder_actor_system": {
+    "message": "System"
+  },
+  "nav_planBuilder_actor_validator": {
+    "message": "Validator"
+  },
+  "nav_planBuilder_status_pending": {
+    "message": "Pending"
+  },
+  "nav_planBuilder_status_running": {
+    "message": "Running"
+  },
+  "nav_planBuilder_status_done": {
+    "message": "Done"
+  },
+  "nav_planBuilder_status_failed": {
+    "message": "Failed"
+  },
+  "nav_planBuilder_status_cancelled": {
+    "message": "Cancelled"
+  },
+  "nav_planBuilder_defaultTitle": {
+    "message": "New Plan"
+  },
+  "nav_planBuilder_saveSuccess": {
+    "message": "Saved"
+  },
+  "nav_planBuilder_saveFail": {
+    "message": "Failed to save"
+  },
+  "nav_planBuilder_titleLabel": {
+    "message": "Plan Title"
+  },
+  "nav_planBuilder_titlePlaceholder": {
+    "message": "Plan title"
+  },
+  "nav_planBuilder_runningHint": {
+    "message": "Running plan — progress updates below each step."
+  },
+  "nav_planBuilder_emptySteps": {
+    "message": "No steps yet. Add your first step."
+  },
+  "nav_planBuilder_stepLabel": {
+    "message": "Step $1"
+  },
+  "nav_planBuilder_remove": {
+    "message": "Remove"
+  },
+  "nav_planBuilder_stepPlaceholder": {
+    "message": "Describe what this step should do..."
+  },
+  "nav_planBuilder_addStep": {
+    "message": "+ Add Step"
+  },
+  "nav_planBuilder_saving": {
+    "message": "Saving..."
+  },
+  "nav_planBuilder_save": {
+    "message": "Save"
+  },
+  "nav_planBuilder_executing": {
+    "message": "Executing..."
+  },
+  "nav_planBuilder_execute": {
+    "message": "Execute"
+  },
 
   "welcome_instruction": {
     "message": "To get started, please configure your API keys in the settings page."

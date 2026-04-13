@@ -39,15 +39,15 @@ const createStep = (order: number): PlanStep => ({
 function actorDisplayName(actor: Actors): string {
   switch (actor) {
     case Actors.USER:
-      return 'User';
+      return t('nav_planBuilder_actor_user');
     case Actors.PLANNER:
-      return 'Planner';
+      return t('nav_planBuilder_actor_planner');
     case Actors.NAVIGATOR:
-      return 'Navigator';
+      return t('nav_planBuilder_actor_navigator');
     case Actors.SYSTEM:
-      return 'System';
+      return t('nav_planBuilder_actor_system');
     case Actors.VALIDATOR:
-      return 'Validator';
+      return t('nav_planBuilder_actor_validator');
     default:
       return String(actor);
   }
@@ -67,7 +67,9 @@ function PlanStepActivityLog({ lines, autoScroll }: { lines: PlanStepActivityLin
 
   return (
     <div className="mt-2 max-h-40 overflow-y-auto rounded border border-[#fdb56f]/15 bg-[#fffdfb] px-2 py-1.5">
-      <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-[#a35b19]">Activity</p>
+      <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-[#a35b19]">
+        {t('nav_planBuilder_activity')}
+      </p>
       <ul className="space-y-1.5">
         {lines.map(line => (
           <li key={line.id} className="text-[11px] leading-snug">
@@ -96,15 +98,15 @@ function PlanStepActivityLog({ lines, autoScroll }: { lines: PlanStepActivityLin
 function stepStatusLabel(status: PlanStepUiExecStatus): string {
   switch (status) {
     case 'pending':
-      return 'Pending';
+      return t('nav_planBuilder_status_pending');
     case 'running':
-      return 'Running';
+      return t('nav_planBuilder_status_running');
     case 'ok':
-      return 'Done';
+      return t('nav_planBuilder_status_done');
     case 'fail':
-      return 'Failed';
+      return t('nav_planBuilder_status_failed');
     case 'cancel':
-      return 'Cancelled';
+      return t('nav_planBuilder_status_cancelled');
     default:
       return '';
   }
@@ -124,7 +126,7 @@ export default function PlanBuilder({
   userPauseHint = null,
   onResumeTask,
 }: PlanBuilderProps) {
-  const [title, setTitle] = useState(plan?.title ?? 'New Plan');
+  const [title, setTitle] = useState(plan?.title ?? t('nav_planBuilder_defaultTitle'));
   const [steps, setSteps] = useState<PlanStep[]>(plan?.steps ?? []);
   const [isSaving, setIsSaving] = useState(false);
   const [saveNotice, setSaveNotice] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
@@ -133,7 +135,7 @@ export default function PlanBuilder({
   // Re-hydrate when switching plans or after save (updatedAt); avoid resetting on unrelated parent re-renders that replace `plan` by reference only.
   useEffect(() => {
     if (!plan) return;
-    setTitle(plan.title ?? 'New Plan');
+    setTitle(plan.title ?? t('nav_planBuilder_defaultTitle'));
     setSteps(plan.steps ?? []);
   }, [plan?.id, plan?.updatedAt]); // eslint-disable-line react-hooks/exhaustive-deps -- snapshot id + updatedAt
 
@@ -181,7 +183,7 @@ export default function PlanBuilder({
         })),
         title,
       );
-      setSaveNotice({ type: 'ok', text: '已保存' });
+      setSaveNotice({ type: 'ok', text: t('nav_planBuilder_saveSuccess') });
       saveNoticeTimerRef.current = window.setTimeout(() => {
         setSaveNotice(null);
         saveNoticeTimerRef.current = null;
@@ -189,7 +191,7 @@ export default function PlanBuilder({
     } catch (err) {
       console.error('Plan save failed', err);
       const text = err instanceof Error ? err.message : String(err);
-      setSaveNotice({ type: 'err', text: text || '保存失败' });
+      setSaveNotice({ type: 'err', text: text || t('nav_planBuilder_saveFail') });
     } finally {
       setIsSaving(false);
     }
@@ -227,7 +229,7 @@ export default function PlanBuilder({
       ) : null}
       <div className="rounded-lg border border-[#fdb56f]/25 bg-[#fffaf5] p-3">
         <label htmlFor="plan-title" className="mb-1 block text-xs text-[#8a490d]">
-          Plan Title
+          {t('nav_planBuilder_titleLabel')}
         </label>
         <input
           id="plan-title"
@@ -238,7 +240,7 @@ export default function PlanBuilder({
             setTitle(e.target.value);
           }}
           className="w-full rounded-md border border-[#fdb56f]/30 bg-white px-3 py-2 text-sm text-[#6f3909] disabled:opacity-60"
-          placeholder="Plan title"
+          placeholder={t('nav_planBuilder_titlePlaceholder')}
         />
       </div>
 
@@ -250,7 +252,7 @@ export default function PlanBuilder({
             }`}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-medium text-[#8a490d]">
-                {taskAwaitingUserResume ? t('exec_task_pause') : 'Running plan — progress updates below each step.'}
+                {taskAwaitingUserResume ? t('exec_task_pause') : t('nav_planBuilder_runningHint')}
               </p>
               <div className="flex flex-wrap items-center gap-2">
                 {taskAwaitingUserResume && onResumeTask ? (
@@ -265,7 +267,7 @@ export default function PlanBuilder({
                   type="button"
                   onClick={() => onStopTask()}
                   className="rounded-md border border-red-300 bg-white px-3 py-1.5 text-sm text-red-600 hover:bg-red-50">
-                  Stop
+                  {t('chat_buttons_stop')}
                 </button>
               </div>
             </div>
@@ -276,11 +278,13 @@ export default function PlanBuilder({
             ) : null}
           </div>
         )}
-        {sortedSteps.length === 0 && <p className="text-sm text-[#a35b19]">No steps yet. Add your first step.</p>}
+        {sortedSteps.length === 0 && <p className="text-sm text-[#a35b19]">{t('nav_planBuilder_emptySteps')}</p>}
         {sortedSteps.map((step, index) => (
           <div key={step.id} className="rounded-md border border-[#fdb56f]/25 bg-white p-2">
             <div className="mb-1 flex items-center justify-between gap-2">
-              <span className="text-xs font-medium text-[#8a490d]">Step {index + 1}</span>
+              <span className="text-xs font-medium text-[#8a490d]">
+                {t('nav_planBuilder_stepLabel', [String(index + 1)])}
+              </span>
               <div className="flex items-center gap-2">
                 {stepStatusByStepId?.[step.id] ? (
                   <span
@@ -303,7 +307,7 @@ export default function PlanBuilder({
                   disabled={executing}
                   onClick={() => removeStep(step.id)}
                   className="text-xs text-red-500 hover:text-red-600 disabled:opacity-40">
-                  Remove
+                  {t('nav_planBuilder_remove')}
                 </button>
               </div>
             </div>
@@ -313,7 +317,7 @@ export default function PlanBuilder({
               onChange={e => updateStep(step.id, e.target.value)}
               rows={3}
               className="w-full resize-y rounded-md border border-[#fdb56f]/20 p-2 text-sm text-[#6f3909] outline-none focus:border-[#fdb56f] disabled:opacity-60"
-              placeholder="Describe what this step should do..."
+              placeholder={t('nav_planBuilder_stepPlaceholder')}
             />
             <PlanStepActivityLog
               lines={activityByStepId?.[step.id] ?? []}
@@ -329,7 +333,7 @@ export default function PlanBuilder({
           disabled={executing}
           onClick={addStep}
           className="rounded-md border border-[#fdb56f]/30 px-3 py-2 text-sm text-[#8a490d] disabled:opacity-50">
-          + Add Step
+          {t('nav_planBuilder_addStep')}
         </button>
         <div className="flex gap-2">
           <button
@@ -337,14 +341,14 @@ export default function PlanBuilder({
             onClick={() => void handleSave()}
             disabled={executing || isSaving}
             className="rounded-md border border-[#fdb56f]/30 px-3 py-2 text-sm text-[#8a490d] disabled:opacity-50">
-            {isSaving ? 'Saving…' : 'Save'}
+            {isSaving ? t('nav_planBuilder_saving') : t('nav_planBuilder_save')}
           </button>
           <button
             type="button"
             onClick={() => void handleExecute()}
             disabled={executing}
             className="rounded-md bg-[#fdb56f] px-3 py-2 text-sm text-white hover:bg-[#ee9b47] disabled:opacity-50">
-            {executing ? 'Executing...' : 'Execute'}
+            {executing ? t('nav_planBuilder_executing') : t('nav_planBuilder_execute')}
           </button>
         </div>
       </div>
