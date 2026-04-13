@@ -1,53 +1,143 @@
-# Privacy Policy for Nanobrowser
+# iBB8 Web Agent 隐私政策（Privacy Policy）
 
-## Introduction
+生效日期：2026-04-13  
+适用产品：iBB8 Web Agent Chrome Extension（Manifest V3）
 
-[Nanobrowser](https://github.com/nanobrowser/nanobrowser) is an open-source AI web automation Chrome extension. This Privacy Policy explains how we handle your data and protect your privacy.
+## 1. 我们是谁
 
-## Open Source
+iBB8 Web Agent 是一个AI 网页自动化浏览器扩展，用于帮助用户按计划在网页中执行自动化任务。
 
-Nanobrowser is licensed under Apache License 2.0. All source code is publicly available in our [GitHub repository](https://github.com/nanobrowser/nanobrowser), ensuring complete transparency.
+## 2. 本政策涵盖的数据范围
 
-## Data Collection and Processing
+本政策描述扩展在运行过程中涉及的：
 
-### Local Processing
-- Nanobrowser operates entirely within your browser
-- Login credentials and cookies never leave your browser
-- All user data is processed locally by default
+- 本地存储的数据
+- 任务执行时处理的网页数据
+- 可选分析数据（如启用）
+- 与第三方 AI 服务交互时的数据流转
 
-### Anonymous Analytics (Optional)
-**Analytics is enabled by default but can be disabled anytime** in extension settings.
+## 3. 我们收集和处理哪些数据
 
-**We collect only:**
-- Task metrics (execution times, error categories)
-- Domain names visited (e.g., "amazon.com" - not full URLs)
-- Anonymous usage statistics
-- Anonymous user identifier (randomly generated)
+### 3.1 由你主动输入或触发的数据
 
-**We never collect:**
-- Personal information, credentials, or authentication data
-- Full URLs, page content, screenshots, or task instructions
-- Any personally identifiable information
+- 任务指令、计划步骤、任务执行相关文本
+- 你在扩展设置中填写的配置（如模型配置、功能开关）
+- 你主动触发的操作记录（如开始/停止/恢复任务）
 
-Analytics data is processed by PostHog and used solely to improve the extension. Data is anonymized and never sold or shared with advertisers.
+### 3.2 执行自动化任务时处理的数据
 
-### LLM Provider Interactions
-When using AI features, web page data (screenshots and HTML) is sent directly to your chosen LLM provider. This is necessary for AI functionality. Your data privacy is subject to your LLM provider's policies.
+为完成你发起的网页自动化任务，扩展可能处理当前页面的相关信息，例如：
 
-## API Keys
-- You provide your own API keys for LLM providers
-- Keys are stored locally in your browser only
-- You manage key security per provider terms
+- 页面结构信息（如 DOM 片段）
+- 与任务相关的页面文本或元素状态
+- 任务执行上下文（步骤状态、报错信息、运行日志）
 
-## User Control
-- Clear conversation history and settings anytime
-- **Enable/disable analytics** through extension options
-- Uninstall extension to remove all local data
+说明：仅在你触发任务及任务上下文内处理，不用于无关用途。
 
-## Changes to This Privacy Policy
-We may update this policy periodically. Please review it regularly for changes.
+### 3.3 本地存储的数据
 
-## Contact
-Questions or concerns? Contact us at cws@felight.xyz
+扩展会在浏览器本地存储中保存必要数据以提供功能连续性，例如：
 
-Last Updated: August 30, 2025
+- 计划（Plan）及步骤内容
+- 任务运行历史与状态
+- UI 偏好与功能设置
+- 模型相关配置与（由你提供的）API Key
+
+### 3.4 可选分析数据（若开启）
+
+若你启用匿名分析，我们可能收集最小化统计信息用于改进产品，例如：
+
+- 功能使用频次
+- 任务耗时、错误类别等稳定性指标
+- 匿名设备/安装标识符（随机生成）
+
+我们不会将分析数据用于广告定向，不会出售给第三方。
+
+## 4. 我们不会收集什么
+
+除非是你主动发起任务所必需的数据处理，我们不会主动收集或出售：
+
+- 身份证号、银行卡等敏感身份信息
+- 与产品功能无关的个人内容
+- 广告画像用途的个人行为档案
+
+## 5. 数据如何使用
+
+我们仅将数据用于以下目的：
+
+- 执行你发起的自动化任务
+- 保存任务与计划，支持继续编辑与回放
+- 提供错误定位、稳定性改进和功能优化
+- 支持你配置并连接所选 AI 模型服务
+
+## 6. 权限使用说明（对应 Chrome Manifest）
+
+### `host_permissions: <all_urls>`
+用于在你访问的网站中执行你主动发起的自动化任务（元素识别、交互、流程执行）。
+
+### `storage`
+用于本地保存计划、历史记录、配置和偏好。
+
+### `scripting`
+用于向页面注入任务执行所需脚本，以完成自动化操作。
+
+### `tabs` / `activeTab`
+用于识别并操作当前任务相关标签页，确保任务可在正确页面执行。
+
+### `debugger`
+用于自动化能力所需的调试协议控制（仅在任务执行上下文中使用）。
+
+### `unlimitedStorage`
+用于保存较长任务历史与计划数据，避免容量不足导致功能受限。
+
+### `webNavigation`
+用于监听页面导航状态（如跳转、加载完成），确保多步骤任务正确衔接。
+
+### `sidePanel`
+用于提供扩展的侧边栏主交互界面。
+
+## 7. 与第三方服务共享
+
+### 7.1 你选择的 AI 模型服务商
+
+当你使用 AI 功能时，任务所需的部分页面信息与指令可能发送至你配置的模型服务商（如 OpenAI、Anthropic、Gemini、Ollama 等），以生成执行结果。
+
+- 该部分数据处理受对应服务商隐私政策约束
+- 你可自行决定是否配置、使用某个服务商
+
+### 7.2 分析服务（如启用）
+
+若开启匿名分析，统计数据可能发送至分析服务提供方（如 PostHog）用于产品改进。
+
+## 8. 数据保存与删除
+
+- 本地数据会持续保留，直到你手动删除、重置或卸载扩展
+- 你可在扩展内删除计划/历史记录
+- 卸载扩展后，浏览器会清除该扩展的本地存储数据（以浏览器行为为准）
+
+## 9. 你的控制权
+
+你可以随时：
+
+- 停止使用扩展功能
+- 调整或关闭可选分析
+- 删除本地计划与历史数据
+- 卸载扩展
+
+## 10. 儿童隐私
+
+本扩展不面向未满 13 周岁儿童提供服务，也不以此为目标收集儿童个人信息。
+
+## 11. 安全措施
+
+我们采用合理的技术和工程措施保护数据安全，包括最小化处理、权限边界控制和本地优先存储策略。  
+但任何系统都无法保证绝对安全，请你同时妥善保管自己的设备与 API Key。
+
+## 12. 政策更新
+
+我们可能因功能升级、合规要求或服务变化更新本政策。更新后将通过仓库或版本发布说明同步。
+
+## 13. 联系我们
+
+如对隐私政策有疑问，请联系：  
+dolphinux@gmail.com
