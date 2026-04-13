@@ -738,7 +738,10 @@ const SidePanel = () => {
     setPanelPage('plan_history');
   };
 
-  const handleBackToPlanList = () => {
+  const handleBackToPlanList = async () => {
+    if (planExecutionRef.current) {
+      await handleStopTask();
+    }
     setPanelPage('plan_list');
   };
 
@@ -798,7 +801,9 @@ const SidePanel = () => {
             {panelPage === 'plan_history' || panelPage === 'plan_builder' ? (
               <button
                 type="button"
-                onClick={() => handleBackToPlanList()}
+                onClick={() => {
+                  void handleBackToPlanList();
+                }}
                 className={`${iconClassName} cursor-pointer`}
                 aria-label={t('nav_back_a11y')}>
                 {t('nav_back')}

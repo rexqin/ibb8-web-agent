@@ -25,6 +25,7 @@ import { chatHistoryStore } from '@extension/storage/lib/chat';
 import type { AgentStepHistory } from './history';
 import type { GeneralSettingsConfig } from '@extension/storage';
 import { analytics } from '../services/analytics';
+import { HumanMessage } from '@langchain/core/messages';
 
 const logger = createLogger('Executor');
 
@@ -53,6 +54,8 @@ export class Executor {
   private tasks: string[] = [];
   /** After user resumes from awaiting_user, skip one planner cycle so Navigator refreshes DOM first. */
   private skipPlannerAfterUserResume = false;
+  /** After resume, allow a few planner re-checks before pausing again on awaiting_user. */
+  private awaitingUserRecheckBudget = 0;
   constructor(
     task: string,
     taskId: string,
@@ -142,6 +145,7 @@ export class Executor {
     context.nSteps = 0;
     const allowedMaxSteps = this.context.options.maxSteps;
     this.skipPlannerAfterUserResume = false;
+    this.awaitingUserRecheckBudget = 0;
 
     try {
       this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_START, this.context.taskId);
@@ -179,6 +183,14 @@ export class Executor {
           latestPlanOutput = await this.runPlanner();
 
           if (latestPlanOutput?.result?.awaiting_user === true) {
+            if (this.awaitingUserRecheckBudget > 0) {
+              this.awaitingUserRecheckBudget--;
+              this.skipPlannerAfterUserResume = true;
+              logger.info(
+                `Planner still reports awaiting_user after resume, rechecking with fresh navigator state (remaining retries: ${this.awaitingUserRecheckBudget})`,
+              );
+              continue;
+            }
             const hint =
               latestPlanOutput.result.user_action_hint?.trim() || t('exec_awaitUserLogin' as Parameters<typeof t>[0]);
             this.context.pause();
@@ -390,6 +402,12 @@ export class Executor {
 
   async resume(): Promise<void> {
     this.context.resume();
+    this.awaitingUserRecheckBudget = 2;
+    this.context.messageManager.addMessageWithTokens(
+      new HumanMessage(
+        'User completed required manual step (e.g. login/verification) and clicked Resume. Re-evaluate the latest page state before deciding awaiting_user again.',
+      ),
+    );
     await this.context.emitEvent(
       Actors.SYSTEM,
       ExecutionState.TASK_RESUME,

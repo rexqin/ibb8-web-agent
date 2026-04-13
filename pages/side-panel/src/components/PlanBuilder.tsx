@@ -131,6 +131,9 @@ export default function PlanBuilder({
   const [isSaving, setIsSaving] = useState(false);
   const [saveNotice, setSaveNotice] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const saveNoticeTimerRef = useRef<number | null>(null);
+  const awaitingActionMenuRef = useRef<HTMLDivElement>(null);
+  const [awaitingActionChoice, setAwaitingActionChoice] = useState<'resume' | 'stop'>('resume');
+  const [awaitingActionMenuOpen, setAwaitingActionMenuOpen] = useState(false);
 
   // Re-hydrate when switching plans or after save (updatedAt); avoid resetting on unrelated parent re-renders that replace `plan` by reference only.
   useEffect(() => {
@@ -146,6 +149,27 @@ export default function PlanBuilder({
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (taskAwaitingUserResume) {
+      setAwaitingActionChoice('resume');
+    } else {
+      setAwaitingActionMenuOpen(false);
+    }
+  }, [taskAwaitingUserResume]);
+
+  useEffect(() => {
+    if (!awaitingActionMenuOpen) return;
+    const onPointerDown = (event: MouseEvent) => {
+      if (!awaitingActionMenuRef.current?.contains(event.target as Node)) {
+        setAwaitingActionMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+    };
+  }, [awaitingActionMenuOpen]);
 
   const sortedSteps = useMemo(() => [...steps].sort((a, b) => a.order - b.order), [steps]);
 
@@ -204,12 +228,16 @@ export default function PlanBuilder({
   };
 
   const primaryActionLabel = taskAwaitingUserResume
-    ? t('chat_buttons_resume')
+    ? awaitingActionChoice === 'resume'
+      ? t('chat_buttons_resume')
+      : t('chat_buttons_stop')
     : executing
       ? t('chat_buttons_stop')
       : t('nav_planBuilder_execute');
   const primaryActionButtonClassName = taskAwaitingUserResume
-    ? 'rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:bg-emerald-300 disabled:text-emerald-100'
+    ? awaitingActionChoice === 'resume'
+      ? 'rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:bg-emerald-300 disabled:text-emerald-100'
+      : 'rounded-md bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:bg-rose-300 disabled:text-rose-100'
     : executing
       ? 'rounded-md bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:bg-rose-300 disabled:text-rose-100'
       : 'rounded-md bg-[#fdb56f] px-3 py-2 text-sm font-medium text-white hover:bg-[#ee9b47] disabled:bg-[#f6d3b0] disabled:text-white/80';
@@ -338,23 +366,65 @@ export default function PlanBuilder({
             className="rounded-md border border-[#fdb56f]/30 px-3 py-2 text-sm text-[#8a490d] disabled:opacity-50">
             {isSaving ? t('nav_planBuilder_saving') : t('nav_planBuilder_save')}
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (taskAwaitingUserResume) {
-                onResumeTask?.();
-                return;
-              }
-              if (executing) {
-                onStopTask();
-                return;
-              }
-              void handleExecute();
-            }}
-            disabled={!executing && sortedSteps.every(step => step.content.trim() === '')}
-            className={primaryActionButtonClassName}>
-            {primaryActionLabel}
-          </button>
+          {taskAwaitingUserResume ? (
+            <div className="relative flex" ref={awaitingActionMenuRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  if (awaitingActionChoice === 'resume') {
+                    onResumeTask?.();
+                    return;
+                  }
+                  onStopTask();
+                }}
+                className={`${primaryActionButtonClassName} rounded-r-none pr-4`}>
+                {primaryActionLabel}
+              </button>
+              <button
+                type="button"
+                onClick={() => setAwaitingActionMenuOpen(prev => !prev)}
+                className={`${primaryActionButtonClassName} rounded-l-none border-l border-white/35 px-2`}
+                aria-label="Toggle resume actions">
+                ▼
+              </button>
+              {awaitingActionMenuOpen ? (
+                <div className="absolute bottom-full right-0 z-20 mb-1 min-w-[110px] rounded-md border border-[#fdb56f]/25 bg-white p-1 shadow-lg">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAwaitingActionChoice('resume');
+                      setAwaitingActionMenuOpen(false);
+                    }}
+                    className="w-full rounded px-2 py-1 text-left text-sm text-emerald-700 hover:bg-emerald-50">
+                    {t('chat_buttons_resume')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAwaitingActionChoice('stop');
+                      setAwaitingActionMenuOpen(false);
+                    }}
+                    className="mt-1 w-full rounded px-2 py-1 text-left text-sm text-rose-700 hover:bg-rose-50">
+                    {t('chat_buttons_stop')}
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                if (executing) {
+                  onStopTask();
+                  return;
+                }
+                void handleExecute();
+              }}
+              disabled={!executing && sortedSteps.every(step => step.content.trim() === '')}
+              className={primaryActionButtonClassName}>
+              {primaryActionLabel}
+            </button>
+          )}
         </div>
       </div>
     </section>
