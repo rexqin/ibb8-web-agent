@@ -1,12 +1,24 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { PlanSession, PlanStep } from '@extension/storage';
+import { Actors, type PlanSession, type PlanStep } from '@extension/storage';
 
 type PlanStepUiExecStatus = 'pending' | 'running' | 'ok' | 'fail' | 'cancel';
+
+/** One log line under a plan step (User / Planner / Navigator / System, etc.) */
+export interface PlanStepActivityLine {
+  id: string;
+  actor: Actors;
+  state?: string;
+  content: string;
+  timestamp: number;
+  isProgress: boolean;
+}
 
 interface PlanBuilderProps {
   plan: PlanSession | null;
   executing: boolean;
+  runningStepId?: string | null;
   stepStatusByStepId?: Record<string, PlanStepUiExecStatus>;
+  activityByStepId?: Record<string, PlanStepActivityLine[]>;
   onCreatePlan: () => Promise<void>;
   onSave: (steps: PlanStep[], title: string) => Promise<void>;
   onExecute: (steps: PlanStep[], title: string) => Promise<void>;
@@ -18,6 +30,63 @@ const createStep = (order: number): PlanStep => ({
   content: '',
   order,
 });
+
+function actorDisplayName(actor: Actors): string {
+  switch (actor) {
+    case Actors.USER:
+      return 'User';
+    case Actors.PLANNER:
+      return 'Planner';
+    case Actors.NAVIGATOR:
+      return 'Navigator';
+    case Actors.SYSTEM:
+      return 'System';
+    case Actors.VALIDATOR:
+      return 'Validator';
+    default:
+      return String(actor);
+  }
+}
+
+function PlanStepActivityLog({ lines, autoScroll }: { lines: PlanStepActivityLine[]; autoScroll: boolean }) {
+  const endRef = useRef<HTMLDivElement>(null);
+  const lastId = lines.at(-1)?.id;
+
+  useEffect(() => {
+    if (autoScroll && lastId) {
+      endRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }, [autoScroll, lastId]);
+
+  if (lines.length === 0) return null;
+
+  return (
+    <div className="mt-2 max-h-40 overflow-y-auto rounded border border-[#fdb56f]/15 bg-[#fffdfb] px-2 py-1.5">
+      <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-[#a35b19]">Activity</p>
+      <ul className="space-y-1.5">
+        {lines.map(line => (
+          <li key={line.id} className="text-[11px] leading-snug">
+            <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0">
+              <span className={`font-semibold ${line.isProgress ? 'text-amber-800' : 'text-[#6f3909]'}`}>
+                {actorDisplayName(line.actor)}
+              </span>
+              {line.state ? (
+                <span className="rounded bg-[#fff3e0] px-1 font-mono text-[9px] text-[#8a490d]">{line.state}</span>
+              ) : null}
+            </div>
+            {line.content ? (
+              <p
+                className={`mt-0.5 whitespace-pre-wrap break-words pl-0.5 ${line.isProgress ? 'italic text-amber-900/90' : 'text-[#5c3d1e]'}`}>
+                {line.content}
+              </p>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+      <div ref={endRef} />
+    </div>
+  );
+}
 
 function stepStatusLabel(status: PlanStepUiExecStatus): string {
   switch (status) {
@@ -39,7 +108,9 @@ function stepStatusLabel(status: PlanStepUiExecStatus): string {
 export default function PlanBuilder({
   plan,
   executing,
+  runningStepId,
   stepStatusByStepId,
+  activityByStepId,
   onCreatePlan,
   onSave,
   onExecute,
@@ -213,6 +284,10 @@ export default function PlanBuilder({
               rows={3}
               className="w-full resize-y rounded-md border border-[#fdb56f]/20 p-2 text-sm text-[#6f3909] outline-none focus:border-[#fdb56f] disabled:opacity-60"
               placeholder="Describe what this step should do..."
+            />
+            <PlanStepActivityLog
+              lines={activityByStepId?.[step.id] ?? []}
+              autoScroll={executing && runningStepId === step.id}
             />
           </div>
         ))}

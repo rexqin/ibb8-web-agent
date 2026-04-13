@@ -22,7 +22,7 @@ import { t } from '@extension/i18n';
 import MessageList from './components/MessageList';
 import ChatInput from './components/ChatInput';
 import ChatHistoryList from './components/ChatHistoryList';
-import PlanBuilder from './components/PlanBuilder';
+import PlanBuilder, { type PlanStepActivityLine } from './components/PlanBuilder';
 import PlanHistoryList from './components/PlanHistoryList';
 import { EventType, type AgentEvent, ExecutionState } from './types/event';
 import './SidePanel.css';
@@ -49,7 +49,9 @@ const SidePanel = () => {
   }
 
   const progressMessage = 'Showing progress...';
+  const MAX_PLAN_STEP_ACTIVITY = 200;
   const [messages, setMessages] = useState<Message[]>([]);
+  const [planStepActivity, setPlanStepActivity] = useState<Record<string, PlanStepActivityLine[]>>({});
   const [mode, setMode] = useState<PanelMode>('plan');
   const [inputEnabled, setInputEnabled] = useState(true);
   const [showStopButton, setShowStopButton] = useState(false);
@@ -148,6 +150,19 @@ const SidePanel = () => {
   useEffect(() => {
     planExecutionRef.current = planExecution;
   }, [planExecution]);
+
+  useEffect(() => {
+    setPlanStepActivity({});
+  }, [currentPlan?.id]);
+
+  const appendPlanStepActivityLine = useCallback((stepId: string, line: Omit<PlanStepActivityLine, 'id'>) => {
+    setPlanStepActivity(prev => {
+      const row: PlanStepActivityLine = { ...line, id: crypto.randomUUID() };
+      const cur = [...(prev[stepId] ?? []), row];
+      const capped = cur.length > MAX_PLAN_STEP_ACTIVITY ? cur.slice(-MAX_PLAN_STEP_ACTIVITY) : cur;
+      return { ...prev, [stepId]: capped };
+    });
+  }, []);
 
   const appendMessage = useCallback((newMessage: Message, sessionId?: string | null) => {
     // Don't save progress messages
@@ -295,23 +310,76 @@ const SidePanel = () => {
         setLastTaskTerminal(state);
       }
 
-      if (!skip) {
-        appendMessage({
-          actor,
-          content: content || '',
-          timestamp: timestamp,
-        });
-      }
+      const executionSnapshot = planExecutionRef.current;
+      const activePlanStepId = executionSnapshot?.steps[executionSnapshot.currentStepIndex]?.id ?? null;
 
-      if (displayProgress) {
-        appendMessage({
-          actor,
-          content: progressMessage,
-          timestamp: timestamp,
-        });
+      if (activePlanStepId) {
+        if (displayProgress) {
+          appendPlanStepActivityLine(activePlanStepId, {
+            actor,
+            state,
+            content: progressMessage,
+            timestamp,
+            isProgress: true,
+          });
+        }
+        if (!skip) {
+          appendPlanStepActivityLine(activePlanStepId, {
+            actor,
+            state,
+            content: content || '',
+            timestamp,
+            isProgress: false,
+          });
+        } else if (
+          (actor === Actors.NAVIGATOR || actor === Actors.PLANNER) &&
+          (state === ExecutionState.STEP_OK ||
+            state === ExecutionState.STEP_FAIL ||
+            state === ExecutionState.STEP_CANCEL ||
+            state === ExecutionState.ACT_OK ||
+            state === ExecutionState.ACT_FAIL)
+        ) {
+          appendPlanStepActivityLine(activePlanStepId, {
+            actor,
+            state,
+            content: content || '',
+            timestamp,
+            isProgress: false,
+          });
+        } else if (
+          actor === Actors.SYSTEM &&
+          (state === ExecutionState.TASK_START ||
+            state === ExecutionState.TASK_OK ||
+            state === ExecutionState.TASK_PAUSE ||
+            state === ExecutionState.TASK_RESUME)
+        ) {
+          appendPlanStepActivityLine(activePlanStepId, {
+            actor,
+            state,
+            content: content || '',
+            timestamp,
+            isProgress: false,
+          });
+        }
+      } else {
+        if (!skip) {
+          appendMessage({
+            actor,
+            content: content || '',
+            timestamp: timestamp,
+          });
+        }
+
+        if (displayProgress) {
+          appendMessage({
+            actor,
+            content: progressMessage,
+            timestamp: timestamp,
+          });
+        }
       }
     },
-    [appendMessage],
+    [appendMessage, appendPlanStepActivityLine],
   );
 
   // Stop heartbeat and close connection
@@ -680,8 +748,18 @@ const SidePanel = () => {
         timestamp: Date.now(),
       };
 
-      // Pass the sessionId directly to appendMessage
-      appendMessage(userMessage, sessionIdRef.current);
+      const planExecSnap = planExecutionRef.current;
+      const planStepIdForUser = planExecSnap?.steps[planExecSnap.currentStepIndex]?.id;
+      if (planStepIdForUser) {
+        appendPlanStepActivityLine(planStepIdForUser, {
+          actor: Actors.USER,
+          content: userMessage.content,
+          timestamp: userMessage.timestamp,
+          isProgress: false,
+        });
+      } else {
+        appendMessage(userMessage, sessionIdRef.current);
+      }
 
       // Setup connection if not exists
       if (!portRef.current) {
@@ -711,11 +789,23 @@ const SidePanel = () => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       console.error('Task error', errorMessage);
-      appendMessage({
-        actor: Actors.SYSTEM,
-        content: errorMessage,
-        timestamp: Date.now(),
-      });
+      const ex = planExecutionRef.current;
+      const sid = ex?.steps[ex.currentStepIndex]?.id;
+      if (sid) {
+        appendPlanStepActivityLine(sid, {
+          actor: Actors.SYSTEM,
+          state: ExecutionState.TASK_FAIL,
+          content: errorMessage,
+          timestamp: Date.now(),
+          isProgress: false,
+        });
+      } else {
+        appendMessage({
+          actor: Actors.SYSTEM,
+          content: errorMessage,
+          timestamp: Date.now(),
+        });
+      }
       setInputEnabled(true);
       setShowStopButton(false);
       stopConnection();
@@ -730,11 +820,23 @@ const SidePanel = () => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       console.error('cancel_task error', errorMessage);
-      appendMessage({
-        actor: Actors.SYSTEM,
-        content: errorMessage,
-        timestamp: Date.now(),
-      });
+      const ex = planExecutionRef.current;
+      const sid = ex?.steps[ex.currentStepIndex]?.id;
+      if (sid) {
+        appendPlanStepActivityLine(sid, {
+          actor: Actors.SYSTEM,
+          state: ExecutionState.TASK_FAIL,
+          content: errorMessage,
+          timestamp: Date.now(),
+          isProgress: false,
+        });
+      } else {
+        appendMessage({
+          actor: Actors.SYSTEM,
+          content: errorMessage,
+          timestamp: Date.now(),
+        });
+      }
     }
     setInputEnabled(true);
     setShowStopButton(false);
@@ -880,6 +982,7 @@ const SidePanel = () => {
     if (!currentPlan) return;
     const cleanedSteps = steps.filter(step => step.content.trim() !== '').map((step, order) => ({ ...step, order }));
     if (cleanedSteps.length === 0) return;
+    setPlanStepActivity({});
 
     const titleTrimmed = title.trim();
     if (titleTrimmed && titleTrimmed !== currentPlan.title) {
@@ -1401,11 +1504,15 @@ const SidePanel = () => {
                   <PlanBuilder
                     plan={currentPlan}
                     executing={!!planExecution}
+                    runningStepId={
+                      planExecution ? (planExecution.steps[planExecution.currentStepIndex]?.id ?? null) : null
+                    }
                     stepStatusByStepId={
                       planExecution
                         ? Object.fromEntries(planExecution.steps.map((s, i) => [s.id, planExecution.stepStatuses[i]]))
                         : undefined
                     }
+                    activityByStepId={planStepActivity}
                     onCreatePlan={handleCreatePlan}
                     onSave={handleSavePlan}
                     onExecute={handleExecutePlan}
