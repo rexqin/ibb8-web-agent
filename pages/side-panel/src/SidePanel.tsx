@@ -28,6 +28,30 @@ declare global {
   }
 }
 
+function isTerminalExecutionState(state: ExecutionState): boolean {
+  return (
+    state === ExecutionState.ACT_OK ||
+    state === ExecutionState.ACT_FAIL ||
+    state === ExecutionState.STEP_OK ||
+    state === ExecutionState.STEP_FAIL ||
+    state === ExecutionState.STEP_CANCEL ||
+    state === ExecutionState.TASK_OK ||
+    state === ExecutionState.TASK_FAIL ||
+    state === ExecutionState.TASK_CANCEL
+  );
+}
+
+function formatDurationSuffix(event: AgentEvent): string {
+  if (!isTerminalExecutionState(event.state)) {
+    return '';
+  }
+  const ms = event.data.activeElapsedMs ?? event.data.elapsedMs;
+  if (ms === undefined) {
+    return '';
+  }
+  return `（耗时 ${(ms / 1000).toFixed(ms >= 10000 ? 1 : 2)}s）`;
+}
+
 const SidePanel = () => {
   type PlanStepExecUiStatus = 'pending' | 'running' | 'ok' | 'fail' | 'cancel';
   type PanelPage = 'plan_list' | 'plan_builder' | 'plan_history';
@@ -130,6 +154,8 @@ const SidePanel = () => {
     (event: AgentEvent) => {
       const { actor, state, timestamp, data } = event;
       const content = data?.details;
+      const durationSuffix = formatDurationSuffix(event);
+      const contentWithDuration = content?.trim() ? `${content}${durationSuffix}` : durationSuffix;
       let skip = true;
       let displayProgress = false;
 
@@ -270,7 +296,7 @@ const SidePanel = () => {
           appendPlanStepActivityLine(activePlanStepId, {
             actor,
             state,
-            content: content || '',
+            content: contentWithDuration || '',
             timestamp,
             isProgress: false,
           });
@@ -285,7 +311,7 @@ const SidePanel = () => {
           appendPlanStepActivityLine(activePlanStepId, {
             actor,
             state,
-            content: content || '',
+            content: contentWithDuration || '',
             timestamp,
             isProgress: false,
           });
@@ -299,14 +325,17 @@ const SidePanel = () => {
           appendPlanStepActivityLine(activePlanStepId, {
             actor,
             state,
-            content: content || '',
+            content: contentWithDuration || '',
             timestamp,
             isProgress: false,
           });
         }
       } else {
         if (!skip) {
-          const msg = content && String(content).trim() ? String(content) : `${actor}: ${state}`;
+          const msg =
+            contentWithDuration && String(contentWithDuration).trim()
+              ? String(contentWithDuration)
+              : `${actor}: ${state}`;
           setPanelNotice(msg);
         } else if (displayProgress) {
           setPanelNotice(progressMessage);

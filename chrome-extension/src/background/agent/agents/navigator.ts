@@ -33,7 +33,6 @@ const logger = createLogger('NavigatorAgent');
 
 const ACTIONS_NEED_PAGE_SETTLE = new Set([
   'search_google',
-  'go_to_url',
   'go_back',
   'click_element',
   'input_text',
@@ -44,8 +43,8 @@ const ACTIONS_NEED_PAGE_SETTLE = new Set([
   'select_dropdown_option',
 ]);
 
-const ACTIONS_WITH_INTERNAL_WAIT = new Set(['wait']);
-const ACTIONS_NEED_LONGER_SETTLE = new Set(['search_google', 'go_to_url', 'open_tab', 'switch_tab', 'close_tab']);
+const ACTIONS_WITH_INTERNAL_WAIT = new Set(['wait', 'go_to_url']);
+const ACTIONS_NEED_LONGER_SETTLE = new Set(['search_google', 'open_tab', 'switch_tab', 'close_tab']);
 
 interface ParsedModelOutput {
   current_state?: {

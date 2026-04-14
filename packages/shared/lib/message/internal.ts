@@ -30,6 +30,8 @@ export const sidePanelExecutionAgentEventSchema = z.object({
     step: z.number(),
     maxSteps: z.number(),
     details: z.string(),
+    elapsedMs: z.number().optional(),
+    activeElapsedMs: z.number().optional(),
   }),
   timestamp: z.number(),
 });

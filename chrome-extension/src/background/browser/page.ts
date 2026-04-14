@@ -81,6 +81,7 @@ export class CachedStateClickableElementsHashes {
 }
 
 export default class Page {
+  private static _elementEvaluateWrapped = false;
   private _tabId: number;
   private _browser: Browser | null = null;
   private _puppeteerPage: PuppeteerPage | null = null;
@@ -89,6 +90,7 @@ export default class Page {
   private _validWebPage = false;
   private _cachedState: PageState | null = null;
   private _cachedStateClickableElementsHashes: CachedStateClickableElementsHashes | null = null;
+  private _evaluateWrapped = false;
 
   constructor(tabId: number, url: string, title: string, config: Partial<BrowserContextConfig> = {}) {
     this._tabId = tabId;
@@ -135,6 +137,7 @@ export default class Page {
 
     const [page] = await browser.pages();
     this._puppeteerPage = page;
+    this._wrapEvaluateForDebug();
 
     // Add anti-detection scripts
     await this._addAntiDetectionScripts();
@@ -182,6 +185,62 @@ export default class Page {
         };
       })();
     `);
+  }
+
+  private _serializeEvaluateFunction(fnOrScript: unknown): string {
+    if (typeof fnOrScript === 'string') {
+      return fnOrScript;
+    }
+    if (typeof fnOrScript === 'function') {
+      return fnOrScript.toString();
+    }
+    try {
+      return JSON.stringify(fnOrScript);
+    } catch {
+      return String(fnOrScript);
+    }
+  }
+
+  private _wrapEvaluateForDebug(): void {
+    if (!import.meta.env.DEV || !this._puppeteerPage || this._evaluateWrapped) {
+      return;
+    }
+    const page = this._puppeteerPage as PuppeteerPage;
+    const originalEvaluate = (page.evaluate as (...args: unknown[]) => Promise<unknown>).bind(page);
+    (page as unknown as { evaluate: (...args: unknown[]) => Promise<unknown> }).evaluate = async (
+      ...args: unknown[]
+    ) => {
+      const [fnOrScript, ...restArgs] = args;
+      logger.debug('[puppeteer.evaluate] script/function:', this._serializeEvaluateFunction(fnOrScript));
+      if (restArgs.length > 0) {
+        logger.debug('[puppeteer.evaluate] args:', restArgs);
+      }
+      return originalEvaluate(...args);
+    };
+    this._evaluateWrapped = true;
+  }
+
+  private _wrapElementEvaluateForDebug(handle: ElementHandle): void {
+    if (!import.meta.env.DEV || Page._elementEvaluateWrapped) {
+      return;
+    }
+    const proto = Object.getPrototypeOf(handle) as {
+      evaluate?: (...args: unknown[]) => Promise<unknown>;
+    };
+    if (!proto || typeof proto.evaluate !== 'function') {
+      return;
+    }
+    const serialize = this._serializeEvaluateFunction.bind(this);
+    const originalEvaluate = proto.evaluate as (...args: unknown[]) => Promise<unknown>;
+    proto.evaluate = async function (...args: unknown[]) {
+      const [fnOrScript, ...restArgs] = args;
+      logger.debug('[elementHandle.evaluate] script/function:', serialize(fnOrScript));
+      if (restArgs.length > 0) {
+        logger.debug('[elementHandle.evaluate] args:', restArgs);
+      }
+      return originalEvaluate.apply(this, args);
+    };
+    Page._elementEvaluateWrapped = true;
   }
 
   async detachPuppeteer(): Promise<void> {
@@ -1111,6 +1170,7 @@ export default class Page {
 
       // If element found, check visibility and scroll into view
       if (elementHandle) {
+        this._wrapElementEvaluateForDebug(elementHandle);
         const isHidden = await elementHandle.isHidden();
         if (!isHidden) {
           await this._scrollIntoViewIfNeeded(elementHandle);

@@ -17,6 +17,18 @@ function isNoTabError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
   return message.includes('No tab with id');
 }
+
+function isBlockedAutomationUrl(url: string): boolean {
+  const lower = url.toLowerCase();
+  return (
+    lower.startsWith('chrome://') ||
+    lower.startsWith('edge://') ||
+    lower.startsWith('about:') ||
+    lower.startsWith('devtools://') ||
+    lower.startsWith('view-source:')
+  );
+}
+
 export default class BrowserContext {
   private _config: BrowserContextConfig;
   private _currentTabId: number | null = null;
@@ -242,6 +254,26 @@ export default class BrowserContext {
     await Promise.race([Promise.all(promises), timeoutPromise]);
   }
 
+  private async waitForTabNavigationComplete(tabId: number, timeoutMs = 15000): Promise<void> {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      let tab: chrome.tabs.Tab;
+      try {
+        tab = await chrome.tabs.get(tabId);
+      } catch (error) {
+        if (isNoTabError(error)) {
+          throw new Error(`Tab ${tabId} no longer exists during navigation`);
+        }
+        throw error;
+      }
+      if (tab.status === 'complete' && !!tab.url) {
+        return;
+      }
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+    throw new Error(`Tab navigation timed out after ${timeoutMs} ms`);
+  }
+
   public async switchTab(tabId: number): Promise<Page> {
     logger.info('switchTab', tabId);
 
@@ -254,6 +286,58 @@ export default class BrowserContext {
     return page;
   }
 
+  private async findFallbackWebTab(excludeTabId?: number): Promise<chrome.tabs.Tab | null> {
+    const tabs = await chrome.tabs.query({ currentWindow: true });
+    for (const tab of tabs) {
+      if (!tab.id || tab.id === excludeTabId || !tab.url) {
+        continue;
+      }
+      if (isBlockedAutomationUrl(tab.url)) {
+        continue;
+      }
+      if (!isUrlAllowed(tab.url, this._config.allowedUrls, this._config.deniedUrls)) {
+        continue;
+      }
+      return tab;
+    }
+    return null;
+  }
+
+  /**
+   * Ensure current tab is navigable by automation before url updates.
+   * Returns true when navigation has already been completed by opening a replacement tab.
+   */
+  private async ensureNavigableTabForNavigation(targetUrl: string): Promise<boolean> {
+    if (!this._currentTabId) {
+      return false;
+    }
+    let currentTab: chrome.tabs.Tab;
+    try {
+      currentTab = await chrome.tabs.get(this._currentTabId);
+    } catch (error) {
+      if (isNoTabError(error)) {
+        this._currentTabId = null;
+        return false;
+      }
+      throw error;
+    }
+    if (!currentTab.url || !isBlockedAutomationUrl(currentTab.url)) {
+      return false;
+    }
+
+    logger.info(`Current tab is restricted for automation: ${currentTab.url}`);
+    const fallbackTab = await this.findFallbackWebTab(currentTab.id);
+    if (fallbackTab?.id) {
+      logger.info(`Switching to fallback tab ${fallbackTab.id}: ${fallbackTab.url}`);
+      await this.switchTab(fallbackTab.id);
+      return false;
+    }
+
+    logger.info('No fallback web tab found, opening a fresh tab for navigation');
+    await this.openTab(targetUrl);
+    return true;
+  }
+
   public async navigateTo(url: string): Promise<void> {
     if (!isUrlAllowed(url, this._config.allowedUrls, this._config.deniedUrls)) {
       throw new URLNotAllowedError(`URL: ${url} is not allowed`);
@@ -261,6 +345,11 @@ export default class BrowserContext {
 
     // Track domain visit for analytics
     void analytics.trackDomainVisit(url);
+
+    // If current tab is restricted (e.g. chrome://extensions), recover first.
+    if (await this.ensureNavigableTabForNavigation(url)) {
+      return;
+    }
 
     const page = await this.getCurrentPage();
     if (!page) {
@@ -276,7 +365,7 @@ export default class BrowserContext {
     const tabId = page.tabId;
     // Update tab and wait for events
     await chrome.tabs.update(tabId, { url, active: true });
-    await this.waitForTabEvents(tabId);
+    await this.waitForTabNavigationComplete(tabId);
 
     // Reattach the page after navigation completes
     const updatedPage = await this._getOrCreatePage(await chrome.tabs.get(tabId), true);
@@ -294,8 +383,8 @@ export default class BrowserContext {
     if (!tab.id) {
       throw new Error('No tab ID available');
     }
-    // Wait for tab events
-    await this.waitForTabEvents(tab.id);
+    // Deterministic navigation completion (avoid brittle 5s tab event timeout).
+    await this.waitForTabNavigationComplete(tab.id);
 
     // Get updated tab information
     const updatedTab = await chrome.tabs.get(tab.id);

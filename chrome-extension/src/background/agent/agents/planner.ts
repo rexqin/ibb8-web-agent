@@ -2,7 +2,7 @@ import { BaseAgent, type BaseAgentOptions, type ExtraAgentOptions } from './base
 import { createLogger } from '@src/background/log';
 import { z } from 'zod';
 import type { AgentOutput } from '../types';
-import { HumanMessage } from '@langchain/core/messages';
+import { AIMessage, HumanMessage, type BaseMessage, ToolMessage } from '@langchain/core/messages';
 import { Actors, ExecutionState } from '../event/types';
 import {
   ChatModelAuthError,
@@ -65,6 +65,29 @@ export class PlannerAgent extends BaseAgent<typeof plannerOutputSchema, PlannerO
     super(plannerOutputSchema, options, { ...extraOptions, id: 'planner' });
   }
 
+  private sanitizePlannerMessages(messages: BaseMessage[]): BaseMessage[] {
+    const sanitized: BaseMessage[] = [];
+    for (const message of messages) {
+      if (!(message instanceof ToolMessage)) {
+        sanitized.push(message);
+        continue;
+      }
+      const previous = sanitized[sanitized.length - 1];
+      if (!(previous instanceof AIMessage) || !Array.isArray(previous.tool_calls) || previous.tool_calls.length === 0) {
+        logger.debug('Dropping orphan tool message from planner input');
+        continue;
+      }
+      const toolCallId = message.tool_call_id;
+      const matched = !toolCallId || previous.tool_calls.some(toolCall => String(toolCall.id) === String(toolCallId));
+      if (!matched) {
+        logger.debug('Dropping unmatched tool message from planner input');
+        continue;
+      }
+      sanitized.push(message);
+    }
+    return sanitized;
+  }
+
   async execute(): Promise<AgentOutput<PlannerOutput>> {
     try {
       this.context.emitEvent(Actors.PLANNER, ExecutionState.STEP_START, 'Planning...');
@@ -74,7 +97,8 @@ export class PlannerAgent extends BaseAgent<typeof plannerOutputSchema, PlannerO
       const historyMessages = messages.slice(1);
       const windowSize = this.context.options.plannerHistoryWindow;
       const plannerHistory = windowSize > 0 ? historyMessages.slice(-windowSize) : historyMessages;
-      const plannerMessages = [this.prompt.getSystemMessage(), ...plannerHistory];
+      const sanitizedHistory = this.sanitizePlannerMessages(plannerHistory);
+      const plannerMessages = [this.prompt.getSystemMessage(), ...sanitizedHistory];
 
       // Remove images from last message if vision is not enabled for planner but vision is enabled
       if (!this.context.options.useVisionForPlanner && this.context.options.useVision) {

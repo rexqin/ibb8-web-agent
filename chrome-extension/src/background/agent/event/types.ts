@@ -56,6 +56,10 @@ export interface EventData {
   maxSteps: number;
   /** details is the content of the event */
   details: string;
+  /** Raw elapsed time from matched start event to current event, in ms. */
+  elapsedMs?: number;
+  /** Active elapsed time excluding paused duration, in ms. */
+  activeElapsedMs?: number;
 }
 
 export class AgentEvent {
