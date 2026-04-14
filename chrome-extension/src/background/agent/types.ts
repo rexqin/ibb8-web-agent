@@ -18,6 +18,7 @@ export interface AgentOptions {
   useVisionForPlanner: boolean;
   includeAttributes: string[];
   planningInterval: number;
+  plannerHistoryWindow: number;
 }
 
 export const DEFAULT_AGENT_OPTIONS: AgentOptions = {
@@ -30,7 +31,8 @@ export const DEFAULT_AGENT_OPTIONS: AgentOptions = {
   useVision: false,
   useVisionForPlanner: true,
   includeAttributes: DEFAULT_INCLUDE_ATTRIBUTES,
-  planningInterval: 3,
+  planningInterval: 5,
+  plannerHistoryWindow: 20,
 };
 
 export class AgentContext {
