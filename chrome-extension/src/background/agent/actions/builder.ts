@@ -13,6 +13,7 @@ import {
   sendKeysActionSchema,
   scrollToTextActionSchema,
   cacheContentActionSchema,
+  downloadImageToBase64ActionSchema,
   selectDropdownOptionActionSchema,
   getDropdownOptionsActionSchema,
   closeTabActionSchema,
@@ -461,6 +462,169 @@ export class ActionBuilder {
       return new ActionResult({ extractedContent: msg, includeInMemory: true });
     }, cacheContentActionSchema);
     actions.push(cacheContent);
+
+    // Download an image, convert to base64 and paste it into the target element.
+    // This is mainly used when the editor requires embedded base64 rather than a raw URL.
+    const downloadImageToBase64 = new Action(
+      async (input: z.infer<typeof downloadImageToBase64ActionSchema.schema>) => {
+        const intent = input.intent || 'Download image and convert to base64';
+        this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_START, intent);
+
+        // For DEV diagnostics we keep whatever response metadata we managed to get.
+        let debugResponseStatus: number | undefined;
+        let debugResponseContentType: string | null | undefined;
+        let debugResponseOk: boolean | undefined;
+
+        try {
+          if (import.meta.env.DEV) {
+            logger.debug('download_image_to_base64 start', {
+              url: input.url,
+              as_data_uri: input.as_data_uri,
+              mime_type: input.mime_type ?? null,
+              max_output_chars: input.max_output_chars ?? null,
+            });
+          }
+
+          const page = await this.context.browserContext.getCurrentPage();
+          const state = await page.getState();
+          let targetIndex = input.index ?? null;
+          let targetNode = targetIndex !== null ? state?.selectorMap.get(targetIndex) : undefined;
+          if (!targetNode) {
+            // Fallback for model outputs where index is null/invalid:
+            // choose the first likely editor element in current DOM snapshot.
+            const pickCandidate = () => {
+              for (const [idx, node] of state.selectorMap.entries()) {
+                const cls = (node.attributes['class'] ?? '').toString().toLowerCase();
+                const ceAttr = (node.attributes['contenteditable'] ?? '').toString().toLowerCase();
+                const dp = (node.attributes['data-placeholder'] ?? '').toString().toLowerCase();
+                const ph = (node.attributes['placeholder'] ?? '').toString().toLowerCase();
+                const isEditorLike =
+                  (node.tagName === 'div' &&
+                    (cls.includes('ql-editor') || ceAttr === 'true' || ceAttr === 'contenteditable')) ||
+                  node.tagName === 'textarea' ||
+                  (node.tagName === 'input' && /url|链接|image|图片|base64/.test(ph + dp + cls));
+                if (isEditorLike) {
+                  return [idx, node] as const;
+                }
+              }
+              return null;
+            };
+
+            const candidate = pickCandidate();
+            if (candidate) {
+              targetIndex = candidate[0];
+              targetNode = candidate[1];
+              if (import.meta.env.DEV) {
+                logger.debug('download_image_to_base64 fallback target index', {
+                  requestedIndex: input.index ?? null,
+                  pickedIndex: targetIndex,
+                  pickedTag: targetNode.tagName,
+                  pickedClass: (targetNode.attributes['class'] ?? '').toString().slice(0, 120),
+                });
+              }
+            }
+          }
+          if (!targetNode || targetIndex === null) {
+            throw new Error(t('act_errors_elementNotExist', [String(input.index)]));
+          }
+
+          const res = await fetch(input.url);
+          debugResponseStatus = res.status;
+          debugResponseContentType = res.headers.get('content-type');
+          debugResponseOk = res.ok;
+
+          if (!res.ok) {
+            if (import.meta.env.DEV) {
+              logger.debug('download_image_to_base64 http error', {
+                url: input.url,
+                status: res.status,
+                statusText: res.statusText,
+                contentType: debugResponseContentType,
+                ok: res.ok,
+              });
+            }
+            throw new Error(`Failed to download image: ${res.status} ${res.statusText}`);
+          }
+
+          if (import.meta.env.DEV) {
+            logger.debug('download_image_to_base64 fetch ok', {
+              status: res.status,
+              contentType: res.headers.get('content-type'),
+            });
+          }
+
+          const buffer = await res.arrayBuffer();
+          const bytes = new Uint8Array(buffer);
+
+          // Infer mime type from response unless overridden.
+          const inferredMime =
+            input.mime_type?.trim() || res.headers.get('content-type')?.split(';')[0]?.trim() || 'image/png';
+
+          let base64: string;
+          const globalAny = globalThis as unknown as {
+            Buffer?: { from: (b: Uint8Array) => { toString: (enc: string) => string } };
+          };
+          if (globalAny.Buffer) {
+            base64 = globalAny.Buffer.from(bytes).toString('base64');
+          } else {
+            // Browser-safe base64 encoding (works in service worker contexts).
+            let binary = '';
+            const chunkSize = 0x8000;
+            for (let i = 0; i < bytes.length; i += chunkSize) {
+              const chunk = bytes.subarray(i, i + chunkSize);
+              for (let j = 0; j < chunk.length; j++) {
+                binary += String.fromCharCode(chunk[j]);
+              }
+            }
+            base64 = btoa(binary);
+          }
+
+          const finalOutput = input.as_data_uri ? `data:${inferredMime};base64,${base64}` : base64;
+          const maxChars = input.max_output_chars ?? undefined;
+          const didTruncate = typeof maxChars === 'number' && maxChars > 0 && finalOutput.length > maxChars;
+          const output = didTruncate ? finalOutput.slice(0, maxChars) : finalOutput;
+
+          await page.inputTextElementNode(this.context.options.useVision, targetNode, output);
+
+          if (import.meta.env.DEV) {
+            logger.debug('download_image_to_base64 finish', {
+              inferredMime,
+              bytesLen: bytes.byteLength,
+              base64Len: base64.length,
+              outputLen: output.length,
+              index: targetIndex,
+              didTruncate,
+            });
+          }
+
+          const msg = `Downloaded image and pasted base64 into index ${targetIndex} (${output.length} chars)`;
+          this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_OK, msg);
+
+          return new ActionResult({ extractedContent: msg, includeInMemory: true });
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          if (import.meta.env.DEV) {
+            logger.debug('download_image_to_base64 failed', {
+              url: input.url,
+              index: input.index ?? null,
+              as_data_uri: input.as_data_uri,
+              mime_type: input.mime_type ?? null,
+              max_output_chars: input.max_output_chars ?? null,
+              // Best-effort response diagnostics
+              response_status: debugResponseStatus ?? null,
+              response_ok: debugResponseOk ?? null,
+              response_contentType: debugResponseContentType ?? null,
+              error: errorMessage,
+              stack: error instanceof Error ? error.stack?.slice(0, 1000) : null,
+            });
+          }
+          this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_FAIL, errorMessage);
+          return new ActionResult({ error: errorMessage, includeInMemory: true });
+        }
+      },
+      downloadImageToBase64ActionSchema,
+    );
+    actions.push(downloadImageToBase64);
 
     // Scroll to percent
     const scrollToPercent = new Action(async (input: z.infer<typeof scrollToPercentActionSchema.schema>) => {

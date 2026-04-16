@@ -242,6 +242,15 @@ chrome.runtime.onConnect.addListener(port => {
               });
             }
 
+            // Each plan step should be independent; avoid reusing the previous executor/browser state.
+            // Especially when the plan execution suppresses auto-cleanup on terminal events,
+            // we explicitly cleanup here before creating a new executor.
+            try {
+              await currentExecutor?.cleanup();
+            } catch (error) {
+              logger.warning('previous executor cleanup failed during new_task', error);
+            }
+
             currentExecutor = await setupExecutor(message.taskId, message.task, browserContext);
             subscribeToExecutorEvents(currentExecutor);
 

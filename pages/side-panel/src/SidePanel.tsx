@@ -167,12 +167,14 @@ const SidePanel = () => {
               setUserPauseHint(null);
               break;
             case ExecutionState.TASK_OK:
-              setIsFollowUpMode(true);
+              // Each plan step should be independent: do not reuse follow-up mode.
+              setIsFollowUpMode(false);
               setTaskAwaitingUserResume(false);
               setUserPauseHint(null);
               break;
             case ExecutionState.TASK_FAIL:
-              setIsFollowUpMode(true);
+              // Each plan step should be independent: do not reuse follow-up mode.
+              setIsFollowUpMode(false);
               setTaskAwaitingUserResume(false);
               setUserPauseHint(null);
               skip = false;

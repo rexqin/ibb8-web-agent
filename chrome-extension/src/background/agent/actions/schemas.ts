@@ -112,6 +112,26 @@ export const cacheContentActionSchema: ActionSchema = {
   }),
 };
 
+export const downloadImageToBase64ActionSchema: ActionSchema = {
+  name: 'download_image_to_base64',
+  description: 'Download an image from an URL, convert it to base64 and paste it into the specified element index',
+  schema: z.object({
+    intent: z.string().default('').describe('purpose of this action'),
+    index: z.number().int().nullable().optional().describe('index of the target interactive input/editor element'),
+    url: z.string().describe('image url to download'),
+    as_data_uri: z
+      .boolean()
+      .default(true)
+      .describe('return as data:image/*;base64,... when true, otherwise plain base64'),
+    mime_type: z
+      .string()
+      .nullable()
+      .optional()
+      .describe('override mime type, e.g. image/png. If empty, tries to infer from response header.'),
+    max_output_chars: z.number().int().optional().describe('truncate output to at most N characters'),
+  }),
+};
+
 export const scrollToPercentActionSchema: ActionSchema = {
   name: 'scroll_to_percent',
   description:
