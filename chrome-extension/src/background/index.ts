@@ -18,10 +18,10 @@ import {
 import BrowserContext from './browser/context';
 import { Executor } from './agent/executor';
 import { createLogger } from './log';
-import { ExecutionState } from './agent/event/types';
 import { createChatModel } from './agent/helper';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { DEFAULT_AGENT_OPTIONS } from './agent/types';
+import { shouldCleanupExecutorOnTerminalEvent } from './executor-lifecycle';
 import { SpeechToTextService } from './services/speechToText';
 import { injectBuildDomTreeScripts } from './browser/dom/service';
 import { analytics } from './services/analytics';
@@ -257,8 +257,34 @@ chrome.runtime.onConnect.addListener(port => {
             logger.info('follow_up_task', message.tabId, message.task, { planDedicatedTab: message.planDedicatedTab });
 
             try {
-              if (message.planDedicatedTab && planDedicatedTabId !== null) {
-                await browserContext.attachToTabInBackground(planDedicatedTabId);
+              if (message.planDedicatedTab) {
+                // When navigation internally falls back to a fresh tab (e.g. about:blank is blocked),
+                // `planDedicatedTabId` might still point to the old blocked tab.
+                // In that case, prefer attaching to the incoming `message.tabId`.
+                const blockedPrefixes = ['chrome://', 'edge://', 'about:', 'devtools://', 'view-source:'];
+                const isBlockedUrl = (url?: string) => {
+                  const lower = (url ?? '').toLowerCase();
+                  return blockedPrefixes.some(prefix => lower.startsWith(prefix));
+                };
+
+                const dedicatedId = planDedicatedTabId;
+                const dedicatedTab = dedicatedId !== null ? await chrome.tabs.get(dedicatedId).catch(() => null) : null;
+                const incomingTab = await chrome.tabs.get(message.tabId).catch(() => null);
+
+                logger.debug('follow_up_task tab routing (DEV)', {
+                  planDedicatedTabId: dedicatedId,
+                  planDedicatedTabUrl: dedicatedTab?.url,
+                  messageTabId: message.tabId,
+                  messageTabUrl: incomingTab?.url,
+                });
+
+                const canUseDedicated = dedicatedId !== null && dedicatedTab?.url && !isBlockedUrl(dedicatedTab.url);
+                if (canUseDedicated) {
+                  await browserContext.attachToTabInBackground(dedicatedId);
+                } else {
+                  planDedicatedTabId = message.tabId;
+                  await browserContext.attachToTabInBackground(message.tabId);
+                }
               } else {
                 await closePlanDedicatedTabIfAny();
                 await browserContext.switchTab(message.tabId);
@@ -515,9 +541,10 @@ async function subscribeToExecutorEvents(executor: Executor) {
     }
 
     if (
-      event.state === ExecutionState.TASK_OK ||
-      event.state === ExecutionState.TASK_FAIL ||
-      event.state === ExecutionState.TASK_CANCEL
+      shouldCleanupExecutorOnTerminalEvent({
+        state: event.state,
+        isPlanExecutionActive: planDedicatedTabId !== null,
+      })
     ) {
       await currentExecutor?.cleanup();
     }

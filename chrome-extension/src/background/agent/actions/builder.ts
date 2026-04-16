@@ -284,13 +284,99 @@ export class ActionBuilder {
         const page = await this.context.browserContext.getCurrentPage();
         const state = await page.getState();
 
-        const elementNode = state?.selectorMap.get(input.index);
+        let targetIndex = input.index;
+        let elementNode = state?.selectorMap.get(input.index);
         if (!elementNode) {
           throw new Error(t('act_errors_elementNotExist', [input.index.toString()]));
         }
 
+        // Heuristic guard: when filling "正文/内容" but the LLM selected the "标题" input,
+        // automatically redirect to the rich-text editor (ql-editor/contenteditable) if present.
+        const intentLower = intent.toLowerCase();
+        const wantsBody = /正文|内容|content|body|article/i.test(intentLower);
+        const wantsTitle = /标题|title/i.test(intentLower);
+
+        const dataPlaceholder = (elementNode.attributes['data-placeholder'] ?? '').toString().toLowerCase();
+        const placeholder = (elementNode.attributes['placeholder'] ?? '').toString().toLowerCase();
+        const classValue = (elementNode.attributes['class'] ?? '').toString().toLowerCase();
+        const contentEditableAttr = (elementNode.attributes['contenteditable'] ?? '').toString().toLowerCase();
+
+        const isTitleInput =
+          elementNode.tagName === 'input' &&
+          ((placeholder && placeholder.includes('标题')) ||
+            (dataPlaceholder && dataPlaceholder.includes('标题')) ||
+            classValue.includes('publish-title'));
+
+        // Quill rich-text editor (common in many sites) usually uses `.ql-editor`.
+        const isQuillBodyEditor = classValue.includes('ql-editor');
+
+        const isBodyEditor =
+          (elementNode.tagName === 'div' || elementNode.tagName === 'textarea') &&
+          (isQuillBodyEditor ||
+            // Fallback heuristics (keep for non-Quill editors)
+            dataPlaceholder.includes('请输入正文') ||
+            dataPlaceholder.includes('请输入') ||
+            contentEditableAttr === 'true' ||
+            contentEditableAttr === 'contenteditable');
+
+        const inputTextLen = input.text?.trim()?.length ?? 0;
+        const wantsBodyByLen = inputTextLen >= 80 && !/标题|title/i.test(input.text);
+
+        if ((wantsBody || wantsBodyByLen) && !isBodyEditor) {
+          // Prefer Quill editor by `.ql-editor` for better cross-site generalization.
+          const quillCandidates: Array<[number, typeof elementNode]> = [];
+          const fallbackCandidates: Array<[number, typeof elementNode]> = [];
+
+          for (const [idx, node] of state.selectorMap.entries()) {
+            const dp = (node.attributes['data-placeholder'] ?? '').toString().toLowerCase();
+            const ph = (node.attributes['placeholder'] ?? '').toString().toLowerCase();
+            const cls = (node.attributes['class'] ?? '').toString().toLowerCase();
+            const ceAttr = (node.attributes['contenteditable'] ?? '').toString().toLowerCase();
+
+            const isQuill = (node.tagName === 'div' || node.tagName === 'textarea') && cls.includes('ql-editor');
+            const candidateIsBodyish =
+              isQuill || (ceAttr === 'true' && (node.tagName === 'div' || node.tagName === 'textarea'));
+            const candidateLooksLikeTitle = /标题|title/.test(ph + dp + cls);
+
+            if (!candidateIsBodyish || candidateLooksLikeTitle) continue;
+
+            if (isQuill) quillCandidates.push([idx, node]);
+            else fallbackCandidates.push([idx, node]);
+          }
+
+          const picked = quillCandidates[0] ?? fallbackCandidates[0];
+          if (picked) {
+            const [pickedIdx, pickedNode] = picked;
+            if (import.meta.env.DEV) {
+              logger.debug('input_text redirect (DEV)', {
+                fromIndex: targetIndex,
+                fromTag: elementNode.tagName,
+                pickedIndex: pickedIdx,
+                pickedTag: pickedNode.tagName,
+                pickedClass: (pickedNode.attributes['class'] ?? '').toString().slice(0, 80),
+              });
+            }
+            targetIndex = pickedIdx;
+            elementNode = pickedNode;
+          }
+        } else if (wantsTitle && !isTitleInput) {
+          // Optional: if the model picked body editor but says "title", try to find a title input.
+          for (const [idx, node] of state.selectorMap.entries()) {
+            const dp = (node.attributes['data-placeholder'] ?? '').toString().toLowerCase();
+            const ph = (node.attributes['placeholder'] ?? '').toString().toLowerCase();
+            const cls = (node.attributes['class'] ?? '').toString().toLowerCase();
+            const candidateLooksLikeTitle =
+              node.tagName === 'input' && (ph.includes('标题') || dp.includes('标题') || cls.includes('publish-title'));
+            if (candidateLooksLikeTitle) {
+              targetIndex = idx;
+              elementNode = node;
+              break;
+            }
+          }
+        }
+
         await page.inputTextElementNode(this.context.options.useVision, elementNode, input.text);
-        const msg = t('act_inputText_ok', [input.text, input.index.toString()]);
+        const msg = t('act_inputText_ok', [input.text, targetIndex.toString()]);
         this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_OK, msg);
         return new ActionResult({ extractedContent: msg, includeInMemory: true });
       },

@@ -98,6 +98,15 @@ export async function getClickableElements(
   viewportExpansion = 0,
   debugMode = false,
 ): Promise<DOMState> {
+  if (debugMode) {
+    logger.debug('getClickableElements start', {
+      tabId,
+      url,
+      showHighlightElements,
+      focusElement,
+      viewportExpansion,
+    });
+  }
   const [elementTree, selectorMap] = await _buildDomTree(
     tabId,
     url,
@@ -106,6 +115,12 @@ export async function getClickableElements(
     viewportExpansion,
     debugMode,
   );
+  if (debugMode) {
+    logger.debug('getClickableElements done', {
+      selectorMapSize: selectorMap.size,
+      elementTreeTagName: elementTree.tagName,
+    });
+  }
   return { elementTree, selectorMap };
 }
 

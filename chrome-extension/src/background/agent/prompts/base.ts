@@ -33,11 +33,30 @@ abstract class BasePrompt {
     let formattedElementsText = '';
     if (rawElementsText !== '') {
       const scrollInfo = `[Scroll info of current page] window.scrollY: ${browserState.scrollY}, document.body.scrollHeight: ${browserState.scrollHeight}, window.visualViewport.height: ${browserState.visualViewportHeight}, visual viewport height as percentage of scrollable distance: ${Math.round((browserState.visualViewportHeight / (browserState.scrollHeight - browserState.visualViewportHeight)) * 100)}%\n`;
-      logger.info(scrollInfo);
+      if (import.meta.env.DEV) {
+        logger.debug(scrollInfo);
+      } else {
+        logger.info(scrollInfo);
+      }
       const elementsText = wrapUntrustedContent(rawElementsText);
       formattedElementsText = `${scrollInfo}[Start of page]\n${elementsText}\n[End of page]\n`;
+
+      if (import.meta.env.DEV) {
+        logger.debug('Interactive elements (DEV)', {
+          rawElementsTextLen: rawElementsText.length,
+          rawElementsLines: rawElementsText.split('\n').length,
+          rawElementsPreview: rawElementsText.slice(0, 600),
+        });
+      }
     } else {
       formattedElementsText = 'empty page';
+
+      if (import.meta.env.DEV) {
+        logger.debug('No interactive elements text from elementTree (DEV)', {
+          tabId: browserState.tabId,
+          url: browserState.url,
+        });
+      }
     }
 
     let stepInfoDescription = '';

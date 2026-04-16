@@ -10,6 +10,7 @@ export const DEFAULT_INCLUDE_ATTRIBUTES = [
   'role',
   'value',
   'placeholder',
+  'data-placeholder',
   'data-date-format',
   'data-state',
   'alt',

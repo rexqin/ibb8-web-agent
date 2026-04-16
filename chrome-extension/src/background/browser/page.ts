@@ -269,6 +269,7 @@ export default class Page {
       showHighlightElements,
       focusElement,
       this._config.viewportExpansion,
+      import.meta.env.DEV,
     );
   }
 

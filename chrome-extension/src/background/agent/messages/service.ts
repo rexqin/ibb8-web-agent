@@ -177,7 +177,14 @@ export default class MessageManager {
 
     // Filter and wrap user text
     const cleanedTask = filterExternalContent(userText);
-    const content = `Your new ultimate task is: """${cleanedTask}""". This is a follow-up of the previous tasks. Make sure to take all of the previous context into account and finish your new ultimate task.`;
+    const content = `Your new ultimate task is: """${cleanedTask}""".
+
+IMPORTANT (STRICT STEP BOUNDARY):
+1) Ignore ALL previous "ultimate task" instructions and business goals. The only thing you must do is what is explicitly described in this latest task.
+2) Do NOT proceed with follow-up actions from previous tasks (e.g. publishing/submitting/adding links) unless this latest task explicitly asks for them.
+3) When this latest task is completed, you must call the "done" action and stop. Do not add extra actions after completion.
+
+This is a follow-up of the previous tasks. Take prior technical/navigation context into account ONLY to help you complete the latest task safely and correctly.`;
     const wrappedUser = wrapUserRequest(content, false);
 
     // Filter and wrap attachments as untrusted content

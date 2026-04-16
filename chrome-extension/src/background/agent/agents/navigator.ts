@@ -427,6 +427,14 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
         }
         const page = await browserContext.getCurrentPage();
         const beforeUrl = page.url();
+        if (import.meta.env.DEV) {
+          logger.debug('Navigator action about to execute (DEV)', {
+            step: i + 1,
+            actionName,
+            actionArgs,
+            beforeUrl,
+          });
+        }
 
         const indexArg = actionInstance.getIndexArg(actionArgs);
         if (i > 0 && indexArg !== null) {
@@ -452,6 +460,24 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
         }
         const afterUrl = page.url();
         const urlChanged = beforeUrl !== afterUrl;
+        if (import.meta.env.DEV) {
+          const delayMs = this.getPostActionDelayMs(actionName, result, urlChanged);
+          logger.debug('Navigator action executed (DEV)', {
+            step: i + 1,
+            actionName,
+            urlChanged,
+            beforeUrl,
+            afterUrl,
+            result: {
+              success: result.success,
+              isDone: result.isDone,
+              includeInMemory: result.includeInMemory,
+              extractedContentLen: result.extractedContent?.length ?? 0,
+              error: result.error ?? undefined,
+            },
+            postActionDelayMs: delayMs,
+          });
+        }
 
         // if the action has an index argument, record the interacted element to the result
         if (indexArg !== null) {
