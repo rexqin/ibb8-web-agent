@@ -348,15 +348,6 @@ export class ActionBuilder {
           const picked = quillCandidates[0] ?? fallbackCandidates[0];
           if (picked) {
             const [pickedIdx, pickedNode] = picked;
-            if (import.meta.env.DEV) {
-              logger.debug('input_text redirect (DEV)', {
-                fromIndex: targetIndex,
-                fromTag: elementNode.tagName,
-                pickedIndex: pickedIdx,
-                pickedTag: pickedNode.tagName,
-                pickedClass: (pickedNode.attributes['class'] ?? '').toString().slice(0, 80),
-              });
-            }
             targetIndex = pickedIdx;
             elementNode = pickedNode;
           }
@@ -470,21 +461,7 @@ export class ActionBuilder {
         const intent = input.intent || 'Download image and convert to base64';
         this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_START, intent);
 
-        // For DEV diagnostics we keep whatever response metadata we managed to get.
-        let debugResponseStatus: number | undefined;
-        let debugResponseContentType: string | null | undefined;
-        let debugResponseOk: boolean | undefined;
-
         try {
-          if (import.meta.env.DEV) {
-            logger.debug('download_image_to_base64 start', {
-              url: input.url,
-              as_data_uri: input.as_data_uri,
-              mime_type: input.mime_type ?? null,
-              max_output_chars: input.max_output_chars ?? null,
-            });
-          }
-
           const page = await this.context.browserContext.getCurrentPage();
           const state = await page.getState();
           let targetIndex = input.index ?? null;
@@ -514,14 +491,6 @@ export class ActionBuilder {
             if (candidate) {
               targetIndex = candidate[0];
               targetNode = candidate[1];
-              if (import.meta.env.DEV) {
-                logger.debug('download_image_to_base64 fallback target index', {
-                  requestedIndex: input.index ?? null,
-                  pickedIndex: targetIndex,
-                  pickedTag: targetNode.tagName,
-                  pickedClass: (targetNode.attributes['class'] ?? '').toString().slice(0, 120),
-                });
-              }
             }
           }
           if (!targetNode || targetIndex === null) {
@@ -529,28 +498,9 @@ export class ActionBuilder {
           }
 
           const res = await fetch(input.url);
-          debugResponseStatus = res.status;
-          debugResponseContentType = res.headers.get('content-type');
-          debugResponseOk = res.ok;
 
           if (!res.ok) {
-            if (import.meta.env.DEV) {
-              logger.debug('download_image_to_base64 http error', {
-                url: input.url,
-                status: res.status,
-                statusText: res.statusText,
-                contentType: debugResponseContentType,
-                ok: res.ok,
-              });
-            }
             throw new Error(`Failed to download image: ${res.status} ${res.statusText}`);
-          }
-
-          if (import.meta.env.DEV) {
-            logger.debug('download_image_to_base64 fetch ok', {
-              status: res.status,
-              contentType: res.headers.get('content-type'),
-            });
           }
 
           const buffer = await res.arrayBuffer();
@@ -586,38 +536,12 @@ export class ActionBuilder {
 
           await page.inputTextElementNode(this.context.options.useVision, targetNode, output);
 
-          if (import.meta.env.DEV) {
-            logger.debug('download_image_to_base64 finish', {
-              inferredMime,
-              bytesLen: bytes.byteLength,
-              base64Len: base64.length,
-              outputLen: output.length,
-              index: targetIndex,
-              didTruncate,
-            });
-          }
-
           const msg = `Downloaded image and pasted base64 into index ${targetIndex} (${output.length} chars)`;
           this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_OK, msg);
 
           return new ActionResult({ extractedContent: msg, includeInMemory: true });
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : String(error);
-          if (import.meta.env.DEV) {
-            logger.debug('download_image_to_base64 failed', {
-              url: input.url,
-              index: input.index ?? null,
-              as_data_uri: input.as_data_uri,
-              mime_type: input.mime_type ?? null,
-              max_output_chars: input.max_output_chars ?? null,
-              // Best-effort response diagnostics
-              response_status: debugResponseStatus ?? null,
-              response_ok: debugResponseOk ?? null,
-              response_contentType: debugResponseContentType ?? null,
-              error: errorMessage,
-              stack: error instanceof Error ? error.stack?.slice(0, 1000) : null,
-            });
-          }
           this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_FAIL, errorMessage);
           return new ActionResult({ error: errorMessage, includeInMemory: true });
         }
