@@ -1,4 +1,4 @@
-import type { Page, CDPSession } from 'puppeteer-core';
+import type { Page, CDPSession, Protocol } from 'puppeteer-core';
 
 import { EnhancedDOMTreeNode } from './enhancedDOMTreeNode';
 import { buildSnapshotLookup, REQUIRED_COMPUTED_STYLES } from './enhancedSnapshot';
@@ -28,18 +28,19 @@ export enum NodeType {
 }
 
 export interface EnhancedAXProperty {
-  name: string;
+  name: Protocol.Accessibility.AXPropertyName;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value: any;
 }
 
 export interface EnhancedAXNode {
-  axNodeId: number;
+  axNodeId: Protocol.Accessibility.AXNodeId;
   ignored: boolean;
   role: string | null;
   name: string | null;
   description: string | null;
   properties: EnhancedAXProperty[] | null;
-  childIds: number[] | null;
+  childIds: Protocol.Accessibility.AXNodeId[] | null;
 }
 
 export interface SnapshotNode {
@@ -50,16 +51,29 @@ export interface SnapshotNode {
   isClickable: boolean;
   cursorStyle?: string | null;
   paintOrder?: number | null;
-  stackingContexts?: any;
+
+  stackingContexts?: Protocol.DOMSnapshot.RareBooleanData;
 }
 
 // EnhancedDOMTreeNode 现在是一个类，定义在 enhancedDOMTreeNode.ts 中
 export { EnhancedDOMTreeNode } from './enhancedDOMTreeNode';
 
+/** CDP `DOMSnapshot.captureSnapshot` 的协议返回值（见 devtools-protocol `Protocol.DOMSnapshot.CaptureSnapshotResponse`） */
+export type DomSnapshotCaptureResult = Protocol.DOMSnapshot.CaptureSnapshotResponse;
+
+/** CDP `DOM.getDocument` 的协议返回值 */
+export type DomGetDocumentResult = Protocol.DOM.GetDocumentResponse;
+
+/**
+ * 与 CDP `Accessibility.getFullAXTree` 的响应形状一致；
+ * `getAXTreeForAllFrames` 将多 frame 的 `nodes` 合并为单一数组。
+ */
+export type MergedAccessibilityAXTree = Protocol.Accessibility.GetFullAXTreeResponse;
+
 export interface TargetAllTrees {
-  snapshot: any;
-  domTree: any;
-  axTree: any;
+  snapshot: DomSnapshotCaptureResult;
+  domTree: DomGetDocumentResult;
+  axTree: MergedAccessibilityAXTree;
   devicePixelRatio: number;
   cdpTiming: {
     iframeScrollDetectionMs: number;
@@ -112,7 +126,7 @@ export class DomService {
   /**
    * 构建增强的 AX 节点
    */
-  private buildEnhancedAXNode(axNode: any): EnhancedAXNode {
+  private buildEnhancedAXNode(axNode: Protocol.Accessibility.AXNode): EnhancedAXNode {
     let properties: EnhancedAXProperty[] | null = null;
 
     if (axNode.properties && Array.isArray(axNode.properties)) {
@@ -251,10 +265,13 @@ export class DomService {
   /**
    * 获取所有框架的可访问性树
    */
-  private async getAXTreeForAllFrames(page: Page, cdpSession: CDPSession): Promise<any> {
-    const frameTree = await cdpSession.send('Page.getFrameTree');
+  private async getAXTreeForAllFrames(
+    page: Page,
+    cdpSession: CDPSession,
+  ): Promise<Protocol.Accessibility.GetFullAXTreeResponse> {
+    const frameTree: Protocol.Page.GetFrameTreeResponse = await cdpSession.send('Page.getFrameTree');
 
-    const collectAllFrameIds = (frameTreeNode: any): string[] => {
+    const collectAllFrameIds = (frameTreeNode: Protocol.Page.FrameTree): string[] => {
       const frameIds = [frameTreeNode.frame.id];
       if (frameTreeNode.childFrames && Array.isArray(frameTreeNode.childFrames)) {
         for (const childFrame of frameTreeNode.childFrames) {
@@ -266,11 +283,13 @@ export class DomService {
 
     const allFrameIds = collectAllFrameIds(frameTree.frameTree);
 
-    const axTreeRequests = allFrameIds.map(frameId => cdpSession.send('Accessibility.getFullAXTree', { frameId }));
+    const axTreeRequests: Promise<Protocol.Accessibility.GetFullAXTreeResponse>[] = allFrameIds.map(frameId =>
+      cdpSession.send('Accessibility.getFullAXTree', { frameId }),
+    );
 
-    const axTrees = await Promise.all(axTreeRequests);
+    const axTrees: Protocol.Accessibility.GetFullAXTreeResponse[] = await Promise.all(axTreeRequests);
 
-    const mergedNodes: any[] = [];
+    const mergedNodes: Protocol.Accessibility.AXNode[] = [];
     for (const axTree of axTrees) {
       if (axTree.nodes && Array.isArray(axTree.nodes)) {
         mergedNodes.push(...axTree.nodes);
@@ -397,7 +416,7 @@ export class DomService {
 
     // 构建 AX 树查找表
     const startAx = Date.now();
-    const axTreeLookup = new Map<number, any>();
+    const axTreeLookup = new Map<number, Protocol.Accessibility.AXNode>();
     if (axTree.nodes && Array.isArray(axTree.nodes)) {
       for (const axNode of axTree.nodes) {
         if (axNode.backendDOMNodeId) {
@@ -415,7 +434,7 @@ export class DomService {
     timingInfo.buildSnapshotLookupMs = Date.now() - startSnapshot;
 
     const constructEnhancedNode = async (
-      node: any,
+      node: Protocol.DOM.Node,
       htmlFrames: EnhancedDOMTreeNode[] | null,
       totalFrameOffset: DOMRect | null,
     ): Promise<EnhancedDOMTreeNode> => {

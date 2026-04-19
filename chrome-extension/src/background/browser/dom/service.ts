@@ -187,7 +187,7 @@ async function _buildDomTree(
   const [serializedDomState, enhancedDomTree, timingInfo] = await domService.getSerializedDomTree(
     page,
     cdpSession,
-    tabId,
+    tabId.toString(),
   );
 
   // First cast to unknown, then to BuildDomTreeResult

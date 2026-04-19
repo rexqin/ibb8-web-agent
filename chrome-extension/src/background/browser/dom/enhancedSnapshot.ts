@@ -1,3 +1,4 @@
+import type { Protocol } from 'puppeteer-core';
 import type { DOMRect, SnapshotNode } from './domService';
 
 // 仅用于交互性和可见性检测的基本计算样式
@@ -18,7 +19,7 @@ export const REQUIRED_COMPUTED_STYLES = [
 /**
  * 解析稀有布尔数据
  */
-function parseRareBooleanData(rareData: any, index: number): boolean | null {
+function parseRareBooleanData(rareData: Protocol.DOMSnapshot.RareBooleanData, index: number): boolean | null {
   if (!rareData || !rareData.index) {
     return null;
   }
@@ -42,7 +43,10 @@ function parseComputedStyles(strings: string[], styleIndices: number[]): Record<
 /**
  * 构建后端节点 ID 到增强快照数据的查找表，预先计算所有内容
  */
-export function buildSnapshotLookup(snapshot: any, devicePixelRatio: number = 1.0): Map<number, SnapshotNode> {
+export function buildSnapshotLookup(
+  snapshot: Protocol.DOMSnapshot.CaptureSnapshotResponse,
+  devicePixelRatio: number = 1.0,
+): Map<number, SnapshotNode> {
   const snapshotLookup = new Map<number, SnapshotNode>();
 
   if (!snapshot || !snapshot.documents) {
@@ -166,7 +170,7 @@ export function buildSnapshotLookup(snapshot: any, devicePixelRatio: number = 1.
         scrollRects: scrollRects,
         computedStyles: Object.keys(computedStyles).length > 0 ? computedStyles : null,
         paintOrder: paintOrder,
-        stackingContexts: null, // TODO: 如果需要可以实现
+        stackingContexts: snapshot.documents[0].layout.stackingContexts, // TODO: 如果需要可以实现
       });
     }
   }
