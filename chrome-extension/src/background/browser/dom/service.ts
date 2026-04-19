@@ -39,55 +39,6 @@ export interface FrameInfo {
   title: string | null;
 }
 
-declare global {
-  interface Window {
-    buildDomTree: (args: BuildDomTreeArgs) => RawDomTreeNode | null;
-    turn2Markdown: (selector?: string) => string;
-    parserReadability: () => ReadabilityResult | null;
-  }
-}
-
-/**
- * Get the markdown content for the current page.
- * @param tabId - The ID of the tab to get the markdown content for.
- * @param selector - The selector to get the markdown content for. If not provided, the body of the entire page will be converted to markdown.
- * @returns The markdown content for the selected element on the current page.
- */
-export async function getMarkdownContent(tabId: number, selector?: string): Promise<string> {
-  const results = await chrome.scripting.executeScript({
-    target: { tabId: tabId },
-    func: sel => {
-      return window.turn2Markdown(sel);
-    },
-    args: [selector || ''], // Pass the selector as an argument
-  });
-
-  const result = results[0]?.result;
-  if (!result) {
-    throw new Error('Failed to get markdown content');
-  }
-  return result as string;
-}
-
-/**
- * Get the readability content for the current page.
- * @param tabId - The ID of the tab to get the readability content for.
- * @returns The readability content for the current page.
- */
-export async function getReadabilityContent(tabId: number): Promise<ReadabilityResult> {
-  const results = await chrome.scripting.executeScript({
-    target: { tabId },
-    func: () => {
-      return window.parserReadability();
-    },
-  });
-  const result = results[0]?.result;
-  if (!result) {
-    throw new Error('Failed to get readability content');
-  }
-  return result as ReadabilityResult;
-}
-
 /**
  * Get the clickable elements for the current page.
  * @param tabId - The ID of the tab to get the clickable elements for.
@@ -131,9 +82,7 @@ export async function getClickableElements(
 /**
  * 将 `SerializedDOMState` 的简化树转为 `DOMElementNode` 树，并构建与 LLM 中 `[backendNodeId]` 一致的 selectorMap。
  */
-function domStateFromSerializedRoot(
-  root: SimplifiedNode | null,
-): [DOMElementNode, Map<number, DOMElementNode>] {
+function domStateFromSerializedRoot(root: SimplifiedNode | null): [DOMElementNode, Map<number, DOMElementNode>] {
   const selectorMap = new Map<number, DOMElementNode>();
 
   const convert = (node: SimplifiedNode, parent: DOMElementNode | null): DOMBaseNode => {
@@ -148,7 +97,9 @@ function domStateFromSerializedRoot(
     const snap = orig.snapshotNode;
     const isVisible =
       orig.isVisible !== false &&
-      (snap?.clientRects != null || orig.nodeType === NodeType.ELEMENT_NODE || orig.nodeType === NodeType.DOCUMENT_FRAGMENT_NODE);
+      (snap?.clientRects != null ||
+        orig.nodeType === NodeType.ELEMENT_NODE ||
+        orig.nodeType === NodeType.DOCUMENT_FRAGMENT_NODE);
 
     const domEl = new DOMElementNode({
       tagName: orig.tagName || null,
@@ -245,11 +196,7 @@ async function _buildDomTree(
   }
 
   const domService = new DomService();
-  const [serializedDomState, , timingInfo] = await domService.getSerializedDomTree(
-    page,
-    cdpSession,
-    tabId.toString(),
-  );
+  const [serializedDomState, , timingInfo] = await domService.getSerializedDomTree(page, cdpSession, tabId.toString());
 
   if (debugMode) {
     logger.debug('getSerializedDomTree timing', timingInfo);
@@ -278,16 +225,4 @@ export async function getScrollInfo(tabId: number): Promise<[number, number, num
     throw new Error('Failed to get scroll information');
   }
   return [result.scrollY, result.visualViewportHeight, result.scrollHeight];
-}
-
-/** 在可脚本化页面注入 `buildDomTree.js`，提供 `window.buildDomTree`（供自动化 DOM 采集使用） */
-export async function injectBuildDomTreeScripts(tabId: number): Promise<void> {
-  try {
-    await chrome.scripting.executeScript({
-      target: { tabId },
-      files: ['buildDomTree.js'],
-    });
-  } catch (e) {
-    logger.debug('injectBuildDomTreeScripts failed', tabId, e);
-  }
 }

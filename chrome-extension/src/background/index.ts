@@ -23,7 +23,7 @@ import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import { DEFAULT_AGENT_OPTIONS } from './agent/types';
 import { shouldCleanupExecutorOnTerminalEvent } from './executor-lifecycle';
 import { SpeechToTextService } from './services/speechToText';
-import { injectBuildDomTreeScripts } from './browser/dom/service';
+
 import { analytics } from './services/analytics';
 
 const logger = createLogger('background');
@@ -81,7 +81,6 @@ chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(error 
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (tabId && changeInfo.status === 'complete' && isScriptableTabUrl(tab.url)) {
-    await injectBuildDomTreeScripts(tabId);
   }
 });
 
