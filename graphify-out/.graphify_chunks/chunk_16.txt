@@ -1,1 +1,0 @@
-pages/side-panel/public/icons/user.svg
