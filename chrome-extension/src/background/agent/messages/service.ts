@@ -148,7 +148,7 @@ export default class MessageManager {
 
     // Filter and wrap user text
     const cleanedTask = filterExternalContent(userText);
-    const content = `Your ultimate task is: """${cleanedTask}""". If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task. If not, continue as usual.`;
+    const content = `你的终极任务是："""${cleanedTask}"""。若已完成该终极任务，请停止其它操作，并在下一步使用 "done" 动作结束任务；若尚未完成，则照常继续。`;
     const wrappedUser = wrapUserRequest(content, false);
 
     // Filter and wrap attachments as untrusted content
@@ -177,14 +177,14 @@ export default class MessageManager {
 
     // Filter and wrap user text
     const cleanedTask = filterExternalContent(userText);
-    const content = `Your new ultimate task is: """${cleanedTask}""".
+    const content = `你的新终极任务是："""${cleanedTask}"""。
 
-IMPORTANT (STRICT STEP BOUNDARY):
-1) Ignore ALL previous "ultimate task" instructions and business goals. The only thing you must do is what is explicitly described in this latest task.
-2) Do NOT proceed with follow-up actions from previous tasks (e.g. publishing/submitting/adding links) unless this latest task explicitly asks for them.
-3) When this latest task is completed, you must call the "done" action and stop. Do not add extra actions after completion.
+重要（严格步骤边界）：
+1）忽略此前所有「终极任务」指令与业务目标；你唯一必须执行的内容，就是本条最新任务中明确描述的事项。
+2）除非本条最新任务明确要求，否则不要继续执行上一任务的后续动作（例如发布、提交、添加链接等）。
+3）本条最新任务完成后，你必须调用 "done" 动作并停止；不要在完成后再追加额外动作。
 
-This is a follow-up of the previous tasks. Take prior technical/navigation context into account ONLY to help you complete the latest task safely and correctly.`;
+这是对先前任务的延续。仅在为安全、正确地完成本条最新任务所必需时，才将此前的技术与导航上下文作为辅助参考。`;
     const wrappedUser = wrapUserRequest(content, false);
 
     // Filter and wrap attachments as untrusted content
