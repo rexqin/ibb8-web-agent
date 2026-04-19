@@ -12,11 +12,7 @@ import type {
   HTTPResponse,
 } from 'puppeteer-core';
 
-import {
-  getClickableElements as _getClickableElements,
-  removeHighlights as _removeHighlights,
-  getScrollInfo as _getScrollInfo,
-} from './dom/service';
+import { getClickableElements as _getClickableElements, getScrollInfo as _getScrollInfo } from './dom/service';
 import { DOMElementNode, type DOMState } from './dom/views';
 import { type BrowserContextConfig, DEFAULT_BROWSER_CONTEXT_CONFIG, type PageState, URLNotAllowedError } from './views';
 import { createLogger } from '@src/background/log';
@@ -256,20 +252,13 @@ export default class Page {
     }
   }
 
-  async removeHighlight(): Promise<void> {
-    if (this._config.displayHighlights && this._validWebPage) {
-      await _removeHighlights(this._tabId);
-    }
-  }
-
-  async getClickableElements(showHighlightElements: boolean, focusElement: number): Promise<DOMState | null> {
+  async getClickableElements(focusElement: number): Promise<DOMState | null> {
     if (!this._validWebPage) {
       return null;
     }
     return _getClickableElements(
       this._tabId,
       this.url(),
-      showHighlightElements,
       focusElement,
       this._config.viewportExpansion,
       import.meta.env.DEV,
@@ -486,13 +475,7 @@ export default class Page {
         return this._state;
       }
 
-      await this.removeHighlight();
-
-      // Get DOM content (equivalent to dom_service.get_clickable_elements)
-      // This part would need to be implemented based on your DomService logic
-      // showHighlightElements is true if either useVision or displayHighlights is true
-      const displayHighlights = this._config.displayHighlights || useVision;
-      const content = await this.getClickableElements(displayHighlights, focusElement);
+      const content = await this.getClickableElements(focusElement);
       if (!content) {
         logger.warning('Failed to get clickable elements');
         // Return last known good state if available

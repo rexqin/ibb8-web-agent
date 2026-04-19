@@ -109,27 +109,6 @@ export const GeneralSettings = () => {
 
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base font-medium text-[#8a490d]">{t('options_general_displayHighlights')}</h3>
-              <p className="text-sm font-normal text-[#a35b19]">{t('options_general_displayHighlights_desc')}</p>
-            </div>
-            <div className="relative inline-flex cursor-pointer items-center">
-              <input
-                id="displayHighlights"
-                type="checkbox"
-                checked={settings.displayHighlights}
-                onChange={e => updateSetting('displayHighlights', e.target.checked)}
-                className="peer sr-only"
-              />
-              <label
-                htmlFor="displayHighlights"
-                className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:size-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-[#fdb56f] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#fdb56f]/30">
-                <span className="sr-only">{t('options_general_displayHighlights')}</span>
-              </label>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
               <h3 className="text-base font-medium text-[#8a490d]">{t('options_general_planningInterval')}</h3>
               <p className="text-sm font-normal text-[#a35b19]">{t('options_general_planningInterval_desc')}</p>
             </div>

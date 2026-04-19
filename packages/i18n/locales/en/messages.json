@@ -385,12 +385,6 @@
   "options_general_enableVision_desc": {
     "message": "Use vision capability of LLMs (consumes more tokens for better results)"
   },
-  "options_general_displayHighlights": {
-    "message": "Display Highlights"
-  },
-  "options_general_displayHighlights_desc": {
-    "message": "Show visual highlights on interactive elements (e.g. buttons, links, etc.)"
-  },
   "options_general_planningInterval": {
     "message": "Replanning Frequency"
   },

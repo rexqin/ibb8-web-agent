@@ -70,12 +70,6 @@ export interface BrowserContextConfig {
    * @default 'https://www.google.com'
    */
   homePageUrl: string;
-
-  /**
-   * Display highlights on interactive elements
-   * @default true
-   */
-  displayHighlights: boolean;
 }
 
 export const DEFAULT_BROWSER_CONTEXT_CONFIG: BrowserContextConfig = {
@@ -89,7 +83,6 @@ export const DEFAULT_BROWSER_CONTEXT_CONFIG: BrowserContextConfig = {
   deniedUrls: [],
   includeDynamicAttributes: true,
   homePageUrl: 'about:blank',
-  displayHighlights: false,
 };
 
 export interface PageState extends DOMState {

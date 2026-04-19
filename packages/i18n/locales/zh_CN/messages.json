@@ -384,12 +384,7 @@
   "options_general_enableVision_desc": {
     "message": "使用大型语言模型的视觉能力 (将会消耗更多的 token 以取得更好的结果)"
   },
-  "options_general_displayHighlights": {
-    "message": "显示高亮标记"
-  },
-  "options_general_displayHighlights_desc": {
-    "message": "在可互动的元素 (如按钮、链接等) 上显示视觉化高亮标记"
-  },
+
   "options_general_planningInterval": {
     "message": "重新规划频率"
   },

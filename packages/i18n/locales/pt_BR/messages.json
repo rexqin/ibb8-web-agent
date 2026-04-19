@@ -386,12 +386,6 @@
   "options_general_enableVision_desc": {
     "message": "Usar capacidade de visão dos modelos de linguagem (consome mais tokens para melhores resultados)"
   },
-  "options_general_displayHighlights": {
-    "message": "Mostrar Destaques"
-  },
-  "options_general_displayHighlights_desc": {
-    "message": "Mostrar destaques visuais em elementos interativos (ex: botões, links, etc.)"
-  },
   "options_general_planningInterval": {
     "message": "Frequência de Replanejamento"
   },

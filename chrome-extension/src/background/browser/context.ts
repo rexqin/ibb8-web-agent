@@ -71,17 +71,6 @@ export default class BrowserContext {
   }
 
   public async cleanup(): Promise<void> {
-    try {
-      const currentPage = await this.getCurrentPage();
-      await currentPage?.removeHighlight();
-    } catch (error) {
-      // Cleanup should be best-effort: tab may have been closed already.
-      if (isNoTabError(error)) {
-        logger.info('cleanup skipped highlight removal because tab no longer exists');
-      } else {
-        logger.warning('cleanup failed to remove highlight', error);
-      }
-    }
     // detach all pages
     for (const page of this._attachedPages.values()) {
       await page.detachPuppeteer();
@@ -498,12 +487,5 @@ export default class BrowserContext {
       // browser_errors: [],
     };
     return browserState;
-  }
-
-  public async removeHighlight(): Promise<void> {
-    const page = await this.getCurrentPage();
-    if (page) {
-      await page.removeHighlight();
-    }
   }
 }

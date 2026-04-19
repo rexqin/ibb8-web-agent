@@ -10,7 +10,6 @@ export interface GeneralSettingsConfig {
   useVision: boolean;
   useVisionForPlanner: boolean;
   planningInterval: number;
-  displayHighlights: boolean;
   minWaitPageLoad: number;
   replayHistoricalTasks: boolean;
 }
@@ -29,7 +28,6 @@ export const DEFAULT_GENERAL_SETTINGS: GeneralSettingsConfig = {
   useVision: false,
   useVisionForPlanner: false,
   planningInterval: 3,
-  displayHighlights: false,
   minWaitPageLoad: 250,
   replayHistoricalTasks: false,
 };
@@ -49,8 +47,7 @@ export const generalSettingsStore: GeneralSettingsStorage = {
     };
 
     // If useVision is true, displayHighlights must also be true
-    if (updatedSettings.useVision && !updatedSettings.displayHighlights) {
-      updatedSettings.displayHighlights = true;
+    if (updatedSettings.useVision) {
     }
 
     await storage.set(updatedSettings);

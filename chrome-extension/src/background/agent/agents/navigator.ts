@@ -414,8 +414,6 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
     const browserState = await browserContext.getState(this.context.options.useVision);
     const cachedPathHashes = await calcBranchPathHashSet(browserState);
 
-    await browserContext.removeHighlight();
-
     for (const [i, action] of actions.entries()) {
       const actionName = Object.keys(action)[0];
       const actionArgs = action[actionName];

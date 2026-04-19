@@ -368,12 +368,6 @@ chrome.runtime.onConnect.addListener(port => {
             }
           }
 
-          case 'nohighlight': {
-            const page = await browserContext.getCurrentPage();
-            await page.removeHighlight();
-            return port.postMessage({ type: 'success', msg: t('bg_cmd_nohighlight_ok') });
-          }
-
           case 'speech_to_text': {
             try {
               if (!message.audio) {
@@ -515,7 +509,6 @@ async function setupExecutor(taskId: string, task: string, browserContext: Brows
   const generalSettings = await generalSettingsStore.getSettings();
   browserContext.updateConfig({
     minimumWaitPageLoadTime: generalSettings.minWaitPageLoad / 1000.0,
-    displayHighlights: generalSettings.displayHighlights,
   });
 
   const executor = new Executor(task, taskId, browserContext, navigatorLLM, {
