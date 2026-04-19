@@ -1,0 +1,15 @@
+# .addToolMessage()
+
+- **ID:** `chrome_extension_src_background_agent_messages_service_ts_messagemanager_addtoolmessage`
+- **Type:** Method
+- **File:** `./chrome-extension/src/background/agent/messages/service.ts`
+- **Location:** L442
+
+## Relationships
+
+- chrome_extension_src_background_agent_messages_service_ts_messagemanager → chrome_extension_src_background_agent_messages_service_ts_messagemanager_addtoolmessage (defines, Extracted)
+- chrome_extension_src_background_agent_messages_service_ts_messagemanager_inittaskmessages → chrome_extension_src_background_agent_messages_service_ts_messagemanager_addtoolmessage (calls, Inferred)
+- chrome_extension_src_background_agent_messages_service_ts_messagemanager_addmodeloutput → chrome_extension_src_background_agent_messages_service_ts_messagemanager_addtoolmessage (calls, Inferred)
+- chrome_extension_src_background_agent_messages_service_ts_messagemanager_addtoolmessage → chrome_extension_src_background_agent_messages_service_ts_messagemanager_nexttoolid (calls, Inferred)
+- chrome_extension_src_background_agent_messages_service_ts_messagemanager_addtoolmessage → chrome_extension_src_background_agent_messages_service_ts_messagemanager_addmessagewithtokens (calls, Inferred)
+

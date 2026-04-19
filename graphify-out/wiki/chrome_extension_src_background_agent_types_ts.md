@@ -1,0 +1,23 @@
+# types
+
+- **ID:** `chrome_extension_src_background_agent_types_ts`
+- **Type:** File
+- **File:** `./chrome-extension/src/background/agent/types.ts`
+
+## Relationships
+
+- chrome_extension_src_background_agent_types_ts → chrome_extension_src_background_agent_types_ts_import_zod_z (imports, Extracted)
+- chrome_extension_src_background_agent_types_ts → chrome_extension_src_background_agent_types_ts_import_browser_context_browsercontext (imports, Extracted)
+- chrome_extension_src_background_agent_types_ts → chrome_extension_src_background_agent_types_ts_import_browser_dom_views_default_include_attributes (imports, Extracted)
+- chrome_extension_src_background_agent_types_ts → chrome_extension_src_background_agent_types_ts_import_browser_dom_history_view_domhistoryelement (imports, Extracted)
+- chrome_extension_src_background_agent_types_ts → chrome_extension_src_background_agent_types_ts_import_messages_service_messagemanager (imports, Extracted)
+- chrome_extension_src_background_agent_types_ts → chrome_extension_src_background_agent_types_ts_import_event_manager_eventmanager (imports, Extracted)
+- chrome_extension_src_background_agent_types_ts → chrome_extension_src_background_agent_types_ts_import_event_types_actors (imports, Extracted)
+- chrome_extension_src_background_agent_types_ts → chrome_extension_src_background_agent_types_ts_import_event_types_executionstate (imports, Extracted)
+- chrome_extension_src_background_agent_types_ts → chrome_extension_src_background_agent_types_ts_import_event_types_agentevent (imports, Extracted)
+- chrome_extension_src_background_agent_types_ts → chrome_extension_src_background_agent_types_ts_import_history_agentstephistory (imports, Extracted)
+- chrome_extension_src_background_agent_types_ts → chrome_extension_src_background_agent_types_ts_agentcontext (defines, Extracted)
+- chrome_extension_src_background_agent_types_ts → chrome_extension_src_background_agent_types_ts_agentstepinfo (defines, Extracted)
+- chrome_extension_src_background_agent_types_ts → chrome_extension_src_background_agent_types_ts_actionresult (defines, Extracted)
+- chrome_extension_src_background_agent_types_ts → chrome_extension_src_background_agent_types_ts_stepmetadata (defines, Extracted)
+

@@ -1,0 +1,15 @@
+# planner
+
+- **ID:** `chrome_extension_src_background_agent_prompts_planner_ts`
+- **Type:** File
+- **File:** `./chrome-extension/src/background/agent/prompts/planner.ts`
+
+## Relationships
+
+- chrome_extension_src_background_agent_prompts_planner_ts → chrome_extension_src_background_agent_prompts_planner_ts_import_base_baseprompt (imports, Extracted)
+- chrome_extension_src_background_agent_prompts_planner_ts → chrome_extension_src_background_agent_prompts_planner_ts_import_langchain_core_messages_humanmessage (imports, Extracted)
+- chrome_extension_src_background_agent_prompts_planner_ts → chrome_extension_src_background_agent_prompts_planner_ts_import_langchain_core_messages_systemmessage (imports, Extracted)
+- chrome_extension_src_background_agent_prompts_planner_ts → chrome_extension_src_background_agent_prompts_planner_ts_import_src_background_agent_types_agentcontext (imports, Extracted)
+- chrome_extension_src_background_agent_prompts_planner_ts → chrome_extension_src_background_agent_prompts_planner_ts_import_templates_planner_plannersystemprompttemplate (imports, Extracted)
+- chrome_extension_src_background_agent_prompts_planner_ts → chrome_extension_src_background_agent_prompts_planner_ts_plannerprompt (defines, Extracted)
+

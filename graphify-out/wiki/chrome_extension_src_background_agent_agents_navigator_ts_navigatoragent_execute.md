@@ -1,0 +1,17 @@
+# .execute()
+
+- **ID:** `chrome_extension_src_background_agent_agents_navigator_ts_navigatoragent_execute`
+- **Type:** Method
+- **File:** `./chrome-extension/src/background/agent/agents/navigator.ts`
+- **Location:** L178
+
+## Relationships
+
+- chrome_extension_src_background_agent_agents_navigator_ts_navigatoragent → chrome_extension_src_background_agent_agents_navigator_ts_navigatoragent_execute (defines, Extracted)
+- chrome_extension_src_background_agent_agents_navigator_ts_navigatoragent_execute → chrome_extension_src_background_agent_agents_navigator_ts_navigatoragent_addstatemessagetomemory (calls, Inferred)
+- chrome_extension_src_background_agent_agents_navigator_ts_navigatoragent_execute → chrome_extension_src_background_agent_agents_navigator_ts_navigatoragent_removelaststatemessagefrommemory (calls, Inferred)
+- chrome_extension_src_background_agent_agents_navigator_ts_navigatoragent_execute → chrome_extension_src_background_agent_agents_navigator_ts_navigatoragent_domultiaction (calls, Inferred)
+- chrome_extension_src_background_agent_agents_navigator_ts_navigatoragent_execute → chrome_extension_src_background_agent_agents_navigator_ts_navigatoragent_fixactions (calls, Inferred)
+- chrome_extension_src_background_agent_agents_navigator_ts_navigatoragent_execute → chrome_extension_src_background_agent_agents_navigator_ts_navigatoragent_addmodeloutputtomemory (calls, Inferred)
+- chrome_extension_src_background_agent_agents_navigator_ts_navigatoragent_execute → chrome_extension_src_background_agent_agents_navigator_ts_navigatoragent_invoke (calls, Inferred)
+

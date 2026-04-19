@@ -1,0 +1,31 @@
+# Community 35: guardrails.test
+
+**Members:** 11
+
+## Nodes
+
+- **guardrails.test** (`chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts`, File, degree: 10)
+- **../../../agent/messages/utils/filterExternalContent** (`chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts_import_agent_messages_utils_filterexternalcontent`, Module, degree: 1)
+- **../../../agent/messages/utils/filterExternalContentWithReport** (`chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts_import_agent_messages_utils_filterexternalcontentwithreport`, Module, degree: 1)
+- **../../../agent/messages/utils/wrapUntrustedContent** (`chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts_import_agent_messages_utils_wrapuntrustedcontent`, Module, degree: 1)
+- **../index/cleanEmptyTags** (`chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts_import_index_cleanemptytags`, Module, degree: 1)
+- **../index/guardrails** (`chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts_import_index_guardrails`, Module, degree: 1)
+- **../index/sanitizeContent** (`chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts_import_index_sanitizecontent`, Module, degree: 1)
+- **../index/ThreatType** (`chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts_import_index_threattype`, Module, degree: 1)
+- **vitest/describe** (`chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts_import_vitest_describe`, Module, degree: 1)
+- **vitest/expect** (`chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts_import_vitest_expect`, Module, degree: 1)
+- **vitest/it** (`chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts_import_vitest_it`, Module, degree: 1)
+
+## Relationships
+
+- chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts → chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts_import_vitest_describe (imports)
+- chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts → chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts_import_vitest_it (imports)
+- chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts → chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts_import_vitest_expect (imports)
+- chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts → chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts_import_index_guardrails (imports)
+- chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts → chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts_import_index_threattype (imports)
+- chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts → chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts_import_index_sanitizecontent (imports)
+- chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts → chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts_import_index_cleanemptytags (imports)
+- chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts → chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts_import_agent_messages_utils_filterexternalcontent (imports)
+- chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts → chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts_import_agent_messages_utils_filterexternalcontentwithreport (imports)
+- chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts → chrome_extension_src_background_services_guardrails_tests_guardrails_test_ts_import_agent_messages_utils_wrapuntrustedcontent (imports)
+

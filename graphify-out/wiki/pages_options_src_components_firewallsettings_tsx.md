@@ -1,0 +1,18 @@
+# FirewallSettings
+
+- **ID:** `pages_options_src_components_firewallsettings_tsx`
+- **Type:** File
+- **File:** `./pages/options/src/components/FirewallSettings.tsx`
+
+## Relationships
+
+- pages_options_src_components_firewallsettings_tsx → pages_options_src_components_firewallsettings_tsx_import_react_usestate (imports, Extracted)
+- pages_options_src_components_firewallsettings_tsx → pages_options_src_components_firewallsettings_tsx_import_react_useeffect (imports, Extracted)
+- pages_options_src_components_firewallsettings_tsx → pages_options_src_components_firewallsettings_tsx_import_react_usecallback (imports, Extracted)
+- pages_options_src_components_firewallsettings_tsx → pages_options_src_components_firewallsettings_tsx_import_extension_storage_firewallstore (imports, Extracted)
+- pages_options_src_components_firewallsettings_tsx → pages_options_src_components_firewallsettings_tsx_import_extension_ui_button (imports, Extracted)
+- pages_options_src_components_firewallsettings_tsx → pages_options_src_components_firewallsettings_tsx_import_extension_i18n_t (imports, Extracted)
+- pages_options_src_components_firewallsettings_tsx → pages_options_src_components_firewallsettings_tsx_handletogglefirewall (defines, Extracted)
+- pages_options_src_components_firewallsettings_tsx → pages_options_src_components_firewallsettings_tsx_handleaddurl (defines, Extracted)
+- pages_options_src_components_firewallsettings_tsx → pages_options_src_components_firewallsettings_tsx_handleremoveurl (defines, Extracted)
+

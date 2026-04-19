@@ -1,0 +1,19 @@
+# AnalyticsService
+
+- **ID:** `chrome_extension_src_background_services_analytics_ts_analyticsservice`
+- **Type:** Class
+- **File:** `./chrome-extension/src/background/services/analytics.ts`
+- **Location:** L14
+
+## Relationships
+
+- chrome_extension_src_background_services_analytics_ts → chrome_extension_src_background_services_analytics_ts_analyticsservice (defines, Extracted)
+- chrome_extension_src_background_services_analytics_ts_analyticsservice → chrome_extension_src_background_services_analytics_ts_analyticsservice_init (defines, Extracted)
+- chrome_extension_src_background_services_analytics_ts_analyticsservice → chrome_extension_src_background_services_analytics_ts_analyticsservice_tracktaskstart (defines, Extracted)
+- chrome_extension_src_background_services_analytics_ts_analyticsservice → chrome_extension_src_background_services_analytics_ts_analyticsservice_tracktaskcomplete (defines, Extracted)
+- chrome_extension_src_background_services_analytics_ts_analyticsservice → chrome_extension_src_background_services_analytics_ts_analyticsservice_tracktaskfailed (defines, Extracted)
+- chrome_extension_src_background_services_analytics_ts_analyticsservice → chrome_extension_src_background_services_analytics_ts_analyticsservice_tracktaskcancelled (defines, Extracted)
+- chrome_extension_src_background_services_analytics_ts_analyticsservice → chrome_extension_src_background_services_analytics_ts_analyticsservice_trackdomainvisit (defines, Extracted)
+- chrome_extension_src_background_services_analytics_ts_analyticsservice → chrome_extension_src_background_services_analytics_ts_analyticsservice_categorizeerror (defines, Extracted)
+- chrome_extension_src_background_services_analytics_ts_analyticsservice → chrome_extension_src_background_services_analytics_ts_analyticsservice_updatesettings (defines, Extracted)
+

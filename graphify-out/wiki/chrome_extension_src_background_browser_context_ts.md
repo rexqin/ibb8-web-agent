@@ -1,0 +1,23 @@
+# context
+
+- **ID:** `chrome_extension_src_background_browser_context_ts`
+- **Type:** File
+- **File:** `./chrome-extension/src/background/browser/context.ts`
+
+## Relationships
+
+- chrome_extension_src_background_browser_context_ts → chrome_extension_src_background_browser_context_ts_import_webextension_polyfill (imports, Extracted)
+- chrome_extension_src_background_browser_context_ts → chrome_extension_src_background_browser_context_ts_import_views_browsercontextconfig (imports, Extracted)
+- chrome_extension_src_background_browser_context_ts → chrome_extension_src_background_browser_context_ts_import_views_browserstate (imports, Extracted)
+- chrome_extension_src_background_browser_context_ts → chrome_extension_src_background_browser_context_ts_import_views_default_browser_context_config (imports, Extracted)
+- chrome_extension_src_background_browser_context_ts → chrome_extension_src_background_browser_context_ts_import_views_tabinfo (imports, Extracted)
+- chrome_extension_src_background_browser_context_ts → chrome_extension_src_background_browser_context_ts_import_views_urlnotallowederror (imports, Extracted)
+- chrome_extension_src_background_browser_context_ts → chrome_extension_src_background_browser_context_ts_import_page_page (imports, Extracted)
+- chrome_extension_src_background_browser_context_ts → chrome_extension_src_background_browser_context_ts_import_page_build_initial_state (imports, Extracted)
+- chrome_extension_src_background_browser_context_ts → chrome_extension_src_background_browser_context_ts_import_src_background_log_createlogger (imports, Extracted)
+- chrome_extension_src_background_browser_context_ts → chrome_extension_src_background_browser_context_ts_import_util_isurlallowed (imports, Extracted)
+- chrome_extension_src_background_browser_context_ts → chrome_extension_src_background_browser_context_ts_import_services_analytics_analytics (imports, Extracted)
+- chrome_extension_src_background_browser_context_ts → chrome_extension_src_background_browser_context_ts_isnotaberror (defines, Extracted)
+- chrome_extension_src_background_browser_context_ts → chrome_extension_src_background_browser_context_ts_isblockedautomationurl (defines, Extracted)
+- chrome_extension_src_background_browser_context_ts → chrome_extension_src_background_browser_context_ts_browsercontext (defines, Extracted)
+

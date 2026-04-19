@@ -1,0 +1,549 @@
+{
+  "nodes": [
+    {
+      "id": "packages_shared_lib_message_external_ts",
+      "label": "external.ts",
+      "file_type": "code",
+      "source_file": "packages/shared/lib/message/external.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "packages_shared_lib_message_internal_ts",
+      "label": "internal.ts",
+      "file_type": "code",
+      "source_file": "packages/shared/lib/message/internal.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "packages_shared_lib_utils_shared_types_ts",
+      "label": "shared-types.ts",
+      "file_type": "code",
+      "source_file": "packages/shared/lib/utils/shared-types.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "packages_shared_lib_utils_index_ts",
+      "label": "index.ts",
+      "file_type": "code",
+      "source_file": "packages/shared/lib/utils/index.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "packages_shared_lib_hooks_usestorage_tsx",
+      "label": "useStorage.tsx",
+      "file_type": "code",
+      "source_file": "packages/shared/lib/hooks/useStorage.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "usestorage_usestorage",
+      "label": "useStorage()",
+      "file_type": "code",
+      "source_file": "packages/shared/lib/hooks/useStorage.tsx",
+      "source_location": "L8"
+    },
+    {
+      "id": "usestorage_wrappromise",
+      "label": "wrapPromise()",
+      "file_type": "code",
+      "source_file": "packages/shared/lib/hooks/useStorage.tsx",
+      "source_location": "L24"
+    },
+    {
+      "id": "packages_storage_build_mjs",
+      "label": "build.mjs",
+      "file_type": "code",
+      "source_file": "packages/storage/build.mjs",
+      "source_location": "L1"
+    },
+    {
+      "id": "packages_storage_index_ts",
+      "label": "index.ts",
+      "file_type": "code",
+      "source_file": "packages/storage/index.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "packages_storage_lib_index_ts",
+      "label": "index.ts",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/index.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "packages_storage_lib_settings_agentmodels_ts",
+      "label": "agentModels.ts",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/settings/agentModels.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "agentmodels_validatemodelconfig",
+      "label": "validateModelConfig()",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/settings/agentModels.ts",
+      "source_location": "L39"
+    },
+    {
+      "id": "agentmodels_getmodelparameters",
+      "label": "getModelParameters()",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/settings/agentModels.ts",
+      "source_location": "L45"
+    },
+    {
+      "id": "packages_storage_lib_settings_analyticssettings_ts",
+      "label": "analyticsSettings.ts",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/settings/analyticsSettings.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "analyticssettings_generateanonymoususerid",
+      "label": "generateAnonymousUserId()",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/settings/analyticsSettings.ts",
+      "source_location": "L19"
+    },
+    {
+      "id": "packages_storage_lib_chat_history_ts",
+      "label": "history.ts",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/chat/history.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "history_getsessionmessageskey",
+      "label": "getSessionMessagesKey()",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/chat/history.ts",
+      "source_location": "L22"
+    },
+    {
+      "id": "history_getsessionmessagesstorage",
+      "label": "getSessionMessagesStorage()",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/chat/history.ts",
+      "source_location": "L25"
+    },
+    {
+      "id": "history_getsessionagentstephistorykey",
+      "label": "getSessionAgentStepHistoryKey()",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/chat/history.ts",
+      "source_location": "L33"
+    },
+    {
+      "id": "history_getsessionagentstephistorystorage",
+      "label": "getSessionAgentStepHistoryStorage()",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/chat/history.ts",
+      "source_location": "L36"
+    },
+    {
+      "id": "history_getcurrenttimestamp",
+      "label": "getCurrentTimestamp()",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/chat/history.ts",
+      "source_location": "L52"
+    },
+    {
+      "id": "history_createchathistorystorage",
+      "label": "createChatHistoryStorage()",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/chat/history.ts",
+      "source_location": "L57"
+    },
+    {
+      "id": "packages_storage_lib_chat_types_ts",
+      "label": "types.ts",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/chat/types.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "packages_storage_lib_chat_index_ts",
+      "label": "index.ts",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/chat/index.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "packages_storage_lib_plan_history_ts",
+      "label": "history.ts",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/plan/history.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "history_getplanstepskey",
+      "label": "getPlanStepsKey()",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/plan/history.ts",
+      "source_location": "L18"
+    },
+    {
+      "id": "history_getplanstepsstorage",
+      "label": "getPlanStepsStorage()",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/plan/history.ts",
+      "source_location": "L20"
+    },
+    {
+      "id": "history_now",
+      "label": "now()",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/plan/history.ts",
+      "source_location": "L26"
+    },
+    {
+      "id": "history_createplanhistorystorage",
+      "label": "createPlanHistoryStorage()",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/plan/history.ts",
+      "source_location": "L28"
+    },
+    {
+      "id": "packages_storage_lib_plan_types_ts",
+      "label": "types.ts",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/plan/types.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "packages_storage_lib_plan_index_ts",
+      "label": "index.ts",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/plan/index.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "packages_storage_lib_profile_index_ts",
+      "label": "index.ts",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/profile/index.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "packages_storage_lib_profile_user_ts",
+      "label": "user.ts",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/profile/user.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "packages_storage_lib_prompt_favorites_ts",
+      "label": "favorites.ts",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/prompt/favorites.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "favorites_createfavoritesstorage",
+      "label": "createFavoritesStorage()",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/prompt/favorites.ts",
+      "source_location": "L62"
+    },
+    {
+      "id": "packages_storage_lib_base_base_ts",
+      "label": "base.ts",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/base/base.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "base_updatecache",
+      "label": "updateCache()",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/base/base.ts",
+      "source_location": "L13"
+    },
+    {
+      "id": "base_checkstoragepermission",
+      "label": "checkStoragePermission()",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/base/base.ts",
+      "source_location": "L46"
+    },
+    {
+      "id": "base_createstorage",
+      "label": "createStorage()",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/base/base.ts",
+      "source_location": "L59"
+    },
+    {
+      "id": "packages_storage_lib_base_types_ts",
+      "label": "types.ts",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/base/types.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "packages_storage_lib_base_enums_ts",
+      "label": "enums.ts",
+      "file_type": "code",
+      "source_file": "packages/storage/lib/base/enums.ts",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "packages_shared_lib_hooks_usestorage_tsx",
+      "target": "usestorage_usestorage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/shared/lib/hooks/useStorage.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_shared_lib_hooks_usestorage_tsx",
+      "target": "usestorage_wrappromise",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/shared/lib/hooks/useStorage.tsx",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "usestorage_usestorage",
+      "target": "usestorage_wrappromise",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/shared/lib/hooks/useStorage.tsx",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_storage_lib_settings_agentmodels_ts",
+      "target": "agentmodels_validatemodelconfig",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/storage/lib/settings/agentModels.ts",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_storage_lib_settings_agentmodels_ts",
+      "target": "agentmodels_getmodelparameters",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/storage/lib/settings/agentModels.ts",
+      "source_location": "L45",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_storage_lib_settings_analyticssettings_ts",
+      "target": "analyticssettings_generateanonymoususerid",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/storage/lib/settings/analyticsSettings.ts",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_storage_lib_chat_history_ts",
+      "target": "history_getsessionmessageskey",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/storage/lib/chat/history.ts",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_storage_lib_chat_history_ts",
+      "target": "history_getsessionmessagesstorage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/storage/lib/chat/history.ts",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_storage_lib_chat_history_ts",
+      "target": "history_getsessionagentstephistorykey",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/storage/lib/chat/history.ts",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_storage_lib_chat_history_ts",
+      "target": "history_getsessionagentstephistorystorage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/storage/lib/chat/history.ts",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_storage_lib_chat_history_ts",
+      "target": "history_getcurrenttimestamp",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/storage/lib/chat/history.ts",
+      "source_location": "L52",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_storage_lib_chat_history_ts",
+      "target": "history_createchathistorystorage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/storage/lib/chat/history.ts",
+      "source_location": "L57",
+      "weight": 1.0
+    },
+    {
+      "source": "history_getsessionmessagesstorage",
+      "target": "history_getsessionmessageskey",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/storage/lib/chat/history.ts",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "history_getsessionagentstephistorystorage",
+      "target": "history_getsessionagentstephistorykey",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/storage/lib/chat/history.ts",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_storage_lib_plan_history_ts",
+      "target": "history_getplanstepskey",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/storage/lib/plan/history.ts",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_storage_lib_plan_history_ts",
+      "target": "history_getplanstepsstorage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/storage/lib/plan/history.ts",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_storage_lib_plan_history_ts",
+      "target": "history_now",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/storage/lib/plan/history.ts",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_storage_lib_plan_history_ts",
+      "target": "history_createplanhistorystorage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/storage/lib/plan/history.ts",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "history_getplanstepsstorage",
+      "target": "history_getplanstepskey",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/storage/lib/plan/history.ts",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_storage_lib_prompt_favorites_ts",
+      "target": "favorites_createfavoritesstorage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/storage/lib/prompt/favorites.ts",
+      "source_location": "L62",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_storage_lib_base_base_ts",
+      "target": "base_updatecache",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/storage/lib/base/base.ts",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_storage_lib_base_base_ts",
+      "target": "base_checkstoragepermission",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/storage/lib/base/base.ts",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "packages_storage_lib_base_base_ts",
+      "target": "base_createstorage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/storage/lib/base/base.ts",
+      "source_location": "L59",
+      "weight": 1.0
+    },
+    {
+      "source": "base_createstorage",
+      "target": "base_checkstoragepermission",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "packages/storage/lib/base/base.ts",
+      "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "history_getsessionmessagesstorage",
+      "target": "base_createstorage",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "packages/storage/lib/chat/history.ts",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "history_getsessionagentstephistorystorage",
+      "target": "base_createstorage",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "packages/storage/lib/chat/history.ts",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "history_getcurrenttimestamp",
+      "target": "history_now",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "packages/storage/lib/chat/history.ts",
+      "source_location": "L52",
+      "weight": 1.0
+    },
+    {
+      "source": "history_getplanstepsstorage",
+      "target": "base_createstorage",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "packages/storage/lib/plan/history.ts",
+      "source_location": "L21",
+      "weight": 1.0
+    }
+  ]
+}

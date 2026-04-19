@@ -1,0 +1,17 @@
+# .navigateTo()
+
+- **ID:** `chrome_extension_src_background_browser_context_ts_browsercontext_navigateto`
+- **Type:** Method
+- **File:** `./chrome-extension/src/background/browser/context.ts`
+- **Location:** L341
+
+## Relationships
+
+- chrome_extension_src_background_browser_context_ts_browsercontext → chrome_extension_src_background_browser_context_ts_browsercontext_navigateto (defines, Extracted)
+- chrome_extension_src_background_browser_context_ts_browsercontext_navigateto → chrome_extension_src_background_browser_context_ts_browsercontext_ensurenavigabletabfornavigation (calls, Inferred)
+- chrome_extension_src_background_browser_context_ts_browsercontext_navigateto → chrome_extension_src_background_browser_context_ts_browsercontext_getorcreatepage (calls, Inferred)
+- chrome_extension_src_background_browser_context_ts_browsercontext_navigateto → chrome_extension_src_background_browser_context_ts_browsercontext_waitfortabnavigationcomplete (calls, Inferred)
+- chrome_extension_src_background_browser_context_ts_browsercontext_navigateto → chrome_extension_src_background_browser_context_ts_browsercontext_getcurrentpage (calls, Inferred)
+- chrome_extension_src_background_browser_context_ts_browsercontext_navigateto → chrome_extension_src_background_browser_context_ts_browsercontext_opentab (calls, Inferred)
+- chrome_extension_src_background_browser_context_ts_browsercontext_navigateto → chrome_extension_src_background_browser_context_ts_browsercontext_attachpage (calls, Inferred)
+

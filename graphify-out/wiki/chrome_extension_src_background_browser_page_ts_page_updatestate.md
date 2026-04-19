@@ -1,0 +1,21 @@
+# ._updateState()
+
+- **ID:** `chrome_extension_src_background_browser_page_ts_page_updatestate`
+- **Type:** Method
+- **File:** `./chrome-extension/src/background/browser/page.ts`
+- **Location:** L477
+
+## Relationships
+
+- chrome_extension_src_background_browser_page_ts_page → chrome_extension_src_background_browser_page_ts_page_updatestate (defines, Extracted)
+- chrome_extension_src_background_browser_page_ts_page_getstate → chrome_extension_src_background_browser_page_ts_page_updatestate (calls, Inferred)
+- chrome_extension_src_background_browser_page_ts_page_updatestate → chrome_extension_src_background_browser_page_ts_page_getscrollinfo (calls, Inferred)
+- chrome_extension_src_background_browser_page_ts_page_updatestate → chrome_extension_src_background_browser_page_ts_page_removehighlight (calls, Inferred)
+- chrome_extension_src_background_browser_page_ts_page_updatestate → chrome_extension_src_background_browser_page_ts_page_takescreenshot (calls, Inferred)
+- chrome_extension_src_background_browser_page_ts_page_updatestate → chrome_extension_src_background_browser_page_ts_page_getclickableelements (calls, Inferred)
+- chrome_extension_src_background_browser_page_ts_page_updatestate → chrome_extension_src_background_browser_page_ts_iscdpevaluationblockedurl (calls, Inferred)
+- chrome_extension_src_background_browser_page_ts_page_updatestate → chrome_extension_src_background_browser_page_ts_page_title (calls, Inferred)
+- chrome_extension_src_background_browser_page_ts_page_updatestate → chrome_extension_src_background_browser_page_ts_page_url (calls, Inferred)
+- chrome_extension_src_background_browser_page_ts_page_inputtextelementnode → chrome_extension_src_background_browser_page_ts_page_updatestate (calls, Inferred)
+- chrome_extension_src_background_browser_page_ts_page_clickelementnode → chrome_extension_src_background_browser_page_ts_page_updatestate (calls, Inferred)
+

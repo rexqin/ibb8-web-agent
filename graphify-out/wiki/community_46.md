@@ -1,0 +1,30 @@
+# Community 46: domSerializer
+
+**Members:** 10
+
+## Nodes
+
+- **domSerializer** (`chrome_extension_src_background_browser_dom_domserializer_ts`, File, degree: 8)
+- **./clickableElementDetector/ClickableElementDetector** (`chrome_extension_src_background_browser_dom_domserializer_ts_import_clickableelementdetector_clickableelementdetector`, Module, degree: 1)
+- **./domService/DOMRect** (`chrome_extension_src_background_browser_dom_domserializer_ts_import_domservice_domrect`, Module, degree: 1)
+- **./domService/EnhancedDOMTreeNode** (`chrome_extension_src_background_browser_dom_domserializer_ts_import_domservice_enhanceddomtreenode`, Module, degree: 1)
+- **./domService/NodeType** (`chrome_extension_src_background_browser_dom_domserializer_ts_import_domservice_nodetype`, Module, degree: 1)
+- **./serializedDOMState/SerializedDOMState** (`chrome_extension_src_background_browser_dom_domserializer_ts_import_serializeddomstate_serializeddomstate`, Module, degree: 1)
+- **SimplifiedNode** (`chrome_extension_src_background_browser_dom_domserializer_ts_simplifiednode`, Class, degree: 4)
+- **._cleanOriginalNodeJson()** (`chrome_extension_src_background_browser_dom_domserializer_ts_simplifiednode_cleanoriginalnodejson`, Method, degree: 2)
+- **.constructor()** (`chrome_extension_src_background_browser_dom_domserializer_ts_simplifiednode_constructor`, Method, degree: 1)
+- **.toJSON()** (`chrome_extension_src_background_browser_dom_domserializer_ts_simplifiednode_tojson`, Method, degree: 2)
+
+## Relationships
+
+- chrome_extension_src_background_browser_dom_domserializer_ts → chrome_extension_src_background_browser_dom_domserializer_ts_import_domservice_enhanceddomtreenode (imports)
+- chrome_extension_src_background_browser_dom_domserializer_ts → chrome_extension_src_background_browser_dom_domserializer_ts_import_domservice_domrect (imports)
+- chrome_extension_src_background_browser_dom_domserializer_ts → chrome_extension_src_background_browser_dom_domserializer_ts_import_domservice_nodetype (imports)
+- chrome_extension_src_background_browser_dom_domserializer_ts → chrome_extension_src_background_browser_dom_domserializer_ts_import_serializeddomstate_serializeddomstate (imports)
+- chrome_extension_src_background_browser_dom_domserializer_ts → chrome_extension_src_background_browser_dom_domserializer_ts_import_clickableelementdetector_clickableelementdetector (imports)
+- chrome_extension_src_background_browser_dom_domserializer_ts → chrome_extension_src_background_browser_dom_domserializer_ts_simplifiednode (defines)
+- chrome_extension_src_background_browser_dom_domserializer_ts_simplifiednode → chrome_extension_src_background_browser_dom_domserializer_ts_simplifiednode_constructor (defines)
+- chrome_extension_src_background_browser_dom_domserializer_ts_simplifiednode → chrome_extension_src_background_browser_dom_domserializer_ts_simplifiednode_cleanoriginalnodejson (defines)
+- chrome_extension_src_background_browser_dom_domserializer_ts_simplifiednode → chrome_extension_src_background_browser_dom_domserializer_ts_simplifiednode_tojson (defines)
+- chrome_extension_src_background_browser_dom_domserializer_ts_simplifiednode_tojson → chrome_extension_src_background_browser_dom_domserializer_ts_simplifiednode_cleanoriginalnodejson (calls)
+

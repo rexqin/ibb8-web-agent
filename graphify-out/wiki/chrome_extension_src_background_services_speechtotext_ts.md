@@ -1,0 +1,16 @@
+# speechToText
+
+- **ID:** `chrome_extension_src_background_services_speechtotext_ts`
+- **Type:** File
+- **File:** `./chrome-extension/src/background/services/speechToText.ts`
+
+## Relationships
+
+- chrome_extension_src_background_services_speechtotext_ts → chrome_extension_src_background_services_speechtotext_ts_import_langchain_google_genai_chatgooglegenerativeai (imports, Extracted)
+- chrome_extension_src_background_services_speechtotext_ts → chrome_extension_src_background_services_speechtotext_ts_import_langchain_core_messages_humanmessage (imports, Extracted)
+- chrome_extension_src_background_services_speechtotext_ts → chrome_extension_src_background_services_speechtotext_ts_import_log_createlogger (imports, Extracted)
+- chrome_extension_src_background_services_speechtotext_ts → chrome_extension_src_background_services_speechtotext_ts_import_extension_storage_providerconfig (imports, Extracted)
+- chrome_extension_src_background_services_speechtotext_ts → chrome_extension_src_background_services_speechtotext_ts_import_extension_storage_speechtotextmodelstore (imports, Extracted)
+- chrome_extension_src_background_services_speechtotext_ts → chrome_extension_src_background_services_speechtotext_ts_import_extension_i18n_t (imports, Extracted)
+- chrome_extension_src_background_services_speechtotext_ts → chrome_extension_src_background_services_speechtotext_ts_speechtotextservice (defines, Extracted)
+

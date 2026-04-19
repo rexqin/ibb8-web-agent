@@ -1,0 +1,1 @@
+{"nodes": [{"id": "speechtotext_speechtotextmodelstore", "label": "speechToTextModelStore", "file_type": "code", "source_file": "packages/storage/lib/settings/speechToText.ts", "source_location": "L36", "source_url": null, "captured_at": null, "author": null, "contributor": null}], "edges": [], "hyperedges": []}

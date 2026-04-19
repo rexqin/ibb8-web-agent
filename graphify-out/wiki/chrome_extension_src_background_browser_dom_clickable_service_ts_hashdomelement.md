@@ -1,0 +1,17 @@
+# hashDomElement()
+
+- **ID:** `chrome_extension_src_background_browser_dom_clickable_service_ts_hashdomelement`
+- **Type:** Function
+- **File:** `./chrome-extension/src/background/browser/dom/clickable/service.ts`
+- **Location:** L53
+
+## Relationships
+
+- chrome_extension_src_background_browser_dom_clickable_service_ts → chrome_extension_src_background_browser_dom_clickable_service_ts_hashdomelement (defines, Extracted)
+- chrome_extension_src_background_browser_dom_clickable_service_ts_getclickableelementshashes → chrome_extension_src_background_browser_dom_clickable_service_ts_hashdomelement (calls, Inferred)
+- chrome_extension_src_background_browser_dom_clickable_service_ts_hashdomelement → chrome_extension_src_background_browser_dom_clickable_service_ts_getparentbranchpath (calls, Inferred)
+- chrome_extension_src_background_browser_dom_clickable_service_ts_hashdomelement → chrome_extension_src_background_browser_dom_clickable_service_ts_parentbranchpathhash (calls, Inferred)
+- chrome_extension_src_background_browser_dom_clickable_service_ts_hashdomelement → chrome_extension_src_background_browser_dom_clickable_service_ts_xpathhash (calls, Inferred)
+- chrome_extension_src_background_browser_dom_clickable_service_ts_hashdomelement → chrome_extension_src_background_browser_dom_clickable_service_ts_attributeshash (calls, Inferred)
+- chrome_extension_src_background_browser_dom_clickable_service_ts_hashdomelement → chrome_extension_src_background_browser_dom_clickable_service_ts_hashstring (calls, Inferred)
+

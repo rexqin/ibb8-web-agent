@@ -1,0 +1,21 @@
+# .execute()
+
+- **ID:** `chrome_extension_src_background_agent_executor_ts_executor_execute`
+- **Type:** Method
+- **File:** `./chrome-extension/src/background/agent/executor.ts`
+- **Location:** L141
+
+## Relationships
+
+- chrome_extension_src_background_agent_executor_ts_executor → chrome_extension_src_background_agent_executor_ts_executor_execute (defines, Extracted)
+- chrome_extension_src_background_agent_executor_ts_executor_execute → chrome_extension_src_background_agent_executor_ts_isrequestcancelledlike (calls, Inferred)
+- chrome_extension_src_background_agent_executor_ts_executor_execute → chrome_extension_src_background_agent_executor_ts_executor_pause (calls, Inferred)
+- chrome_extension_src_background_agent_executor_ts_executor_execute → chrome_extension_src_background_agent_executor_ts_executor_resume (calls, Inferred)
+- chrome_extension_src_background_agent_executor_ts_executor_execute → chrome_extension_src_background_agent_executor_ts_executor_checktaskcompletion (calls, Inferred)
+- chrome_extension_src_background_agent_executor_ts_executor_execute → chrome_extension_src_background_agent_executor_ts_executor_navigate (calls, Inferred)
+- chrome_extension_src_background_agent_executor_ts_executor_execute → chrome_extension_src_background_agent_executor_ts_executor_shouldstop (calls, Inferred)
+- chrome_extension_src_background_agent_executor_ts_executor_execute → chrome_extension_src_background_agent_executor_ts_executor_waituntiluserresume (calls, Inferred)
+- chrome_extension_src_background_agent_executor_ts_executor_execute → chrome_extension_src_background_agent_executor_ts_executor_runplanner (calls, Inferred)
+- chrome_extension_src_background_agent_executor_ts_executor_runplanner → chrome_extension_src_background_agent_executor_ts_executor_execute (calls, Inferred)
+- chrome_extension_src_background_agent_executor_ts_executor_navigate → chrome_extension_src_background_agent_executor_ts_executor_execute (calls, Inferred)
+

@@ -1,0 +1,114 @@
+{
+  "chunk": 14,
+  "chunk_paths": [
+    "pages/side-panel/public/icons/planner.svg"
+  ],
+  "nodes": [
+    {
+      "id": "pages_side_panel_public_icons_planner_svg",
+      "label": "planner.svg",
+      "file_type": "image",
+      "source_file": "pages/side-panel/public/icons/planner.svg",
+      "source_location": "full frame"
+    },
+    {
+      "id": "visual_clipboard_checklist_glyph",
+      "label": "Glyph: clipboard with horizontal rule lines (planner / task list)",
+      "file_type": "image",
+      "source_file": "pages/side-panel/public/icons/planner.svg",
+      "source_location": "vector path"
+    },
+    {
+      "id": "style_fill_semi_transparent_white",
+      "label": "Fill: rgba(255,255,255,0.9) on path",
+      "file_type": "image",
+      "source_file": "pages/side-panel/public/icons/planner.svg",
+      "source_location": "path@fill"
+    },
+    {
+      "id": "layout_viewport_24",
+      "label": "Icon viewport: 24×24 (viewBox)",
+      "file_type": "image",
+      "source_file": "pages/side-panel/public/icons/planner.svg",
+      "source_location": "svg@viewBox"
+    },
+    {
+      "id": "detail_clip_top_badge",
+      "label": "Detail: rounded clip top / binder notch (calendar–planner affordance)",
+      "file_type": "image",
+      "source_file": "pages/side-panel/public/icons/planner.svg",
+      "source_location": "path geometry"
+    },
+    {
+      "id": "concept_side_panel_planner_tab",
+      "label": "Side panel: Planner role / tab affordance",
+      "file_type": "document",
+      "source_file": "pages/side-panel/public/icons/planner.svg",
+      "source_location": "filename + path context"
+    }
+  ],
+  "edges": [
+    {
+      "source": "pages_side_panel_public_icons_planner_svg",
+      "target": "layout_viewport_24",
+      "relation": "has_style",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "pages/side-panel/public/icons/planner.svg",
+      "source_location": "svg root",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_side_panel_public_icons_planner_svg",
+      "target": "visual_clipboard_checklist_glyph",
+      "relation": "depicts",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "pages/side-panel/public/icons/planner.svg",
+      "source_location": "path d",
+      "weight": 1.0
+    },
+    {
+      "source": "visual_clipboard_checklist_glyph",
+      "target": "style_fill_semi_transparent_white",
+      "relation": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "pages/side-panel/public/icons/planner.svg",
+      "source_location": "path",
+      "weight": 1.0
+    },
+    {
+      "source": "visual_clipboard_checklist_glyph",
+      "target": "detail_clip_top_badge",
+      "relation": "contains",
+      "confidence": "INFERRED",
+      "confidence_score": 0.82,
+      "source_file": "pages/side-panel/public/icons/planner.svg",
+      "source_location": "path geometry",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_side_panel_public_icons_planner_svg",
+      "target": "concept_side_panel_planner_tab",
+      "relation": "communicates",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "pages/side-panel/public/icons/planner.svg",
+      "source_location": "filename",
+      "weight": 1.0
+    },
+    {
+      "source": "concept_side_panel_planner_tab",
+      "target": "visual_clipboard_checklist_glyph",
+      "relation": "represented_by",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "pages/side-panel/public/icons/planner.svg",
+      "source_location": "composition",
+      "weight": 0.95
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

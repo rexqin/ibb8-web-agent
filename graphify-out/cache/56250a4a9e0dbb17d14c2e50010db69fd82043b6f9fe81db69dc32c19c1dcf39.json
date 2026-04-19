@@ -1,0 +1,1 @@
+{"nodes": [{"id": "hmr_constant_protocol", "label": "LOCAL_RELOAD_SOCKET / DO_UPDATE / DONE_UPDATE / BUILD_COMPLETE", "file_type": "code", "source_file": "packages/hmr/lib/constant.ts", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}], "edges": [], "hyperedges": []}

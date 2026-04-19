@@ -1,0 +1,15 @@
+# .getDomTree()
+
+- **ID:** `chrome_extension_src_background_browser_dom_domservice_ts_domservice_getdomtree`
+- **Type:** Method
+- **File:** `./chrome-extension/src/background/browser/dom/domService.ts`
+- **Location:** L377
+
+## Relationships
+
+- chrome_extension_src_background_browser_dom_domservice_ts_domservice → chrome_extension_src_background_browser_dom_domservice_ts_domservice_getdomtree (defines, Extracted)
+- chrome_extension_src_background_browser_dom_domservice_ts_domservice_getdomtree → chrome_extension_src_background_browser_dom_domservice_ts_domservice_getalltrees (calls, Inferred)
+- chrome_extension_src_background_browser_dom_domservice_ts_domservice_getdomtree → chrome_extension_src_background_browser_dom_domservice_ts_domservice_buildenhancedaxnode (calls, Inferred)
+- chrome_extension_src_background_browser_dom_domservice_ts_domservice_getdomtree → chrome_extension_src_background_browser_dom_domservice_ts_domservice_iselementvisibleaccordingtoallparents (calls, Inferred)
+- chrome_extension_src_background_browser_dom_domservice_ts_domservice_getserializeddomtree → chrome_extension_src_background_browser_dom_domservice_ts_domservice_getdomtree (calls, Inferred)
+

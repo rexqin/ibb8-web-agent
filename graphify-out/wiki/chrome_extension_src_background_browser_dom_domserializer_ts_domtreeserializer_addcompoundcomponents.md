@@ -1,0 +1,15 @@
+# ._addCompoundComponents()
+
+- **ID:** `chrome_extension_src_background_browser_dom_domserializer_ts_domtreeserializer_addcompoundcomponents`
+- **Type:** Method
+- **File:** `./chrome-extension/src/background/browser/dom/domSerializer.ts`
+- **Location:** L215
+
+## Relationships
+
+- chrome_extension_src_background_browser_dom_domserializer_ts_domtreeserializer → chrome_extension_src_background_browser_dom_domserializer_ts_domtreeserializer_addcompoundcomponents (defines, Extracted)
+- chrome_extension_src_background_browser_dom_domserializer_ts_domtreeserializer_addcompoundcomponents → chrome_extension_src_background_browser_dom_domserializer_ts_domtreeserializer_extractselectoptions (calls, Inferred)
+- chrome_extension_src_background_browser_dom_domserializer_ts_domtreeserializer_addcompoundcomponents → chrome_extension_src_background_browser_dom_domserializer_ts_domtreeserializer_safeparseoptionalnumber (calls, Inferred)
+- chrome_extension_src_background_browser_dom_domserializer_ts_domtreeserializer_addcompoundcomponents → chrome_extension_src_background_browser_dom_domserializer_ts_domtreeserializer_safeparsenumber (calls, Inferred)
+- chrome_extension_src_background_browser_dom_domserializer_ts_domtreeserializer_createsimplifiedtree → chrome_extension_src_background_browser_dom_domserializer_ts_domtreeserializer_addcompoundcomponents (calls, Inferred)
+

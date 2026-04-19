@@ -1,0 +1,16 @@
+# DOMTreeValidator
+
+- **ID:** `chrome_extension_src_background_browser_dom_domtreevalidator_ts_domtreevalidator`
+- **Type:** Class
+- **File:** `./chrome-extension/src/background/browser/dom/domTreeValidator.ts`
+- **Location:** L70
+
+## Relationships
+
+- chrome_extension_src_background_browser_dom_domtreevalidator_ts → chrome_extension_src_background_browser_dom_domtreevalidator_ts_domtreevalidator (defines, Extracted)
+- chrome_extension_src_background_browser_dom_domtreevalidator_ts_domtreevalidator → chrome_extension_src_background_browser_dom_domtreevalidator_ts_domtreevalidator_validatesimplifiedtree (defines, Extracted)
+- chrome_extension_src_background_browser_dom_domtreevalidator_ts_domtreevalidator → chrome_extension_src_background_browser_dom_domtreevalidator_ts_domtreevalidator_counttotalchildren (defines, Extracted)
+- chrome_extension_src_background_browser_dom_domtreevalidator_ts_domtreevalidator → chrome_extension_src_background_browser_dom_domtreevalidator_ts_domtreevalidator_validateoriginaltree (defines, Extracted)
+- chrome_extension_src_background_browser_dom_domtreevalidator_ts_domtreevalidator → chrome_extension_src_background_browser_dom_domtreevalidator_ts_domtreevalidator_generatereport (defines, Extracted)
+- chrome_extension_src_background_browser_dom_domtreevalidator_ts_domtreevalidator → chrome_extension_src_background_browser_dom_domtreevalidator_ts_domtreevalidator_quickcheck (defines, Extracted)
+

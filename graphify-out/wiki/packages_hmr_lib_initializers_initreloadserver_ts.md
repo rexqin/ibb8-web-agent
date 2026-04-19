@@ -1,0 +1,18 @@
+# initReloadServer
+
+- **ID:** `packages_hmr_lib_initializers_initreloadserver_ts`
+- **Type:** File
+- **File:** `./packages/hmr/lib/initializers/initReloadServer.ts`
+
+## Relationships
+
+- packages_hmr_lib_initializers_initreloadserver_ts → packages_hmr_lib_initializers_initreloadserver_ts_import_ws_websocket (imports, Extracted)
+- packages_hmr_lib_initializers_initreloadserver_ts → packages_hmr_lib_initializers_initreloadserver_ts_import_ws_websocketserver (imports, Extracted)
+- packages_hmr_lib_initializers_initreloadserver_ts → packages_hmr_lib_initializers_initreloadserver_ts_import_constant_build_complete (imports, Extracted)
+- packages_hmr_lib_initializers_initreloadserver_ts → packages_hmr_lib_initializers_initreloadserver_ts_import_constant_do_update (imports, Extracted)
+- packages_hmr_lib_initializers_initreloadserver_ts → packages_hmr_lib_initializers_initreloadserver_ts_import_constant_done_update (imports, Extracted)
+- packages_hmr_lib_initializers_initreloadserver_ts → packages_hmr_lib_initializers_initreloadserver_ts_import_constant_local_reload_socket_port (imports, Extracted)
+- packages_hmr_lib_initializers_initreloadserver_ts → packages_hmr_lib_initializers_initreloadserver_ts_import_constant_local_reload_socket_url (imports, Extracted)
+- packages_hmr_lib_initializers_initreloadserver_ts → packages_hmr_lib_initializers_initreloadserver_ts_import_interpreter_messageinterpreter (imports, Extracted)
+- packages_hmr_lib_initializers_initreloadserver_ts → packages_hmr_lib_initializers_initreloadserver_ts_initreloadserver (defines, Extracted)
+

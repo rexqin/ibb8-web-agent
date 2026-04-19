@@ -1,0 +1,19 @@
+# _buildDomTree()
+
+- **ID:** `chrome_extension_src_background_browser_dom_service_ts_builddomtree`
+- **Type:** Function
+- **File:** `./chrome-extension/src/background/browser/dom/service.ts`
+- **Location:** L199
+
+## Relationships
+
+- chrome_extension_src_background_browser_dom_service_ts → chrome_extension_src_background_browser_dom_service_ts_builddomtree (defines, Extracted)
+- chrome_extension_src_background_browser_dom_service_ts_getclickableelements → chrome_extension_src_background_browser_dom_service_ts_builddomtree (calls, Inferred)
+- chrome_extension_src_background_browser_dom_service_ts_builddomtree → chrome_extension_src_background_browser_dom_service_ts_getmaxhighlighindex (calls, Inferred)
+- chrome_extension_src_background_browser_dom_service_ts_builddomtree → chrome_extension_src_background_browser_dom_service_ts_logcdptreesindev (calls, Inferred)
+- chrome_extension_src_background_browser_dom_service_ts_builddomtree → chrome_extension_src_background_browser_dom_service_ts_constructdomtree (calls, Inferred)
+- chrome_extension_src_background_browser_dom_service_ts_builddomtree → chrome_extension_src_background_browser_dom_service_ts_injectbuilddomtreescripts (calls, Inferred)
+- chrome_extension_src_background_browser_dom_service_ts_builddomtree → chrome_extension_src_background_browser_dom_service_ts_constructframetree (calls, Inferred)
+- chrome_extension_src_background_browser_dom_service_ts_builddomtree → chrome_extension_src_background_browser_dom_service_ts_getmaxid (calls, Inferred)
+- chrome_extension_src_background_browser_dom_service_ts_builddomtree → chrome_extension_src_background_browser_dom_service_ts_visibleiframesfailedloading (calls, Inferred)
+

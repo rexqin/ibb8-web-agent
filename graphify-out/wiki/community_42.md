@@ -1,0 +1,35 @@
+# Community 42: DomService
+
+**Members:** 10
+
+## Nodes
+
+- **DomService** (`chrome_extension_src_background_browser_dom_domservice_ts_domservice`, Class, degree: 10)
+- **.buildEnhancedAXNode()** (`chrome_extension_src_background_browser_dom_domservice_ts_domservice_buildenhancedaxnode`, Method, degree: 2)
+- **.constructor()** (`chrome_extension_src_background_browser_dom_domservice_ts_domservice_constructor`, Method, degree: 1)
+- **.detectPaginationButtons()** (`chrome_extension_src_background_browser_dom_domservice_ts_domservice_detectpaginationbuttons`, Method, degree: 1)
+- **.getAllTrees()** (`chrome_extension_src_background_browser_dom_domservice_ts_domservice_getalltrees`, Method, degree: 4)
+- **.getAXTreeForAllFrames()** (`chrome_extension_src_background_browser_dom_domservice_ts_domservice_getaxtreeforallframes`, Method, degree: 2)
+- **.getDomTree()** (`chrome_extension_src_background_browser_dom_domservice_ts_domservice_getdomtree`, Method, degree: 5)
+- **.getSerializedDomTree()** (`chrome_extension_src_background_browser_dom_domservice_ts_domservice_getserializeddomtree`, Method, degree: 2)
+- **.getViewportRatio()** (`chrome_extension_src_background_browser_dom_domservice_ts_domservice_getviewportratio`, Method, degree: 2)
+- **.isElementVisibleAccordingToAllParents()** (`chrome_extension_src_background_browser_dom_domservice_ts_domservice_iselementvisibleaccordingtoallparents`, Method, degree: 2)
+
+## Relationships
+
+- chrome_extension_src_background_browser_dom_domservice_ts_domservice → chrome_extension_src_background_browser_dom_domservice_ts_domservice_constructor (defines)
+- chrome_extension_src_background_browser_dom_domservice_ts_domservice → chrome_extension_src_background_browser_dom_domservice_ts_domservice_buildenhancedaxnode (defines)
+- chrome_extension_src_background_browser_dom_domservice_ts_domservice → chrome_extension_src_background_browser_dom_domservice_ts_domservice_getviewportratio (defines)
+- chrome_extension_src_background_browser_dom_domservice_ts_domservice → chrome_extension_src_background_browser_dom_domservice_ts_domservice_iselementvisibleaccordingtoallparents (defines)
+- chrome_extension_src_background_browser_dom_domservice_ts_domservice → chrome_extension_src_background_browser_dom_domservice_ts_domservice_getaxtreeforallframes (defines)
+- chrome_extension_src_background_browser_dom_domservice_ts_domservice → chrome_extension_src_background_browser_dom_domservice_ts_domservice_getalltrees (defines)
+- chrome_extension_src_background_browser_dom_domservice_ts_domservice → chrome_extension_src_background_browser_dom_domservice_ts_domservice_getdomtree (defines)
+- chrome_extension_src_background_browser_dom_domservice_ts_domservice → chrome_extension_src_background_browser_dom_domservice_ts_domservice_getserializeddomtree (defines)
+- chrome_extension_src_background_browser_dom_domservice_ts_domservice → chrome_extension_src_background_browser_dom_domservice_ts_domservice_detectpaginationbuttons (defines)
+- chrome_extension_src_background_browser_dom_domservice_ts_domservice_getalltrees → chrome_extension_src_background_browser_dom_domservice_ts_domservice_getviewportratio (calls)
+- chrome_extension_src_background_browser_dom_domservice_ts_domservice_getalltrees → chrome_extension_src_background_browser_dom_domservice_ts_domservice_getaxtreeforallframes (calls)
+- chrome_extension_src_background_browser_dom_domservice_ts_domservice_getdomtree → chrome_extension_src_background_browser_dom_domservice_ts_domservice_getalltrees (calls)
+- chrome_extension_src_background_browser_dom_domservice_ts_domservice_getdomtree → chrome_extension_src_background_browser_dom_domservice_ts_domservice_buildenhancedaxnode (calls)
+- chrome_extension_src_background_browser_dom_domservice_ts_domservice_getdomtree → chrome_extension_src_background_browser_dom_domservice_ts_domservice_iselementvisibleaccordingtoallparents (calls)
+- chrome_extension_src_background_browser_dom_domservice_ts_domservice_getserializeddomtree → chrome_extension_src_background_browser_dom_domservice_ts_domservice_getdomtree (calls)
+

@@ -1,0 +1,44 @@
+# Community 24: calcBranchPathHashSet()
+
+**Members:** 16
+
+## Nodes
+
+- **calcBranchPathHashSet()** (`chrome_extension_src_background_browser_dom_views_ts_calcbranchpathhashset`, Function, degree: 2)
+- **DOMElementNode** (`chrome_extension_src_background_browser_dom_views_ts_domelementnode`, Class, degree: 10)
+- **.clearHashCache()** (`chrome_extension_src_background_browser_dom_views_ts_domelementnode_clearhashcache`, Method, degree: 1)
+- **.clickableElementsToString()** (`chrome_extension_src_background_browser_dom_views_ts_domelementnode_clickableelementstostring`, Method, degree: 3)
+- **.constructor()** (`chrome_extension_src_background_browser_dom_views_ts_domelementnode_constructor`, Method, degree: 1)
+- **.convertSimpleXPathToCssSelector()** (`chrome_extension_src_background_browser_dom_views_ts_domelementnode_convertsimplexpathtocssselector`, Method, degree: 2)
+- **.enhancedCssSelectorForElement()** (`chrome_extension_src_background_browser_dom_views_ts_domelementnode_enhancedcssselectorforelement`, Method, degree: 3)
+- **.getAllTextTillNextClickableElement()** (`chrome_extension_src_background_browser_dom_views_ts_domelementnode_getalltexttillnextclickableelement`, Method, degree: 2)
+- **.getEnhancedCssSelector()** (`chrome_extension_src_background_browser_dom_views_ts_domelementnode_getenhancedcssselector`, Method, degree: 2)
+- **.getFileUploadElement()** (`chrome_extension_src_background_browser_dom_views_ts_domelementnode_getfileuploadelement`, Method, degree: 1)
+- **.hash()** (`chrome_extension_src_background_browser_dom_views_ts_domelementnode_hash`, Method, degree: 2)
+- **DOMTextNode** (`chrome_extension_src_background_browser_dom_views_ts_domtextnode`, Class, degree: 5)
+- **.constructor()** (`chrome_extension_src_background_browser_dom_views_ts_domtextnode_constructor`, Method, degree: 1)
+- **.hasParentWithHighlightIndex()** (`chrome_extension_src_background_browser_dom_views_ts_domtextnode_hasparentwithhighlightindex`, Method, degree: 2)
+- **.isParentInViewport()** (`chrome_extension_src_background_browser_dom_views_ts_domtextnode_isparentinviewport`, Method, degree: 1)
+- **.isParentTopElement()** (`chrome_extension_src_background_browser_dom_views_ts_domtextnode_isparenttopelement`, Method, degree: 1)
+
+## Relationships
+
+- chrome_extension_src_background_browser_dom_views_ts_domtextnode → chrome_extension_src_background_browser_dom_views_ts_domtextnode_constructor (defines)
+- chrome_extension_src_background_browser_dom_views_ts_domtextnode → chrome_extension_src_background_browser_dom_views_ts_domtextnode_hasparentwithhighlightindex (defines)
+- chrome_extension_src_background_browser_dom_views_ts_domtextnode → chrome_extension_src_background_browser_dom_views_ts_domtextnode_isparentinviewport (defines)
+- chrome_extension_src_background_browser_dom_views_ts_domtextnode → chrome_extension_src_background_browser_dom_views_ts_domtextnode_isparenttopelement (defines)
+- chrome_extension_src_background_browser_dom_views_ts_domelementnode → chrome_extension_src_background_browser_dom_views_ts_domelementnode_constructor (defines)
+- chrome_extension_src_background_browser_dom_views_ts_domelementnode → chrome_extension_src_background_browser_dom_views_ts_domelementnode_hash (defines)
+- chrome_extension_src_background_browser_dom_views_ts_domelementnode → chrome_extension_src_background_browser_dom_views_ts_domelementnode_clearhashcache (defines)
+- chrome_extension_src_background_browser_dom_views_ts_domelementnode → chrome_extension_src_background_browser_dom_views_ts_domelementnode_getalltexttillnextclickableelement (defines)
+- chrome_extension_src_background_browser_dom_views_ts_domelementnode → chrome_extension_src_background_browser_dom_views_ts_domelementnode_clickableelementstostring (defines)
+- chrome_extension_src_background_browser_dom_views_ts_domelementnode → chrome_extension_src_background_browser_dom_views_ts_domelementnode_getfileuploadelement (defines)
+- chrome_extension_src_background_browser_dom_views_ts_domelementnode → chrome_extension_src_background_browser_dom_views_ts_domelementnode_getenhancedcssselector (defines)
+- chrome_extension_src_background_browser_dom_views_ts_domelementnode → chrome_extension_src_background_browser_dom_views_ts_domelementnode_convertsimplexpathtocssselector (defines)
+- chrome_extension_src_background_browser_dom_views_ts_domelementnode → chrome_extension_src_background_browser_dom_views_ts_domelementnode_enhancedcssselectorforelement (defines)
+- chrome_extension_src_background_browser_dom_views_ts_domelementnode_clickableelementstostring → chrome_extension_src_background_browser_dom_views_ts_domelementnode_getalltexttillnextclickableelement (calls)
+- chrome_extension_src_background_browser_dom_views_ts_domelementnode_clickableelementstostring → chrome_extension_src_background_browser_dom_views_ts_domtextnode_hasparentwithhighlightindex (calls)
+- chrome_extension_src_background_browser_dom_views_ts_domelementnode_getenhancedcssselector → chrome_extension_src_background_browser_dom_views_ts_domelementnode_enhancedcssselectorforelement (calls)
+- chrome_extension_src_background_browser_dom_views_ts_domelementnode_enhancedcssselectorforelement → chrome_extension_src_background_browser_dom_views_ts_domelementnode_convertsimplexpathtocssselector (calls)
+- chrome_extension_src_background_browser_dom_views_ts_calcbranchpathhashset → chrome_extension_src_background_browser_dom_views_ts_domelementnode_hash (calls)
+

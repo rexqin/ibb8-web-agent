@@ -1,0 +1,18 @@
+# watch-rebuild-plugin
+
+- **ID:** `packages_hmr_lib_plugins_watch_rebuild_plugin_ts`
+- **Type:** File
+- **File:** `./packages/hmr/lib/plugins/watch-rebuild-plugin.ts`
+
+## Relationships
+
+- packages_hmr_lib_plugins_watch_rebuild_plugin_ts → packages_hmr_lib_plugins_watch_rebuild_plugin_ts_import_node_fs_fs (imports, Extracted)
+- packages_hmr_lib_plugins_watch_rebuild_plugin_ts → packages_hmr_lib_plugins_watch_rebuild_plugin_ts_import_node_path_path (imports, Extracted)
+- packages_hmr_lib_plugins_watch_rebuild_plugin_ts → packages_hmr_lib_plugins_watch_rebuild_plugin_ts_import_vite_pluginoption (imports, Extracted)
+- packages_hmr_lib_plugins_watch_rebuild_plugin_ts → packages_hmr_lib_plugins_watch_rebuild_plugin_ts_import_ws_websocket (imports, Extracted)
+- packages_hmr_lib_plugins_watch_rebuild_plugin_ts → packages_hmr_lib_plugins_watch_rebuild_plugin_ts_import_interpreter_messageinterpreter (imports, Extracted)
+- packages_hmr_lib_plugins_watch_rebuild_plugin_ts → packages_hmr_lib_plugins_watch_rebuild_plugin_ts_import_constant_build_complete (imports, Extracted)
+- packages_hmr_lib_plugins_watch_rebuild_plugin_ts → packages_hmr_lib_plugins_watch_rebuild_plugin_ts_import_constant_local_reload_socket_url (imports, Extracted)
+- packages_hmr_lib_plugins_watch_rebuild_plugin_ts → packages_hmr_lib_plugins_watch_rebuild_plugin_ts_import_types_pluginconfig (imports, Extracted)
+- packages_hmr_lib_plugins_watch_rebuild_plugin_ts → packages_hmr_lib_plugins_watch_rebuild_plugin_ts_watchrebuildplugin (defines, Extracted)
+

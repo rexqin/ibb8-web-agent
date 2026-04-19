@@ -1,0 +1,17 @@
+# MessageHistory
+
+- **ID:** `chrome_extension_src_background_agent_messages_views_ts_messagehistory`
+- **Type:** Class
+- **File:** `./chrome-extension/src/background/agent/messages/views.ts`
+- **Location:** L23
+
+## Relationships
+
+- chrome_extension_src_background_agent_messages_views_ts → chrome_extension_src_background_agent_messages_views_ts_messagehistory (defines, Extracted)
+- chrome_extension_src_background_agent_messages_views_ts_messagehistory → chrome_extension_src_background_agent_messages_views_ts_messagehistory_addmessage (defines, Extracted)
+- chrome_extension_src_background_agent_messages_views_ts_messagehistory → chrome_extension_src_background_agent_messages_views_ts_messagehistory_removemessage (defines, Extracted)
+- chrome_extension_src_background_agent_messages_views_ts_messagehistory → chrome_extension_src_background_agent_messages_views_ts_messagehistory_removelaststatemessage (defines, Extracted)
+- chrome_extension_src_background_agent_messages_views_ts_messagehistory → chrome_extension_src_background_agent_messages_views_ts_messagehistory_getmessages (defines, Extracted)
+- chrome_extension_src_background_agent_messages_views_ts_messagehistory → chrome_extension_src_background_agent_messages_views_ts_messagehistory_gettotaltokens (defines, Extracted)
+- chrome_extension_src_background_agent_messages_views_ts_messagehistory → chrome_extension_src_background_agent_messages_views_ts_messagehistory_removeoldestmessage (defines, Extracted)
+

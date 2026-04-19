@@ -1,0 +1,15 @@
+# SerializedDOMState
+
+- **ID:** `chrome_extension_src_background_browser_dom_serializeddomstate_ts_serializeddomstate`
+- **Type:** Class
+- **File:** `./chrome-extension/src/background/browser/dom/serializedDOMState.ts`
+- **Location:** L66
+
+## Relationships
+
+- chrome_extension_src_background_browser_dom_serializeddomstate_ts → chrome_extension_src_background_browser_dom_serializeddomstate_ts_serializeddomstate (defines, Extracted)
+- chrome_extension_src_background_browser_dom_serializeddomstate_ts_serializeddomstate → chrome_extension_src_background_browser_dom_serializeddomstate_ts_serializeddomstate_constructor (defines, Extracted)
+- chrome_extension_src_background_browser_dom_serializeddomstate_ts_serializeddomstate → chrome_extension_src_background_browser_dom_serializeddomstate_ts_serializeddomstate_llmrepresentation (defines, Extracted)
+- chrome_extension_src_background_browser_dom_serializeddomstate_ts_serializeddomstate → chrome_extension_src_background_browser_dom_serializeddomstate_ts_serializeddomstate_evalrepresentation (defines, Extracted)
+- chrome_extension_src_background_browser_dom_serializeddomstate_ts_serializeddomstate → chrome_extension_src_background_browser_dom_serializeddomstate_ts_serializeddomstate_getevalattributes (defines, Extracted)
+

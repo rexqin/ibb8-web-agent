@@ -1,0 +1,15 @@
+# enhancedDOMTreeNode
+
+- **ID:** `chrome_extension_src_background_browser_dom_enhanceddomtreenode_ts`
+- **Type:** File
+- **File:** `./chrome-extension/src/background/browser/dom/enhancedDOMTreeNode.ts`
+
+## Relationships
+
+- chrome_extension_src_background_browser_dom_enhanceddomtreenode_ts → chrome_extension_src_background_browser_dom_enhanceddomtreenode_ts_import_domservice_domrect (imports, Extracted)
+- chrome_extension_src_background_browser_dom_enhanceddomtreenode_ts → chrome_extension_src_background_browser_dom_enhanceddomtreenode_ts_import_domservice_enhancedaxnode (imports, Extracted)
+- chrome_extension_src_background_browser_dom_enhanceddomtreenode_ts → chrome_extension_src_background_browser_dom_enhanceddomtreenode_ts_import_domservice_snapshotnode (imports, Extracted)
+- chrome_extension_src_background_browser_dom_enhanceddomtreenode_ts → chrome_extension_src_background_browser_dom_enhanceddomtreenode_ts_import_domservice_nodetype (imports, Extracted)
+- chrome_extension_src_background_browser_dom_enhanceddomtreenode_ts → chrome_extension_src_background_browser_dom_enhanceddomtreenode_ts_import_crypto_createhash (imports, Extracted)
+- chrome_extension_src_background_browser_dom_enhanceddomtreenode_ts → chrome_extension_src_background_browser_dom_enhanceddomtreenode_ts_enhanceddomtreenode (defines, Extracted)
+

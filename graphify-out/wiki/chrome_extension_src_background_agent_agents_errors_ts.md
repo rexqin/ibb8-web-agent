@@ -1,0 +1,22 @@
+# errors
+
+- **ID:** `chrome_extension_src_background_agent_agents_errors_ts`
+- **Type:** File
+- **File:** `./chrome-extension/src/background/agent/agents/errors.ts`
+
+## Relationships
+
+- chrome_extension_src_background_agent_agents_errors_ts → chrome_extension_src_background_agent_agents_errors_ts_chatmodelautherror (defines, Extracted)
+- chrome_extension_src_background_agent_agents_errors_ts → chrome_extension_src_background_agent_agents_errors_ts_chatmodelforbiddenerror (defines, Extracted)
+- chrome_extension_src_background_agent_agents_errors_ts → chrome_extension_src_background_agent_agents_errors_ts_chatmodelbadrequesterror (defines, Extracted)
+- chrome_extension_src_background_agent_agents_errors_ts → chrome_extension_src_background_agent_agents_errors_ts_isauthenticationerror (defines, Extracted)
+- chrome_extension_src_background_agent_agents_errors_ts → chrome_extension_src_background_agent_agents_errors_ts_isforbiddenerror (defines, Extracted)
+- chrome_extension_src_background_agent_agents_errors_ts → chrome_extension_src_background_agent_agents_errors_ts_isbadrequesterror (defines, Extracted)
+- chrome_extension_src_background_agent_agents_errors_ts → chrome_extension_src_background_agent_agents_errors_ts_isabortederror (defines, Extracted)
+- chrome_extension_src_background_agent_agents_errors_ts → chrome_extension_src_background_agent_agents_errors_ts_isextensionconflicterror (defines, Extracted)
+- chrome_extension_src_background_agent_agents_errors_ts → chrome_extension_src_background_agent_agents_errors_ts_requestcancellederror (defines, Extracted)
+- chrome_extension_src_background_agent_agents_errors_ts → chrome_extension_src_background_agent_agents_errors_ts_extensionconflicterror (defines, Extracted)
+- chrome_extension_src_background_agent_agents_errors_ts → chrome_extension_src_background_agent_agents_errors_ts_maxstepsreachederror (defines, Extracted)
+- chrome_extension_src_background_agent_agents_errors_ts → chrome_extension_src_background_agent_agents_errors_ts_maxfailuresreachederror (defines, Extracted)
+- chrome_extension_src_background_agent_agents_errors_ts → chrome_extension_src_background_agent_agents_errors_ts_responseparseerror (defines, Extracted)
+

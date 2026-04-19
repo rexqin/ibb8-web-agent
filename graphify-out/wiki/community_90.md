@@ -1,0 +1,39 @@
+# Community 90: ensureBuildDirectoryExists()
+
+**Members:** 5
+
+## Nodes
+
+- **ensureBuildDirectoryExists()** (`packages_zipper_lib_zip_bundle_index_ts_ensurebuilddirectoryexists`, Function, degree: 10)
+- **logPackageSize()** (`packages_zipper_lib_zip_bundle_index_ts_logpackagesize`, Function, degree: 11)
+- **streamFileToZip()** (`packages_zipper_lib_zip_bundle_index_ts_streamfiletozip`, Function, degree: 10)
+- **toMB()** (`packages_zipper_lib_zip_bundle_index_ts_tomb`, Function, degree: 10)
+- **zipBundle()** (`packages_zipper_lib_zip_bundle_index_ts_zipbundle`, Function, degree: 12)
+
+## Relationships
+
+- packages_zipper_lib_zip_bundle_index_ts_logpackagesize → packages_zipper_lib_zip_bundle_index_ts_tomb (calls)
+- packages_zipper_lib_zip_bundle_index_ts_zipbundle → packages_zipper_lib_zip_bundle_index_ts_logpackagesize (calls)
+- packages_zipper_lib_zip_bundle_index_ts_zipbundle → packages_zipper_lib_zip_bundle_index_ts_streamfiletozip (calls)
+- packages_zipper_lib_zip_bundle_index_ts_zipbundle → packages_zipper_lib_zip_bundle_index_ts_ensurebuilddirectoryexists (calls)
+- packages_zipper_lib_zip_bundle_index_ts_tomb → packages_zipper_lib_zip_bundle_index_ts_ensurebuilddirectoryexists (uses)
+- packages_zipper_lib_zip_bundle_index_ts_tomb → packages_zipper_lib_zip_bundle_index_ts_logpackagesize (uses)
+- packages_zipper_lib_zip_bundle_index_ts_tomb → packages_zipper_lib_zip_bundle_index_ts_streamfiletozip (uses)
+- packages_zipper_lib_zip_bundle_index_ts_tomb → packages_zipper_lib_zip_bundle_index_ts_zipbundle (uses)
+- packages_zipper_lib_zip_bundle_index_ts_ensurebuilddirectoryexists → packages_zipper_lib_zip_bundle_index_ts_tomb (uses)
+- packages_zipper_lib_zip_bundle_index_ts_ensurebuilddirectoryexists → packages_zipper_lib_zip_bundle_index_ts_logpackagesize (uses)
+- packages_zipper_lib_zip_bundle_index_ts_ensurebuilddirectoryexists → packages_zipper_lib_zip_bundle_index_ts_streamfiletozip (uses)
+- packages_zipper_lib_zip_bundle_index_ts_ensurebuilddirectoryexists → packages_zipper_lib_zip_bundle_index_ts_zipbundle (uses)
+- packages_zipper_lib_zip_bundle_index_ts_logpackagesize → packages_zipper_lib_zip_bundle_index_ts_tomb (uses)
+- packages_zipper_lib_zip_bundle_index_ts_logpackagesize → packages_zipper_lib_zip_bundle_index_ts_ensurebuilddirectoryexists (uses)
+- packages_zipper_lib_zip_bundle_index_ts_logpackagesize → packages_zipper_lib_zip_bundle_index_ts_streamfiletozip (uses)
+- packages_zipper_lib_zip_bundle_index_ts_logpackagesize → packages_zipper_lib_zip_bundle_index_ts_zipbundle (uses)
+- packages_zipper_lib_zip_bundle_index_ts_streamfiletozip → packages_zipper_lib_zip_bundle_index_ts_tomb (uses)
+- packages_zipper_lib_zip_bundle_index_ts_streamfiletozip → packages_zipper_lib_zip_bundle_index_ts_ensurebuilddirectoryexists (uses)
+- packages_zipper_lib_zip_bundle_index_ts_streamfiletozip → packages_zipper_lib_zip_bundle_index_ts_logpackagesize (uses)
+- packages_zipper_lib_zip_bundle_index_ts_streamfiletozip → packages_zipper_lib_zip_bundle_index_ts_zipbundle (uses)
+- packages_zipper_lib_zip_bundle_index_ts_zipbundle → packages_zipper_lib_zip_bundle_index_ts_tomb (uses)
+- packages_zipper_lib_zip_bundle_index_ts_zipbundle → packages_zipper_lib_zip_bundle_index_ts_ensurebuilddirectoryexists (uses)
+- packages_zipper_lib_zip_bundle_index_ts_zipbundle → packages_zipper_lib_zip_bundle_index_ts_logpackagesize (uses)
+- packages_zipper_lib_zip_bundle_index_ts_zipbundle → packages_zipper_lib_zip_bundle_index_ts_streamfiletozip (uses)
+

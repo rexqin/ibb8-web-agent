@@ -1,0 +1,57 @@
+# Community 12: index
+
+**Members:** 24
+
+## Nodes
+
+- **index** (`chrome_extension_src_background_index_ts`, File, degree: 28)
+- **./agent/executor/Executor** (`chrome_extension_src_background_index_ts_import_agent_executor_executor`, Module, degree: 1)
+- **./agent/helper/createChatModel** (`chrome_extension_src_background_index_ts_import_agent_helper_createchatmodel`, Module, degree: 1)
+- **./agent/types/DEFAULT_AGENT_OPTIONS** (`chrome_extension_src_background_index_ts_import_agent_types_default_agent_options`, Module, degree: 1)
+- **./browser/context/BrowserContext** (`chrome_extension_src_background_index_ts_import_browser_context_browsercontext`, Module, degree: 1)
+- **./browser/dom/service/injectBuildDomTreeScripts** (`chrome_extension_src_background_index_ts_import_browser_dom_service_injectbuilddomtreescripts`, Module, degree: 1)
+- **./executor-lifecycle/shouldCleanupExecutorOnTerminalEvent** (`chrome_extension_src_background_index_ts_import_executor_lifecycle_shouldcleanupexecutoronterminalevent`, Module, degree: 1)
+- **@extension/i18n/t** (`chrome_extension_src_background_index_ts_import_extension_i18n_t`, Module, degree: 1)
+- **@extension/shared/ExternalIncomingMessage** (`chrome_extension_src_background_index_ts_import_extension_shared_externalincomingmessage`, Module, degree: 1)
+- **@extension/shared/externalIncomingMessageSchema** (`chrome_extension_src_background_index_ts_import_extension_shared_externalincomingmessageschema`, Module, degree: 1)
+- **@extension/shared/ExternalPublishMessage** (`chrome_extension_src_background_index_ts_import_extension_shared_externalpublishmessage`, Module, degree: 1)
+- **@extension/shared/externalPublishMessageSchema** (`chrome_extension_src_background_index_ts_import_extension_shared_externalpublishmessageschema`, Module, degree: 1)
+- **@extension/shared/SidePanelPublishReceivedMessage** (`chrome_extension_src_background_index_ts_import_extension_shared_sidepanelpublishreceivedmessage`, Module, degree: 1)
+- **@extension/storage/agentModelStore** (`chrome_extension_src_background_index_ts_import_extension_storage_agentmodelstore`, Module, degree: 1)
+- **@extension/storage/AgentNameEnum** (`chrome_extension_src_background_index_ts_import_extension_storage_agentnameenum`, Module, degree: 1)
+- **@extension/storage/analyticsSettingsStore** (`chrome_extension_src_background_index_ts_import_extension_storage_analyticssettingsstore`, Module, degree: 1)
+- **@extension/storage/firewallStore** (`chrome_extension_src_background_index_ts_import_extension_storage_firewallstore`, Module, degree: 1)
+- **@extension/storage/generalSettingsStore** (`chrome_extension_src_background_index_ts_import_extension_storage_generalsettingsstore`, Module, degree: 1)
+- **@extension/storage/llmProviderStore** (`chrome_extension_src_background_index_ts_import_extension_storage_llmproviderstore`, Module, degree: 1)
+- **@langchain/core/language_models/chat_models/BaseChatModel** (`chrome_extension_src_background_index_ts_import_langchain_core_language_models_chat_models_basechatmodel`, Module, degree: 1)
+- **./log/createLogger** (`chrome_extension_src_background_index_ts_import_log_createlogger`, Module, degree: 1)
+- **./services/analytics/analytics** (`chrome_extension_src_background_index_ts_import_services_analytics_analytics`, Module, degree: 1)
+- **./services/speechToText/SpeechToTextService** (`chrome_extension_src_background_index_ts_import_services_speechtotext_speechtotextservice`, Module, degree: 1)
+- **webextension-polyfill** (`chrome_extension_src_background_index_ts_import_webextension_polyfill`, Module, degree: 1)
+
+## Relationships
+
+- chrome_extension_src_background_index_ts → chrome_extension_src_background_index_ts_import_webextension_polyfill (imports)
+- chrome_extension_src_background_index_ts → chrome_extension_src_background_index_ts_import_extension_storage_agentmodelstore (imports)
+- chrome_extension_src_background_index_ts → chrome_extension_src_background_index_ts_import_extension_storage_agentnameenum (imports)
+- chrome_extension_src_background_index_ts → chrome_extension_src_background_index_ts_import_extension_storage_firewallstore (imports)
+- chrome_extension_src_background_index_ts → chrome_extension_src_background_index_ts_import_extension_storage_generalsettingsstore (imports)
+- chrome_extension_src_background_index_ts → chrome_extension_src_background_index_ts_import_extension_storage_llmproviderstore (imports)
+- chrome_extension_src_background_index_ts → chrome_extension_src_background_index_ts_import_extension_storage_analyticssettingsstore (imports)
+- chrome_extension_src_background_index_ts → chrome_extension_src_background_index_ts_import_extension_i18n_t (imports)
+- chrome_extension_src_background_index_ts → chrome_extension_src_background_index_ts_import_extension_shared_externalpublishmessage (imports)
+- chrome_extension_src_background_index_ts → chrome_extension_src_background_index_ts_import_extension_shared_externalincomingmessageschema (imports)
+- chrome_extension_src_background_index_ts → chrome_extension_src_background_index_ts_import_extension_shared_externalpublishmessageschema (imports)
+- chrome_extension_src_background_index_ts → chrome_extension_src_background_index_ts_import_extension_shared_externalincomingmessage (imports)
+- chrome_extension_src_background_index_ts → chrome_extension_src_background_index_ts_import_extension_shared_sidepanelpublishreceivedmessage (imports)
+- chrome_extension_src_background_index_ts → chrome_extension_src_background_index_ts_import_browser_context_browsercontext (imports)
+- chrome_extension_src_background_index_ts → chrome_extension_src_background_index_ts_import_agent_executor_executor (imports)
+- chrome_extension_src_background_index_ts → chrome_extension_src_background_index_ts_import_log_createlogger (imports)
+- chrome_extension_src_background_index_ts → chrome_extension_src_background_index_ts_import_agent_helper_createchatmodel (imports)
+- chrome_extension_src_background_index_ts → chrome_extension_src_background_index_ts_import_langchain_core_language_models_chat_models_basechatmodel (imports)
+- chrome_extension_src_background_index_ts → chrome_extension_src_background_index_ts_import_agent_types_default_agent_options (imports)
+- chrome_extension_src_background_index_ts → chrome_extension_src_background_index_ts_import_executor_lifecycle_shouldcleanupexecutoronterminalevent (imports)
+- chrome_extension_src_background_index_ts → chrome_extension_src_background_index_ts_import_services_speechtotext_speechtotextservice (imports)
+- chrome_extension_src_background_index_ts → chrome_extension_src_background_index_ts_import_browser_dom_service_injectbuilddomtreescripts (imports)
+- chrome_extension_src_background_index_ts → chrome_extension_src_background_index_ts_import_services_analytics_analytics (imports)
+

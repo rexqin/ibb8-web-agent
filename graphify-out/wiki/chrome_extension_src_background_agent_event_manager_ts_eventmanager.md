@@ -1,0 +1,19 @@
+# EventManager
+
+- **ID:** `chrome_extension_src_background_agent_event_manager_ts_eventmanager`
+- **Type:** Class
+- **File:** `./chrome-extension/src/background/agent/event/manager.ts`
+- **Location:** L6
+
+## Relationships
+
+- chrome_extension_src_background_agent_event_manager_ts → chrome_extension_src_background_agent_event_manager_ts_eventmanager (defines, Extracted)
+- chrome_extension_src_background_agent_event_manager_ts_eventmanager → chrome_extension_src_background_agent_event_manager_ts_eventmanager_constructor (defines, Extracted)
+- chrome_extension_src_background_agent_event_manager_ts_eventmanager → chrome_extension_src_background_agent_event_manager_ts_eventmanager_subscribe (defines, Extracted)
+- chrome_extension_src_background_agent_event_manager_ts_eventmanager → chrome_extension_src_background_agent_event_manager_ts_eventmanager_unsubscribe (defines, Extracted)
+- chrome_extension_src_background_agent_event_manager_ts_eventmanager → chrome_extension_src_background_agent_event_manager_ts_eventmanager_clearsubscribers (defines, Extracted)
+- chrome_extension_src_background_agent_event_manager_ts_eventmanager → chrome_extension_src_background_agent_event_manager_ts_eventmanager_getorcreatetaskstate (defines, Extracted)
+- chrome_extension_src_background_agent_event_manager_ts_eventmanager → chrome_extension_src_background_agent_event_manager_ts_eventmanager_gettotalpausedms (defines, Extracted)
+- chrome_extension_src_background_agent_event_manager_ts_eventmanager → chrome_extension_src_background_agent_event_manager_ts_eventmanager_attachdurations (defines, Extracted)
+- chrome_extension_src_background_agent_event_manager_ts_eventmanager → chrome_extension_src_background_agent_event_manager_ts_eventmanager_emit (defines, Extracted)
+

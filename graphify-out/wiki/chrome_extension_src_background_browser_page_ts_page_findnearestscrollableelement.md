@@ -1,0 +1,16 @@
+# ._findNearestScrollableElement()
+
+- **ID:** `chrome_extension_src_background_browser_page_ts_page_findnearestscrollableelement`
+- **Type:** Method
+- **File:** `./chrome-extension/src/background/browser/page.ts`
+- **Location:** L334
+
+## Relationships
+
+- chrome_extension_src_background_browser_page_ts_page → chrome_extension_src_background_browser_page_ts_page_findnearestscrollableelement (defines, Extracted)
+- chrome_extension_src_background_browser_page_ts_page_getelementscrollinfo → chrome_extension_src_background_browser_page_ts_page_findnearestscrollableelement (calls, Inferred)
+- chrome_extension_src_background_browser_page_ts_page_scrolltopercent → chrome_extension_src_background_browser_page_ts_page_findnearestscrollableelement (calls, Inferred)
+- chrome_extension_src_background_browser_page_ts_page_scrollby → chrome_extension_src_background_browser_page_ts_page_findnearestscrollableelement (calls, Inferred)
+- chrome_extension_src_background_browser_page_ts_page_scrolltopreviouspage → chrome_extension_src_background_browser_page_ts_page_findnearestscrollableelement (calls, Inferred)
+- chrome_extension_src_background_browser_page_ts_page_scrolltonextpage → chrome_extension_src_background_browser_page_ts_page_findnearestscrollableelement (calls, Inferred)
+

@@ -1,0 +1,17 @@
+# domService
+
+- **ID:** `chrome_extension_src_background_browser_dom_domservice_ts`
+- **Type:** File
+- **File:** `./chrome-extension/src/background/browser/dom/domService.ts`
+
+## Relationships
+
+- chrome_extension_src_background_browser_dom_domservice_ts → chrome_extension_src_background_browser_dom_domservice_ts_import_puppeteer_core_page (imports, Extracted)
+- chrome_extension_src_background_browser_dom_domservice_ts → chrome_extension_src_background_browser_dom_domservice_ts_import_puppeteer_core_cdpsession (imports, Extracted)
+- chrome_extension_src_background_browser_dom_domservice_ts → chrome_extension_src_background_browser_dom_domservice_ts_import_enhanceddomtreenode_enhanceddomtreenode (imports, Extracted)
+- chrome_extension_src_background_browser_dom_domservice_ts → chrome_extension_src_background_browser_dom_domservice_ts_import_enhancedsnapshot_buildsnapshotlookup (imports, Extracted)
+- chrome_extension_src_background_browser_dom_domservice_ts → chrome_extension_src_background_browser_dom_domservice_ts_import_enhancedsnapshot_required_computed_styles (imports, Extracted)
+- chrome_extension_src_background_browser_dom_domservice_ts → chrome_extension_src_background_browser_dom_domservice_ts_import_domserializer_domtreeserializer (imports, Extracted)
+- chrome_extension_src_background_browser_dom_domservice_ts → chrome_extension_src_background_browser_dom_domservice_ts_import_serializeddomstate_serializeddomstate (imports, Extracted)
+- chrome_extension_src_background_browser_dom_domservice_ts → chrome_extension_src_background_browser_dom_domservice_ts_domservice (defines, Extracted)
+

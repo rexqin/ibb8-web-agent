@@ -1,0 +1,104 @@
+{
+  "chunk": 15,
+  "chunk_paths": [
+    "pages/side-panel/public/icons/system.svg"
+  ],
+  "nodes": [
+    {
+      "id": "pages_side_panel_public_icons_system_svg",
+      "label": "system.svg",
+      "file_type": "image",
+      "source_file": "pages/side-panel/public/icons/system.svg",
+      "source_location": "full document"
+    },
+    {
+      "id": "svg_viewbox_24",
+      "label": "viewBox 0 0 24 24 (standard icon grid)",
+      "file_type": "image",
+      "source_file": "pages/side-panel/public/icons/system.svg",
+      "source_location": "L1"
+    },
+    {
+      "id": "path_layered_stack_geometry",
+      "label": "Single path: layered / stacked parallelogram faces (3D stack motif)",
+      "file_type": "image",
+      "source_file": "pages/side-panel/public/icons/system.svg",
+      "source_location": "L2 path"
+    },
+    {
+      "id": "fill_rgba_white_90",
+      "label": "Fill rgba(255, 255, 255, 0.9) on dark UI backgrounds",
+      "file_type": "image",
+      "source_file": "pages/side-panel/public/icons/system.svg",
+      "source_location": "L2 fill"
+    },
+    {
+      "id": "theme_system_actor_chrome",
+      "label": "Side-panel chrome: System actor identity in chat / timeline",
+      "file_type": "document",
+      "source_file": "pages/side-panel/public/icons/system.svg",
+      "source_location": "semantics"
+    },
+    {
+      "id": "usage_actor_profiles_system",
+      "label": "ACTOR_PROFILES.system.icon → icons/system.svg",
+      "file_type": "code",
+      "source_file": "pages/side-panel/src/types/message.ts",
+      "source_location": "L7-L10"
+    }
+  ],
+  "edges": [
+    {
+      "source": "pages_side_panel_public_icons_system_svg",
+      "target": "svg_viewbox_24",
+      "relation": "has_property",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "pages/side-panel/public/icons/system.svg",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_side_panel_public_icons_system_svg",
+      "target": "path_layered_stack_geometry",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "pages/side-panel/public/icons/system.svg",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "path_layered_stack_geometry",
+      "target": "fill_rgba_white_90",
+      "relation": "styled_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "pages/side-panel/public/icons/system.svg",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_side_panel_public_icons_system_svg",
+      "target": "theme_system_actor_chrome",
+      "relation": "communicates",
+      "confidence": "INFERRED",
+      "confidence_score": 0.82,
+      "source_file": "pages/side-panel/public/icons/system.svg",
+      "source_location": "composition",
+      "weight": 0.95
+    },
+    {
+      "source": "usage_actor_profiles_system",
+      "target": "pages_side_panel_public_icons_system_svg",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "pages/side-panel/src/types/message.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}
