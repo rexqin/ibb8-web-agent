@@ -1,7 +1,11 @@
 import type { EnhancedDOMTreeNode, DOMRect } from './domService';
 import { NodeType } from './domService';
+import type { CompoundChildInfo } from './compoundChildInfo';
+import type { EnhancedDOMTreeNodeJSON } from './enhancedDOMTreeNode';
 import { SerializedDOMState } from './serializedDOMState';
 import { ClickableElementDetector } from './clickableElementDetector';
+
+export type { CompoundChildInfo } from './compoundChildInfo';
 
 // 禁用元素集合
 const DISABLED_ELEMENTS = new Set(['style', 'script', 'head', 'meta', 'link', 'title', 'noscript', '#comment']);
@@ -37,18 +41,6 @@ export interface PropagatingBounds {
   depth: number;
 }
 
-// 复合组件子元素信息
-export interface CompoundChildInfo {
-  role: string;
-  name: string;
-  valuemin: number | null;
-  valuemax: number | null;
-  valuenow: string | number | null;
-  optionsCount?: number;
-  firstOptions?: string[];
-  formatHint?: string;
-}
-
 // 简化节点
 export class SimplifiedNode {
   originalNode: EnhancedDOMTreeNode;
@@ -70,21 +62,16 @@ export class SimplifiedNode {
    * 递归清理 originalNode 的 JSON，移除 childrenNodes 和 shadowRoots
    * 避免与 SimplifiedNode.children 重复
    */
-  private _cleanOriginalNodeJson(nodeJson: Record<string, any>): Record<string, any> {
-    // 移除不需要的字段
-    if ('childrenNodes' in nodeJson) {
-      delete nodeJson.childrenNodes;
-    }
-    if ('shadowRoots' in nodeJson) {
-      delete nodeJson.shadowRoots;
+  private _cleanOriginalNodeJson(nodeJson: EnhancedDOMTreeNodeJSON): Record<string, unknown> {
+    const out: Record<string, unknown> = { ...nodeJson };
+    delete out.childrenNodes;
+    delete out.shadowRoots;
+
+    if (out.contentDocument && typeof out.contentDocument === 'object') {
+      out.contentDocument = this._cleanOriginalNodeJson(out.contentDocument as EnhancedDOMTreeNodeJSON);
     }
 
-    // 清理嵌套的 contentDocument（如果存在）
-    if (nodeJson.contentDocument) {
-      nodeJson.contentDocument = this._cleanOriginalNodeJson(nodeJson.contentDocument);
-    }
-
-    return nodeJson;
+    return out;
   }
 
   /**

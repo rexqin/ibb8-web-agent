@@ -1,5 +1,50 @@
 import type { DOMRect, EnhancedAXNode, SnapshotNode } from './domService';
 import { NodeType } from './domService';
+import type { CompoundChildInfo } from './compoundChildInfo';
+
+/** toJSON() 产出的可序列化节点形状（无 parent 环） */
+export interface EnhancedDOMTreeNodeJSON {
+  nodeId: number;
+  backendNodeId: number;
+  nodeType: string;
+  nodeName: string;
+  nodeValue: string | null;
+  isVisible: boolean | null;
+  attributes: Record<string, string>;
+  isScrollable: boolean | null;
+  sessionId: string | null;
+  targetId: string;
+  frameId: string | null;
+  contentDocument: EnhancedDOMTreeNodeJSON | null;
+  shadowRootType: string | null;
+  axNode: EnhancedAXNode | null;
+  snapshotNode: SnapshotNode | null;
+  shadowRoots: EnhancedDOMTreeNodeJSON[];
+  childrenNodes: EnhancedDOMTreeNodeJSON[];
+}
+
+/** get scrollInfo 返回的数值摘要 */
+export interface ElementScrollInfo {
+  scrollTop: number;
+  scrollLeft: number;
+  scrollableHeight: number;
+  scrollableWidth: number;
+  visibleHeight: number;
+  visibleWidth: number;
+  contentAbove: number;
+  contentBelow: number;
+  contentLeft: number;
+  contentRight: number;
+  verticalScrollPercentage: number;
+  horizontalScrollPercentage: number;
+  pagesAbove: number;
+  pagesBelow: number;
+  totalPages: number;
+  canScrollUp: boolean;
+  canScrollDown: boolean;
+  canScrollLeft: boolean;
+  canScrollRight: boolean;
+}
 
 /** SHA-256 十六进制摘要的前 16 个字符解析为 number（与 Node createHash 行为一致） */
 async function sha256DigestPrefixToInt(input: string): Promise<number> {
@@ -38,7 +83,7 @@ export class EnhancedDOMTreeNode {
   childrenNodes: EnhancedDOMTreeNode[] | null;
   axNode: EnhancedAXNode | null;
   snapshotNode: SnapshotNode | null;
-  _compoundChildren: Array<Record<string, any>> = [];
+  _compoundChildren: CompoundChildInfo[] = [];
   uuid: string;
 
   constructor(data: {
@@ -61,7 +106,7 @@ export class EnhancedDOMTreeNode {
     childrenNodes?: EnhancedDOMTreeNode[] | null;
     axNode?: EnhancedAXNode | null;
     snapshotNode?: SnapshotNode | null;
-    _compoundChildren?: Array<Record<string, any>>;
+    _compoundChildren?: CompoundChildInfo[];
     uuid?: string;
   }) {
     this.nodeId = data.nodeId;
@@ -188,7 +233,7 @@ export class EnhancedDOMTreeNode {
   /**
    * 将节点及其后代序列化为字典，省略父引用
    */
-  toJSON(): Record<string, any> {
+  toJSON(): EnhancedDOMTreeNodeJSON {
     return {
       nodeId: this.nodeId,
       backendNodeId: this.backendNodeId,
@@ -385,7 +430,7 @@ export class EnhancedDOMTreeNode {
   /**
    * 计算此元素的滚动信息（如果可滚动）
    */
-  get scrollInfo(): Record<string, any> | null {
+  get scrollInfo(): ElementScrollInfo | null {
     if (!this.isActuallyScrollable || !this.snapshotNode) {
       return null;
     }

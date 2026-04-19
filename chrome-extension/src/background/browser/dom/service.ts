@@ -8,6 +8,15 @@ import { DomService } from './domService';
 import type { Page as PuppeteerPage, CDPSession as PuppeteerCDPSession } from 'puppeteer-core';
 const logger = createLogger('DOMService');
 
+/** Page 的主 CDP 客户端；公开类型不含 `_client`，扩展里也不能用 `createCDPSession()` */
+function getPuppeteerPageMainClient(page: PuppeteerPage | null | undefined): PuppeteerCDPSession | null {
+  if (page == null) {
+    return null;
+  }
+  const client = (page as unknown as { _client?: () => PuppeteerCDPSession })._client?.();
+  return client ?? null;
+}
+
 function isNotNull<T>(item: T | null | undefined): item is T {
   return item != null;
 }
@@ -99,11 +108,11 @@ export async function getClickableElements(
   focusElement = -1,
   viewportExpansion = 0,
   debugMode = false,
-  page?: PuppeteerPage | null,
+  page?: PuppeteerPage,
 ): Promise<DOMState> {
-  const cdpSession = await page?._client();
+  const cdpSession = getPuppeteerPageMainClient(page);
   if (!cdpSession) {
-    throw new Error('Failed to create CDP session');
+    throw new Error('Failed to get CDP session (page missing or not connected)');
   }
 
   const [elementTree, selectorMap] = await _buildDomTree(
