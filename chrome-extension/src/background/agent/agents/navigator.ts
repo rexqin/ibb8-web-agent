@@ -186,7 +186,7 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
     let actionResults: ActionResult[] = [];
 
     try {
-      this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.STEP_START, 'Navigating...');
+      this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.STEP_START, '导航中...');
 
       const messageManager = this.context.messageManager;
       // add the browser state message
@@ -220,7 +220,7 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
       this.removeLastStateMessageFromMemory();
       this.addModelOutputToMemory(modelOutput);
 
-      // take the actions
+      logger.info('执行动作列表', actions);
       actionResults = await this.doMultiAction(actions);
 
       this.context.actionResults = actionResults;
@@ -231,7 +231,7 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
         return agentOutput;
       }
       // emit event
-      this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.STEP_OK, 'Navigation done');
+      this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.STEP_OK, '完成导航');
       let done = false;
       if (actionResults.length > 0 && actionResults[actionResults.length - 1].isDone) {
         done = true;
@@ -256,9 +256,7 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
         throw error;
       }
 
-      debugger;
-
-      const errorString = `Navigation failed: ${errorMessage}`;
+      const errorString = `导航失败: ${errorMessage}`;
       logger.error(errorString);
       this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.STEP_FAIL, errorString);
       agentOutput.error = errorMessage;
