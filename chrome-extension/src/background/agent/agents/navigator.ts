@@ -222,7 +222,6 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
 
       // take the actions
       actionResults = await this.doMultiAction(actions);
-      // logger.info('Action results', JSON.stringify(actionResults, null, 2));
 
       this.context.actionResults = actionResults;
 
@@ -256,6 +255,8 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
       } else if (error instanceof URLNotAllowedError) {
         throw error;
       }
+
+      debugger;
 
       const errorString = `Navigation failed: ${errorMessage}`;
       logger.error(errorString);

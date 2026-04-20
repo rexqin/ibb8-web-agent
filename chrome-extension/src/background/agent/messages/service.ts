@@ -59,7 +59,7 @@ export default class MessageManager {
     // Add context message if provided
     if (messageContext && messageContext.length > 0) {
       const contextMessage = new HumanMessage({
-        content: `Context for the task: ${messageContext}`,
+        content: `任务上下文：${messageContext}`,
       });
       this.addMessageWithTokens(contextMessage, 'init');
     }
@@ -70,16 +70,16 @@ export default class MessageManager {
 
     // Add sensitive data info if sensitive data is provided
     if (this.settings.sensitiveData) {
-      const info = `Here are placeholders for sensitive data: ${Object.keys(this.settings.sensitiveData)}`;
+      const info = `以下是敏感数据占位符：${Object.keys(this.settings.sensitiveData)}`;
       const infoMessage = new HumanMessage({
-        content: `${info}\nTo use them, write <secret>the placeholder name</secret>`,
+        content: `${info}\n要使用它们，请写成 <secret>占位符名称</secret>`,
       });
       this.addMessageWithTokens(infoMessage, 'init');
     }
 
     // Add example output
     const placeholderMessage = new HumanMessage({
-      content: 'Example output:',
+      content: '示例输出：',
     });
     this.addMessageWithTokens(placeholderMessage, 'init');
 
@@ -89,19 +89,17 @@ export default class MessageManager {
         name: 'AgentOutput',
         args: {
           current_state: {
-            evaluation_previous_goal:
-              `Success - I successfully clicked on the 'Apple' link from the Google Search results page, 
-              which directed me to the 'Apple' company homepage. This is a good start toward finding 
-              the best place to buy a new iPhone as the Apple website often list iPhones for sale.`.trim(),
-            memory: `I searched for 'iPhone retailers' on Google. From the Google Search results page, 
-              I used the 'click_element' tool to click on a element labelled 'Best Buy' but calling 
-              the tool did not direct me to a new page. I then used the 'click_element' tool to click 
-              on a element labelled 'Apple' which redirected me to the 'Apple' company homepage. 
-              Currently at step 3/15.`.trim(),
-            next_goal: `Looking at reported structure of the current page, I can see the item '[127]<h3 iPhone/>' 
-              in the content. I think this button will lead to more information and potentially prices 
-              for iPhones. I'll click on the link to 'iPhone' at index [127] using the 'click_element' 
-              tool and hope to see prices on the next page.`.trim(),
+            evaluation_previous_goal: `成功 - 我已在 Google 搜索结果页中成功点击了 “Apple” 链接，
+              并跳转到了 Apple 公司主页。这是朝着寻找购买新 iPhone 最佳地点迈出的良好一步，
+              因为 Apple 官网通常会提供 iPhone 的销售信息。`.trim(),
+            memory: `我在 Google 上搜索了 “iPhone retailers”（iPhone 零售商）。在 Google 搜索结果页中，
+              我使用了 'click_element' 工具点击了一个标注为 “Best Buy” 的元素，但调用该工具后并没有跳转到新页面。
+              随后我又使用 'click_element' 工具点击了一个标注为 “Apple” 的元素，
+              并重定向到了 Apple 公司主页。目前处于第 3/15 步。`.trim(),
+            next_goal: `根据当前页面上报的结构，我可以在内容中看到 '[127]<h3 iPhone/>' 这一项。
+              我认为这个按钮会引导到更多信息，并可能包含 iPhone 的价格。
+              我将使用 'click_element' 工具点击索引为 [127] 的 “iPhone” 链接，
+              希望在下一页看到价格信息。`.trim(),
           },
           action: [{ click_element: { index: 127 } }],
         },
@@ -115,18 +113,18 @@ export default class MessageManager {
       tool_calls: toolCalls,
     });
     this.addMessageWithTokens(exampleToolCall, 'init');
-    this.addToolMessage('Browser started', toolCallId, 'init');
+    this.addToolMessage('浏览器已启动', toolCallId, 'init');
 
     // Add history start marker
     const historyStartMessage = new HumanMessage({
-      content: '[Your task history memory starts here]',
+      content: '[你的任务历史记忆从这里开始]',
     });
     this.addMessageWithTokens(historyStartMessage);
 
     // Add available file paths if provided
     if (this.settings.availableFilePaths && this.settings.availableFilePaths.length > 0) {
       const filepathsMsg = new HumanMessage({
-        content: `Here are file paths you can use: ${this.settings.availableFilePaths}`,
+        content: `以下是你可以使用的文件路径：${this.settings.availableFilePaths}`,
       });
       this.addMessageWithTokens(filepathsMsg, 'init');
     }

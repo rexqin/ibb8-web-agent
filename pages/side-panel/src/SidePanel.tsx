@@ -65,7 +65,7 @@ const SidePanel = () => {
     stepStatuses: PlanStepExecUiStatus[];
   }
 
-  const progressMessage = 'Showing progress...';
+  const progressMessage = '显示进度...';
   const MAX_PLAN_STEP_ACTIVITY = 200;
   const [planStepActivity, setPlanStepActivity] = useState<Record<string, PlanStepActivityLine[]>>({});
   const [panelNotice, setPanelNotice] = useState<string | null>(null);
