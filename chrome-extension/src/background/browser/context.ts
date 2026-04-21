@@ -13,6 +13,21 @@ import { analytics } from '../services/analytics';
 
 const logger = createLogger('BrowserContext');
 
+interface TabLifecycleTrace {
+  tabId: number;
+  attachAttempts: number;
+  attachSuccesses: number;
+  detachAttempts: number;
+  detachSuccesses: number;
+  lastAttachAt: number | null;
+  lastDetachAt: number | null;
+  lastAccessAt: number | null;
+  lastUrl: string | null;
+  lastTitle: string | null;
+  lastError: string | null;
+  lastDetachReason: string | null;
+}
+
 function isNoTabError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
   return message.includes('No tab with id');
@@ -33,6 +48,7 @@ export default class BrowserContext {
   private _config: BrowserContextConfig;
   private _currentTabId: number | null = null;
   private _attachedPages: Map<number, Page> = new Map();
+  private _tabLifecycleTraces: Map<number, TabLifecycleTrace> = new Map();
 
   constructor(config: Partial<BrowserContextConfig>) {
     this._config = { ...DEFAULT_BROWSER_CONTEXT_CONFIG, ...config };
@@ -49,6 +65,54 @@ export default class BrowserContext {
   public updateCurrentTabId(tabId: number): void {
     // only update tab id, but don't attach it.
     this._currentTabId = tabId;
+  }
+
+  private _touchLifecycle(tabId: number, patch: Partial<TabLifecycleTrace>): TabLifecycleTrace {
+    const prev = this._tabLifecycleTraces.get(tabId) ?? {
+      tabId,
+      attachAttempts: 0,
+      attachSuccesses: 0,
+      detachAttempts: 0,
+      detachSuccesses: 0,
+      lastAttachAt: null,
+      lastDetachAt: null,
+      lastAccessAt: null,
+      lastUrl: null,
+      lastTitle: null,
+      lastError: null,
+      lastDetachReason: null,
+    };
+    const next = { ...prev, ...patch };
+    this._tabLifecycleTraces.set(tabId, next);
+    return next;
+  }
+
+  private _tracePanel(event: string, tabId?: number): void {
+    if (!import.meta.env.DEV) {
+      return;
+    }
+
+    const now = Date.now();
+    const panel = Array.from(this._tabLifecycleTraces.values())
+      .sort((a, b) => (b.lastAccessAt ?? 0) - (a.lastAccessAt ?? 0))
+      .slice(0, 8)
+      .map(trace => ({
+        tabId: trace.tabId,
+        attached: this._attachedPages.has(trace.tabId),
+        attach: `${trace.attachSuccesses}/${trace.attachAttempts}`,
+        detach: `${trace.detachSuccesses}/${trace.detachAttempts}`,
+        lastAccessAgoMs: trace.lastAccessAt ? now - trace.lastAccessAt : null,
+        lastDetachReason: trace.lastDetachReason,
+        lastError: trace.lastError,
+      }));
+
+    logger.debug('tabLifecyclePanel', {
+      event,
+      tabId,
+      currentTabId: this._currentTabId,
+      attachedCount: this._attachedPages.size,
+      panel,
+    });
   }
 
   private async _getOrCreatePage(tab: chrome.tabs.Tab, forceUpdate = false): Promise<Page> {
@@ -80,6 +144,11 @@ export default class BrowserContext {
   }
 
   public async attachPage(page: Page): Promise<boolean> {
+    const now = Date.now();
+    this._touchLifecycle(page.tabId, {
+      attachAttempts: (this._tabLifecycleTraces.get(page.tabId)?.attachAttempts ?? 0) + 1,
+      lastAccessAt: now,
+    });
     logger.debug('attachPage:start', {
       tabId: page.tabId,
       currentAttachedCount: this._attachedPages.size,
@@ -89,6 +158,11 @@ export default class BrowserContext {
     // check if page is already attached
     if (this._attachedPages.has(page.tabId)) {
       logger.info('attachPage', page.tabId, 'already attached');
+      this._touchLifecycle(page.tabId, {
+        lastAccessAt: Date.now(),
+        lastError: null,
+      });
+      this._tracePanel('attachPage:already-attached', page.tabId);
       logger.debug('attachPage:skip-already-attached', {
         tabId: page.tabId,
         currentAttachedCount: this._attachedPages.size,
@@ -106,6 +180,13 @@ export default class BrowserContext {
         logger.info('attachPage', page.tabId, 'attached');
         // add page to managed pages
         this._attachedPages.set(page.tabId, page);
+        this._touchLifecycle(page.tabId, {
+          attachSuccesses: (this._tabLifecycleTraces.get(page.tabId)?.attachSuccesses ?? 0) + 1,
+          lastAttachAt: Date.now(),
+          lastAccessAt: Date.now(),
+          lastError: null,
+        });
+        this._tracePanel('attachPage:done', page.tabId);
         logger.debug('attachPage:done', {
           tabId: page.tabId,
           currentAttachedCount: this._attachedPages.size,
@@ -116,8 +197,19 @@ export default class BrowserContext {
         tabId: page.tabId,
         currentAttachedCount: this._attachedPages.size,
       });
+      this._touchLifecycle(page.tabId, {
+        lastAccessAt: Date.now(),
+        lastError: 'attachPuppeteer returned false',
+      });
+      this._tracePanel('attachPage:failed', page.tabId);
       return false;
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this._touchLifecycle(page.tabId, {
+        lastAccessAt: Date.now(),
+        lastError: errorMsg,
+      });
+      this._tracePanel('attachPage:error', page.tabId);
       logger.error('attachPage:error', {
         tabId: page.tabId,
         currentAttachedCount: this._attachedPages.size,
@@ -127,7 +219,12 @@ export default class BrowserContext {
     }
   }
 
-  public async detachPage(tabId: number): Promise<void> {
+  public async detachPage(tabId: number, reason: string = 'manual'): Promise<void> {
+    this._touchLifecycle(tabId, {
+      detachAttempts: (this._tabLifecycleTraces.get(tabId)?.detachAttempts ?? 0) + 1,
+      lastAccessAt: Date.now(),
+      lastDetachReason: reason,
+    });
     logger.debug('detachPage:start', {
       tabId,
       currentAttachedCount: this._attachedPages.size,
@@ -137,6 +234,10 @@ export default class BrowserContext {
     // detach page
     const page = this._attachedPages.get(tabId);
     if (!page) {
+      this._touchLifecycle(tabId, {
+        lastAccessAt: Date.now(),
+      });
+      this._tracePanel('detachPage:skip-not-found', tabId);
       logger.debug('detachPage:skip-not-found', {
         tabId,
         currentAttachedCount: this._attachedPages.size,
@@ -146,13 +247,26 @@ export default class BrowserContext {
 
     try {
       await page.detachPuppeteer();
+      this._touchLifecycle(tabId, {
+        detachSuccesses: (this._tabLifecycleTraces.get(tabId)?.detachSuccesses ?? 0) + 1,
+        lastDetachAt: Date.now(),
+        lastAccessAt: Date.now(),
+        lastError: null,
+      });
       logger.debug('detachPage:detachPuppeteer-done', { tabId });
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this._touchLifecycle(tabId, {
+        lastAccessAt: Date.now(),
+        lastError: errorMsg,
+      });
+      this._tracePanel('detachPage:error', tabId);
       logger.error('detachPage:error', { tabId, error });
       throw error;
     } finally {
       // remove page from managed pages
       this._attachedPages.delete(tabId);
+      this._tracePanel('detachPage:done', tabId);
       logger.debug('detachPage:done', {
         tabId,
         currentAttachedCount: this._attachedPages.size,
@@ -161,33 +275,52 @@ export default class BrowserContext {
   }
 
   /**
-   * 当前窗口无可用活动标签时，打开首页标签作为兜底。
+   * 仅在当前窗口选择一个已存在的 tab（优先 active）。
+   * 注意：这里不会创建新 tab。
    */
-  private async _resolveActiveTabOrCreateHome(): Promise<chrome.tabs.Tab> {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tab?.id) {
-      return tab;
+  private async _resolveExistingTabInCurrentWindow(): Promise<chrome.tabs.Tab> {
+    const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (activeTab?.id) {
+      return activeTab;
     }
-    const newTab = await chrome.tabs.create({ url: this._config.homePageUrl });
-    if (!newTab.id) {
-      throw new Error('No tab ID available');
+
+    const tabs = await chrome.tabs.query({ currentWindow: true });
+    const fallback = tabs.find(tab => tab.id);
+    if (fallback?.id) {
+      logger.info('No active tab found, fallback to existing tab', fallback.id, fallback.url, fallback.title);
+      return fallback;
     }
-    return newTab;
+
+    throw new Error('No existing tab available in current window');
   }
 
   /**
    * 为指定 tab 创建/复用 Page、执行 attach，并写入当前 tab id。
    */
   private async _bindPageToCurrentTab(tab: chrome.tabs.Tab): Promise<Page> {
+    if (tab.id) {
+      this._touchLifecycle(tab.id, {
+        lastAccessAt: Date.now(),
+        lastUrl: tab.url ?? null,
+        lastTitle: tab.title ?? null,
+      });
+      this._tracePanel('_bindPageToCurrentTab:start', tab.id);
+    }
     const page = await this._getOrCreatePage(tab);
     await this.attachPage(page);
     this._currentTabId = tab.id ?? null;
+    if (tab.id) {
+      this._touchLifecycle(tab.id, {
+        lastAccessAt: Date.now(),
+      });
+      this._tracePanel('_bindPageToCurrentTab:done', tab.id);
+    }
     return page;
   }
 
   /**
    * 返回当前逻辑 tab 对应的 Page：已 attach 则直接复用；否则按 tab id 拉 tab 并 attach；
-   * 若尚未指定当前 tab，则取活动 tab（或新建首页 tab）再 attach。
+   * 若尚未指定当前 tab，则只从当前窗口已有 tab 中选择并 attach（不会新建 tab）。
    */
   public async getCurrentPage(): Promise<Page> {
     const tabId = this._currentTabId;
@@ -195,6 +328,11 @@ export default class BrowserContext {
     if (tabId !== null) {
       const cached = this._attachedPages.get(tabId);
       if (cached) {
+        this._touchLifecycle(tabId, {
+          lastAccessAt: Date.now(),
+          lastError: null,
+        });
+        this._tracePanel('getCurrentPage:cache-hit', tabId);
         return cached;
       }
 
@@ -212,7 +350,7 @@ export default class BrowserContext {
       }
     }
 
-    const tab = await this._resolveActiveTabOrCreateHome();
+    const tab = await this._resolveExistingTabInCurrentWindow();
     logger.info('getCurrentPage active tab', tab.id, tab.url, tab.title);
     return await this._bindPageToCurrentTab(tab);
   }
@@ -487,7 +625,7 @@ export default class BrowserContext {
   }
 
   public async closeTab(tabId: number): Promise<void> {
-    await this.detachPage(tabId);
+    await this.detachPage(tabId, 'closeTab');
     await chrome.tabs.remove(tabId);
     // update current tab id if needed
     if (this._currentTabId === tabId) {

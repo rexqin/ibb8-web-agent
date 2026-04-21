@@ -270,17 +270,34 @@ export default class Page {
       this._browser = null;
       this._puppeteerPage = null;
 
+      logger.debug('detachPuppeteer:done', { tabId: this._tabId });
       // reset the state
       this._state = build_initial_state(this._tabId);
     }
+  }
+
+  private async _ensurePuppeteerPage(): Promise<PuppeteerPage> {
+    if (this._puppeteerPage) {
+      return this._puppeteerPage;
+    }
+
+    logger.warning('Puppeteer page missing, attempting auto reconnect', { tabId: this._tabId });
+    const attached = await this.attachPuppeteer();
+    if (!attached || !this._puppeteerPage) {
+      throw new Error('Puppeteer is not connected');
+    }
+
+    logger.info('Puppeteer auto reconnect succeeded', { tabId: this._tabId });
+    return this._puppeteerPage;
   }
 
   async getClickableElements(focusElement: number): Promise<EnhancedDOMState | null> {
     if (!this._validWebPage) {
       return null;
     }
+    const puppeteerPage = await this._ensurePuppeteerPage();
     const cdpSession = this._getMainCdpSession();
-    if (!cdpSession || !this._puppeteerPage) {
+    if (!cdpSession) {
       throw new Error('Failed to get CDP session (page missing or not connected)');
     }
     return _getClickableElements(
@@ -289,7 +306,7 @@ export default class Page {
       focusElement,
       this._config.viewportExpansion,
       import.meta.env.DEV,
-      this._puppeteerPage,
+      puppeteerPage,
       cdpSession,
     );
   }
@@ -313,9 +330,7 @@ export default class Page {
 
   // Get scroll position information for a specific element.
   async getElementScrollInfo(elementNode: EnhancedDOMTreeNode): Promise<[number, number, number]> {
-    if (!this._puppeteerPage) {
-      throw new Error('Puppeteer is not connected');
-    }
+    await this._ensurePuppeteerPage();
 
     const element = await this.locateElement(elementNode);
     if (!element) {
@@ -345,9 +360,7 @@ export default class Page {
    * @returns The nearest scrollable ancestor or null if none found
    */
   private async _findNearestScrollableElement(element: ElementHandle): Promise<ElementHandle | null> {
-    if (!this._puppeteerPage) {
-      return null;
-    }
+    const puppeteerPage = await this._ensurePuppeteerPage();
 
     // Check if the current element is scrollable
     const isScrollable = await element.evaluate((el: Node) => {
@@ -419,7 +432,7 @@ export default class Page {
 
     // If no scrollable ancestor found, return the document body or documentElement
     try {
-      const bodyElement = await this._puppeteerPage.$('body');
+      const bodyElement = await puppeteerPage.$('body');
       if (bodyElement) {
         const bodyIsScrollable = await bodyElement.evaluate(el => {
           if (!(el instanceof HTMLElement)) return false;
@@ -431,7 +444,7 @@ export default class Page {
       }
 
       // Last resort: return document element for page-level scrolling
-      const documentElement = await this._puppeteerPage.evaluateHandle(() => document.documentElement);
+      const documentElement = await puppeteerPage.evaluateHandle(() => document.documentElement);
       const docElement = (await documentElement.asElement()) as ElementHandle<Element> | null;
       return docElement;
     } catch (error) {
@@ -441,10 +454,8 @@ export default class Page {
   }
 
   async getContent(): Promise<string> {
-    if (!this._puppeteerPage) {
-      throw new Error('Puppeteer page is not connected');
-    }
-    return await this._puppeteerPage.content();
+    const puppeteerPage = await this._ensurePuppeteerPage();
+    return await puppeteerPage.content();
   }
 
   getCachedState(): PageState | null {
@@ -542,13 +553,11 @@ export default class Page {
   }
 
   async takeScreenshot(fullPage = false): Promise<string | null> {
-    if (!this._puppeteerPage) {
-      throw new Error('Puppeteer page is not connected');
-    }
+    const puppeteerPage = await this._ensurePuppeteerPage();
 
     try {
       // First disable animations/transitions
-      await this._puppeteerPage.evaluate(() => {
+      await puppeteerPage.evaluate(() => {
         const styleId = 'puppeteer-disable-animations';
         if (!document.getElementById(styleId)) {
           const style = document.createElement('style');
@@ -564,7 +573,7 @@ export default class Page {
       });
 
       // Take the screenshot using JPEG format with 80% quality
-      const screenshot = await this._puppeteerPage.screenshot({
+      const screenshot = await puppeteerPage.screenshot({
         fullPage: fullPage,
         encoding: 'base64',
         type: 'jpeg',
@@ -572,7 +581,7 @@ export default class Page {
       });
 
       // Clean up the style element
-      await this._puppeteerPage.evaluate(() => {
+      await puppeteerPage.evaluate(() => {
         const style = document.getElementById('puppeteer-disable-animations');
         if (style) {
           style.remove();
@@ -601,9 +610,7 @@ export default class Page {
   }
 
   async navigateTo(url: string): Promise<void> {
-    if (!this._puppeteerPage) {
-      return;
-    }
+    const puppeteerPage = await this._ensurePuppeteerPage();
     logger.info('navigateTo', url);
 
     // Check if URL is allowed
@@ -612,7 +619,7 @@ export default class Page {
     }
 
     try {
-      await Promise.all([this.waitForPageAndFramesLoad(), this._puppeteerPage.goto(url)]);
+      await Promise.all([this.waitForPageAndFramesLoad(), puppeteerPage.goto(url)]);
       logger.info('navigateTo complete');
     } catch (error) {
       if (error instanceof URLNotAllowedError) {
@@ -630,10 +637,10 @@ export default class Page {
   }
 
   async refreshPage(): Promise<void> {
-    if (!this._puppeteerPage) return;
+    const puppeteerPage = await this._ensurePuppeteerPage();
 
     try {
-      await Promise.all([this.waitForPageAndFramesLoad(), this._puppeteerPage.reload()]);
+      await Promise.all([this.waitForPageAndFramesLoad(), puppeteerPage.reload()]);
       logger.info('Page refresh complete');
     } catch (error) {
       if (error instanceof URLNotAllowedError) {
@@ -651,10 +658,10 @@ export default class Page {
   }
 
   async goBack(): Promise<void> {
-    if (!this._puppeteerPage) return;
+    const puppeteerPage = await this._ensurePuppeteerPage();
 
     try {
-      await Promise.all([this.waitForPageAndFramesLoad(), this._puppeteerPage.goBack()]);
+      await Promise.all([this.waitForPageAndFramesLoad(), puppeteerPage.goBack()]);
       logger.info('Navigation back completed');
     } catch (error) {
       if (error instanceof URLNotAllowedError) {
@@ -672,10 +679,10 @@ export default class Page {
   }
 
   async goForward(): Promise<void> {
-    if (!this._puppeteerPage) return;
+    const puppeteerPage = await this._ensurePuppeteerPage();
 
     try {
-      await Promise.all([this.waitForPageAndFramesLoad(), this._puppeteerPage.goForward()]);
+      await Promise.all([this.waitForPageAndFramesLoad(), puppeteerPage.goForward()]);
       logger.info('Navigation forward completed');
     } catch (error) {
       if (error instanceof URLNotAllowedError) {
@@ -697,11 +704,9 @@ export default class Page {
   // if elementNode is provided, scroll to a percentage of the element
   // if elementNode is not provided, scroll to a percentage of the page
   async scrollToPercent(yPercent: number, elementNode?: EnhancedDOMTreeNode): Promise<void> {
-    if (!this._puppeteerPage) {
-      throw new Error('Puppeteer is not connected');
-    }
+    const puppeteerPage = await this._ensurePuppeteerPage();
     if (!elementNode) {
-      await this._puppeteerPage.evaluate(yPercent => {
+      await puppeteerPage.evaluate(yPercent => {
         const scrollHeight = document.documentElement.scrollHeight;
         const viewportHeight = window.visualViewport?.height || window.innerHeight;
         const scrollTop = (scrollHeight - viewportHeight) * (yPercent / 100);
@@ -737,11 +742,9 @@ export default class Page {
   }
 
   async scrollBy(y: number, elementNode?: EnhancedDOMTreeNode): Promise<void> {
-    if (!this._puppeteerPage) {
-      throw new Error('Puppeteer is not connected');
-    }
+    const puppeteerPage = await this._ensurePuppeteerPage();
     if (!elementNode) {
-      await this._puppeteerPage.evaluate(y => {
+      await puppeteerPage.evaluate(y => {
         window.scrollBy({
           top: y,
           left: 0,
@@ -770,13 +773,11 @@ export default class Page {
   }
 
   async scrollToPreviousPage(elementNode?: EnhancedDOMTreeNode): Promise<void> {
-    if (!this._puppeteerPage) {
-      throw new Error('Puppeteer is not connected');
-    }
+    const puppeteerPage = await this._ensurePuppeteerPage();
 
     if (!elementNode) {
       // Scroll the whole page up by viewport height
-      await this._puppeteerPage.evaluate('window.scrollBy(0, -(window.visualViewport?.height || window.innerHeight));');
+      await puppeteerPage.evaluate('window.scrollBy(0, -(window.visualViewport?.height || window.innerHeight));');
     } else {
       // Scroll the specific element up by its client height
       const element = await this.locateElement(elementNode);
@@ -797,13 +798,11 @@ export default class Page {
   }
 
   async scrollToNextPage(elementNode?: EnhancedDOMTreeNode): Promise<void> {
-    if (!this._puppeteerPage) {
-      throw new Error('Puppeteer is not connected');
-    }
+    const puppeteerPage = await this._ensurePuppeteerPage();
 
     if (!elementNode) {
       // Scroll the whole page down by viewport height
-      await this._puppeteerPage.evaluate('window.scrollBy(0, (window.visualViewport?.height || window.innerHeight));');
+      await puppeteerPage.evaluate('window.scrollBy(0, (window.visualViewport?.height || window.innerHeight));');
     } else {
       // Scroll the specific element down by its client height
       const element = await this.locateElement(elementNode);
@@ -824,9 +823,7 @@ export default class Page {
   }
 
   async sendKeys(keys: string): Promise<void> {
-    if (!this._puppeteerPage) {
-      throw new Error('Puppeteer page is not connected');
-    }
+    const puppeteerPage = await this._ensurePuppeteerPage();
 
     // Split combination keys (e.g., "Control+A" or "Shift+ArrowLeft")
     const keyParts = keys.split('+');
@@ -837,14 +834,11 @@ export default class Page {
     try {
       // Press all modifier keys (e.g., Control, Shift, etc.)
       for (const modifier of modifiers) {
-        await this._puppeteerPage.keyboard.down(this._convertKey(modifier));
+        await puppeteerPage.keyboard.down(this._convertKey(modifier));
       }
       // Press the main key
       // also wait for stable state
-      await Promise.all([
-        this._puppeteerPage.keyboard.press(this._convertKey(mainKey)),
-        this.waitForPageAndFramesLoad(),
-      ]);
+      await Promise.all([puppeteerPage.keyboard.press(this._convertKey(mainKey)), this.waitForPageAndFramesLoad()]);
       logger.info('sendKeys complete', keys);
     } catch (error) {
       logger.error('Failed to send keys:', error);
@@ -853,7 +847,7 @@ export default class Page {
       // Release all modifier keys in reverse order regardless of any errors in key press.
       for (const modifier of [...modifiers].reverse()) {
         try {
-          await this._puppeteerPage.keyboard.up(this._convertKey(modifier));
+          await puppeteerPage.keyboard.up(this._convertKey(modifier));
         } catch (releaseError) {
           logger.error('Failed to release modifier:', modifier, releaseError);
         }
@@ -941,9 +935,7 @@ export default class Page {
   }
 
   async scrollToText(text: string, nth: number = 1): Promise<boolean> {
-    if (!this._puppeteerPage) {
-      throw new Error('Puppeteer is not connected');
-    }
+    const puppeteerPage = await this._ensurePuppeteerPage();
 
     try {
       // Convert text to lowercase for consistent searching
@@ -960,7 +952,7 @@ export default class Page {
       for (const selector of selectors) {
         try {
           // Use $$ to get all matching elements
-          const elements = await this._puppeteerPage.$$(selector);
+          const elements = await puppeteerPage.$$(selector);
 
           if (elements.length > 0) {
             // Find visible elements and select the nth occurrence
@@ -1017,9 +1009,10 @@ export default class Page {
     const selectorMap = this.getSelectorMap();
     const element = selectorMap?.get(index);
 
-    if (!element || !this._puppeteerPage) {
-      throw new Error('Element not found or puppeteer is not connected');
+    if (!element) {
+      throw new Error('Element not found');
     }
+    await this._ensurePuppeteerPage();
 
     try {
       // Get the element handle using the element's selector
@@ -1055,9 +1048,10 @@ export default class Page {
     const selectorMap = this.getSelectorMap();
     const element = selectorMap?.get(index);
 
-    if (!element || !this._puppeteerPage) {
-      throw new Error('Element not found or puppeteer is not connected');
+    if (!element) {
+      throw new Error('Element not found');
     }
+    await this._ensurePuppeteerPage();
 
     logger.debug(`Attempting to select '${text}' from dropdown`);
     logger.debug(`Element attributes: ${JSON.stringify(element.attributes)}`);
@@ -1153,12 +1147,8 @@ export default class Page {
     //   elementHandle = await pageWithRealm.worlds.MAIN_WORLD.adoptBackendNode(backendNodeId);
     // }
     // return elementHandle;
-    if (!this._puppeteerPage) {
-      // throw new Error('Puppeteer page is not connected');
-      logger.warning('Puppeteer is not connected');
-      return null;
-    }
-    let currentFrame: PuppeteerPage | Frame = this._puppeteerPage;
+    const puppeteerPage = await this._ensurePuppeteerPage();
+    let currentFrame: PuppeteerPage | Frame = puppeteerPage;
 
     // Start with the target element and collect all parents
     const parents: EnhancedDOMTreeNode[] = [];
@@ -1232,9 +1222,7 @@ export default class Page {
     text: string,
     inputMode: 'override' | 'append' = 'override',
   ): Promise<void> {
-    if (!this._puppeteerPage) {
-      throw new Error('Puppeteer is not connected');
-    }
+    await this._ensurePuppeteerPage();
 
     try {
       const element = await this.locateElement(elementNode);
@@ -1501,9 +1489,7 @@ export default class Page {
   }
 
   async clickElementNode(elementNode: EnhancedDOMTreeNode): Promise<void> {
-    if (!this._puppeteerPage) {
-      throw new Error('Puppeteer is not connected');
-    }
+    await this._ensurePuppeteerPage();
 
     try {
       // Highlight before clicking
@@ -1525,7 +1511,6 @@ export default class Page {
           element.click(),
           new Promise((_, reject) => setTimeout(() => reject(new Error('Click timeout')), 2000)),
         ]);
-        await this._checkAndHandleNavigation();
       } catch (error) {
         // if URLNotAllowedError, throw it
         if (error instanceof URLNotAllowedError) {
@@ -1553,9 +1538,7 @@ export default class Page {
   }
 
   async hoverElementNode(elementNode: EnhancedDOMTreeNode): Promise<void> {
-    if (!this._puppeteerPage) {
-      throw new Error('Puppeteer is not connected');
-    }
+    await this._ensurePuppeteerPage();
 
     try {
       const element = await this.locateElement(elementNode);
@@ -1629,9 +1612,7 @@ export default class Page {
   }
 
   private async _waitForStableNetwork() {
-    if (!this._puppeteerPage) {
-      throw new Error('Puppeteer page is not connected');
-    }
+    const puppeteerPage = await this._ensurePuppeteerPage();
 
     const RELEVANT_RESOURCE_TYPES = new Set(['document', 'stylesheet', 'image', 'font', 'script', 'iframe']);
 
@@ -1762,8 +1743,8 @@ export default class Page {
     };
 
     // Add event listeners
-    this._puppeteerPage.on('request', onRequest);
-    this._puppeteerPage.on('response', onResponse);
+    puppeteerPage.on('request', onRequest);
+    puppeteerPage.on('response', onResponse);
 
     try {
       const startTime = Date.now();
@@ -1790,8 +1771,8 @@ export default class Page {
       }
     } finally {
       // Clean up event listeners
-      this._puppeteerPage.off('request', onRequest);
-      this._puppeteerPage.off('response', onResponse);
+      puppeteerPage.off('request', onRequest);
+      puppeteerPage.off('response', onResponse);
     }
     console.debug(`Network stabilized for ${this._config.waitForNetworkIdlePageLoadTime} seconds`);
   }
@@ -1803,11 +1784,6 @@ export default class Page {
     // Wait for page load
     try {
       await this._waitForStableNetwork();
-
-      // Check if the loaded URL is allowed
-      if (this._puppeteerPage) {
-        await this._checkAndHandleNavigation();
-      }
     } catch (error) {
       if (error instanceof URLNotAllowedError) {
         throw error;
@@ -1827,34 +1803,6 @@ export default class Page {
     // Sleep remaining time if needed
     if (remaining > 0) {
       await new Promise(resolve => setTimeout(resolve, remaining * 1000)); // Convert seconds to milliseconds
-    }
-  }
-
-  /**
-   * Check the current page URL and handle if it's not allowed
-   * @throws URLNotAllowedError if the current URL is not allowed
-   */
-  private async _checkAndHandleNavigation(): Promise<void> {
-    if (!this._puppeteerPage) {
-      return;
-    }
-
-    const currentUrl = this._puppeteerPage.url();
-    if (!isUrlAllowed(currentUrl, this._config.allowedUrls, this._config.deniedUrls)) {
-      const errorMessage = `URL: ${currentUrl} is not allowed`;
-      logger.error(errorMessage);
-
-      // Navigate to home page or about:blank
-      const safeUrl = this._config.homePageUrl || 'about:blank';
-      logger.info(`Redirecting to safe URL: ${safeUrl}`);
-
-      try {
-        await this._puppeteerPage.goto(safeUrl);
-      } catch (error) {
-        logger.error(`Failed to redirect to safe URL: ${error instanceof Error ? error.message : String(error)}`);
-      }
-
-      throw new URLNotAllowedError(errorMessage);
     }
   }
 }

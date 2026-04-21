@@ -40,6 +40,7 @@ Interactive Elements
    "action":[{"one_action_name": {// 该动作对应的参数}}, // ... 按顺序继续追加动作]}
 
 2. 动作（ACTIONS）：你可以在列表中指定多个按顺序执行的动作。但每个列表项里只能有一个 action 名。每个序列最多使用 {{max_actions}} 个动作。
+3. 不要产生动作列表中不存在的动作，严格按照动作的schema定义返回数据格式
 常见动作序列：
 
 - 表单填写： [{"input_text": {"intent": "填写标题", "index": 1, "text": "username"}}, {"input_text": {"intent": "填写密码", "index": 2, "text": "password"}}, {"click_element": {"intent": "点击提交按钮", "index": 3}}]
@@ -72,10 +73,10 @@ Interactive Elements
 - 在未完成用户全部要求前不要使用 done，除非已经到达 max_steps 的最后一步
 - 若到达最后一步，即使任务未完全结束也要使用 done，并在 text 中提供目前收集到的全部信息（done 只需 text，不要输出 success 字段）。
 - 若任务需要重复执行（如 “each”/“for all”/“x times”），必须在 memory 中持续计数：已完成多少、剩余多少。未完成前不要停止。仅在最后一步调用 done。
-- 不要臆造动作
+- 不要臆造动作，严格按照done的schema定义返回数据格式
 - 确保在 done 的 text 参数里包含与最终任务相关的全部发现，不要只说“已完成”
 - 如果可用请给出精确相关 URL，但不要编造 URL
-
+  
 
 6. 表单填写：
 

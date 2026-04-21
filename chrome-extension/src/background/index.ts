@@ -212,8 +212,9 @@ chrome.runtime.onConnect.addListener(port => {
                 // Keep plan tab lifecycle aligned with a whole plan run:
                 // attach once at plan start, detach/close when plan ends.
                 if (planDedicatedTabId === null) {
-                  const dedicatedPage = await browserContext.openInactiveTab();
-                  planDedicatedTabId = dedicatedPage.tabId;
+                  // Reuse the incoming tab as dedicated tab first, avoid creating a new tab on execute.
+                  await browserContext.attachToTabInBackground(message.tabId);
+                  planDedicatedTabId = message.tabId;
                 } else {
                   await browserContext.attachToTabInBackground(planDedicatedTabId);
                 }
