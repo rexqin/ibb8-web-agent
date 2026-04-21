@@ -80,28 +80,83 @@ export default class BrowserContext {
   }
 
   public async attachPage(page: Page): Promise<boolean> {
+    logger.debug('attachPage:start', {
+      tabId: page.tabId,
+      currentAttachedCount: this._attachedPages.size,
+      hasExistingEntry: this._attachedPages.has(page.tabId),
+    });
+
     // check if page is already attached
     if (this._attachedPages.has(page.tabId)) {
       logger.info('attachPage', page.tabId, 'already attached');
+      logger.debug('attachPage:skip-already-attached', {
+        tabId: page.tabId,
+        currentAttachedCount: this._attachedPages.size,
+      });
       return true;
     }
 
-    if (await page.attachPuppeteer()) {
-      logger.info('attachPage', page.tabId, 'attached');
-      // add page to managed pages
-      this._attachedPages.set(page.tabId, page);
-      return true;
+    try {
+      const attached = await page.attachPuppeteer();
+      logger.debug('attachPage:attachPuppeteer-result', {
+        tabId: page.tabId,
+        attached,
+      });
+      if (attached) {
+        logger.info('attachPage', page.tabId, 'attached');
+        // add page to managed pages
+        this._attachedPages.set(page.tabId, page);
+        logger.debug('attachPage:done', {
+          tabId: page.tabId,
+          currentAttachedCount: this._attachedPages.size,
+        });
+        return true;
+      }
+      logger.debug('attachPage:failed', {
+        tabId: page.tabId,
+        currentAttachedCount: this._attachedPages.size,
+      });
+      return false;
+    } catch (error) {
+      logger.error('attachPage:error', {
+        tabId: page.tabId,
+        currentAttachedCount: this._attachedPages.size,
+        error,
+      });
+      throw error;
     }
-    return false;
   }
 
   public async detachPage(tabId: number): Promise<void> {
+    logger.debug('detachPage:start', {
+      tabId,
+      currentAttachedCount: this._attachedPages.size,
+      hasExistingEntry: this._attachedPages.has(tabId),
+    });
+
     // detach page
     const page = this._attachedPages.get(tabId);
-    if (page) {
+    if (!page) {
+      logger.debug('detachPage:skip-not-found', {
+        tabId,
+        currentAttachedCount: this._attachedPages.size,
+      });
+      return;
+    }
+
+    try {
       await page.detachPuppeteer();
+      logger.debug('detachPage:detachPuppeteer-done', { tabId });
+    } catch (error) {
+      logger.error('detachPage:error', { tabId, error });
+      throw error;
+    } finally {
       // remove page from managed pages
       this._attachedPages.delete(tabId);
+      logger.debug('detachPage:done', {
+        tabId,
+        currentAttachedCount: this._attachedPages.size,
+      });
     }
   }
 
