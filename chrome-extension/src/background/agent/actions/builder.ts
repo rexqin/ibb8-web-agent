@@ -154,6 +154,31 @@ export class ActionBuilder {
 
   buildDefaultActions() {
     const actions = [];
+    const resolveIndexedNode = (
+      state: { serializedDomState?: { selectorMap: Map<number, unknown> } } | null | undefined,
+      index: number,
+    ): { resolvedIndex: number; node: unknown; usedOrdinalFallback: boolean } | null => {
+      const map = state?.serializedDomState?.selectorMap;
+      if (!map || map.size === 0) {
+        return null;
+      }
+
+      const direct = map.get(index);
+      if (direct) {
+        return { resolvedIndex: index, node: direct, usedOrdinalFallback: false };
+      }
+
+      // Backward compatibility: some model outputs still use 1-based ordinal index
+      // while selectorMap keys are backendNodeId.
+      if (Number.isInteger(index) && index > 0 && index <= map.size) {
+        const entry = Array.from(map.entries())[index - 1];
+        if (entry) {
+          return { resolvedIndex: entry[0], node: entry[1], usedOrdinalFallback: true };
+        }
+      }
+
+      return null;
+    };
 
     const done = new Action(async (input: z.infer<typeof doneActionSchema.schema>) => {
       this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_START, doneActionSchema.name);
@@ -236,27 +261,14 @@ export class ActionBuilder {
         try {
           const page = await this.context.browserContext.getCurrentPage();
           const state = await page.getState();
-          const elementNode = state?.serializedDomState.selectorMap.get(input.index);
-          if (elementNode) {
-            const handle = await page.locateElement(elementNode);
-            if (handle) {
-              const visible = await handle.evaluate(el => {
-                if (!(el instanceof HTMLElement)) return false;
-                const style = window.getComputedStyle(el);
-                const rect = el.getBoundingClientRect();
-                return (
-                  style.display !== 'none' &&
-                  style.visibility !== 'hidden' &&
-                  style.opacity !== '0' &&
-                  rect.width > 0 &&
-                  rect.height > 0
-                );
-              });
-              if (visible) {
-                const msg = `Element ${input.index} is available`;
-                this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_OK, msg);
-                return new ActionResult({ extractedContent: msg, includeInMemory: true });
-              }
+          const resolved = resolveIndexedNode(state, input.index);
+          if (resolved?.node) {
+            const elementNode = resolved.node as Parameters<typeof page.isElementVisibleByBackendNode>[0];
+            const visible = await page.isElementVisibleByBackendNode(elementNode);
+            if (visible) {
+              const msg = `Element ${input.index} is available`;
+              this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_OK, msg);
+              return new ActionResult({ extractedContent: msg, includeInMemory: true });
             }
           }
         } catch (error) {
@@ -286,8 +298,8 @@ export class ActionBuilder {
 
         const page = await this.context.browserContext.getCurrentPage();
         const state = await page.getState();
-
-        const elementNode = state?.serializedDomState.selectorMap.get(input.index);
+        const resolved = resolveIndexedNode(state, input.index);
+        const elementNode = resolved?.node as Parameters<typeof page.clickElementNode>[0] | undefined;
         if (!elementNode) {
           throw new Error(t('act_errors_elementNotExist', [input.index.toString()]));
         }
@@ -342,7 +354,8 @@ export class ActionBuilder {
 
         const page = await this.context.browserContext.getCurrentPage();
         const state = await page.getState();
-        const elementNode = state?.serializedDomState.selectorMap.get(input.index);
+        const resolved = resolveIndexedNode(state, input.index);
+        const elementNode = resolved?.node as Parameters<typeof page.hoverElementNode>[0] | undefined;
         if (!elementNode) {
           throw new Error(t('act_errors_elementNotExist', [input.index.toString()]));
         }
@@ -366,7 +379,15 @@ export class ActionBuilder {
         const state = await page.getState();
 
         let targetIndex = input.index;
-        let elementNode = state?.serializedDomState.selectorMap.get(input.index);
+        const resolved = resolveIndexedNode(state, input.index);
+        let elementNode = resolved?.node as Parameters<typeof page.inputTextElementNode>[0] | undefined;
+        if (resolved?.usedOrdinalFallback) {
+          targetIndex = resolved.resolvedIndex;
+          logger.info('input_text used ordinal index fallback', {
+            requestedIndex: input.index,
+            resolvedIndex: targetIndex,
+          });
+        }
         if (!elementNode) {
           throw new Error(t('act_errors_elementNotExist', [input.index.toString()]));
         }
@@ -582,57 +603,7 @@ export class ActionBuilder {
           const didTruncate = typeof maxChars === 'number' && maxChars > 0 && finalOutput.length > maxChars;
           const output = didTruncate ? finalOutput.slice(0, maxChars) : finalOutput;
 
-          const targetHandle = await page.locateElement(targetNode);
-          if (!targetHandle) {
-            throw new Error(t('act_errors_elementNotExist', [String(targetIndex)]));
-          }
-
-          await targetHandle.evaluate(
-            async (element, src, originalUrl) => {
-              if (!(element instanceof HTMLElement)) {
-                throw new Error('Target element is not an HTMLElement');
-              }
-
-              const tag = element.tagName.toLowerCase();
-              const isRichEditor =
-                element.isContentEditable || tag === 'div' || element.classList.contains('ql-editor');
-
-              if (!isRichEditor) {
-                throw new Error(`Target element ${tag} is not a rich-text editor; cannot insert image node`);
-              }
-
-              // Normalize to data URI so we can build a File/Blob for paste clipboard.
-              const dataUri = src.startsWith('data:') ? src : `data:image/png;base64,${src}`;
-              const response = await fetch(dataUri);
-              const blob = await response.blob();
-              const file = new File([blob], 'pasted-image', { type: blob.type || 'image/png' });
-
-              const dataTransfer = new DataTransfer();
-              dataTransfer.items.add(file);
-              dataTransfer.setData('text/html', `<img src="${dataUri}" alt="embedded-image" />`);
-              dataTransfer.setData('text/plain', originalUrl || dataUri);
-
-              // Focus target before paste so editor-level handlers can receive it.
-              element.focus();
-
-              let pasteEvent: Event;
-              try {
-                pasteEvent = new ClipboardEvent('paste', {
-                  clipboardData: dataTransfer,
-                  bubbles: true,
-                  cancelable: true,
-                });
-              } catch {
-                pasteEvent = new Event('paste', { bubbles: true, cancelable: true });
-                Object.defineProperty(pasteEvent, 'clipboardData', { value: dataTransfer });
-              }
-
-              // Dispatch on target element (will bubble to document-level paste listeners).
-              element.dispatchEvent(pasteEvent);
-            },
-            output,
-            input.url,
-          );
+          await page.pasteImageDataToElementNode(targetNode, output);
 
           const msg = `Downloaded image and dispatched paste image data to rich editor index ${targetIndex} (${output.length} chars)`;
           this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_OK, msg);
@@ -822,6 +793,7 @@ export class ActionBuilder {
       this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_START, intent);
 
       const page = await this.context.browserContext.getCurrentPage();
+
       try {
         const scrolled = await page.scrollToText(input.text, input.nth);
         const msg = scrolled

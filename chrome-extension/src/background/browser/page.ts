@@ -5,8 +5,6 @@ import type {
   Page as PuppeteerPage,
   Browser,
   CDPSession as PuppeteerCDPSession,
-  ElementHandle,
-  Frame,
   KeyInput,
   ProtocolType,
   HTTPRequest,
@@ -101,7 +99,6 @@ export class CachedStateClickableElementsHashes {
 }
 
 export default class Page {
-  private static _elementEvaluateWrapped = false;
   private _tabId: number;
   private _browser: Browser | null = null;
   private _puppeteerPage: PuppeteerPage | null = null;
@@ -241,29 +238,6 @@ export default class Page {
     this._evaluateWrapped = true;
   }
 
-  private _wrapElementEvaluateForDebug(handle: ElementHandle): void {
-    if (!import.meta.env.DEV || Page._elementEvaluateWrapped) {
-      return;
-    }
-    const proto = Object.getPrototypeOf(handle) as {
-      evaluate?: (...args: unknown[]) => Promise<unknown>;
-    };
-    if (!proto || typeof proto.evaluate !== 'function') {
-      return;
-    }
-    const serialize = this._serializeEvaluateFunction.bind(this);
-    const originalEvaluate = proto.evaluate as (...args: unknown[]) => Promise<unknown>;
-    proto.evaluate = async function (...args: unknown[]) {
-      const [fnOrScript, ...restArgs] = args;
-      logger.debug('[elementHandle.evaluate] script/function:', serialize(fnOrScript));
-      if (restArgs.length > 0) {
-        logger.debug('[elementHandle.evaluate] args:', restArgs);
-      }
-      return originalEvaluate.apply(this, args);
-    };
-    Page._elementEvaluateWrapped = true;
-  }
-
   async detachPuppeteer(): Promise<void> {
     if (this._browser) {
       await this._browser.disconnect();
@@ -296,7 +270,7 @@ export default class Page {
       return null;
     }
     const puppeteerPage = await this._ensurePuppeteerPage();
-    const cdpSession = this._getMainCdpSession();
+    const cdpSession = this.getCDPSession();
     if (!cdpSession) {
       throw new Error('Failed to get CDP session (page missing or not connected)');
     }
@@ -312,7 +286,7 @@ export default class Page {
   }
 
   /** Puppeteer Page 的主 CDP 客户端；公开类型不含 `_client`，扩展里也不能用 `createCDPSession()` */
-  private _getMainCdpSession(): PuppeteerCDPSession | null {
+  private getCDPSession(): PuppeteerCDPSession | null {
     if (!this._puppeteerPage) {
       return null;
     }
@@ -332,125 +306,36 @@ export default class Page {
   async getElementScrollInfo(elementNode: EnhancedDOMTreeNode): Promise<[number, number, number]> {
     await this._ensurePuppeteerPage();
 
-    const element = await this.locateElement(elementNode);
-    if (!element) {
-      throw new Error(`Element: ${elementNode} not found`);
-    }
-
-    // Find the nearest scrollable ancestor
-    const scrollableElement = await this._findNearestScrollableElement(element);
-    if (!scrollableElement) {
-      throw new Error(`No scrollable ancestor found for element: ${elementNode}`);
-    }
-
-    const scrollInfo = await scrollableElement.evaluate(el => {
-      return {
-        scrollTop: el.scrollTop,
-        clientHeight: el.clientHeight,
-        scrollHeight: el.scrollHeight,
-      };
-    });
+    const scrollInfo = (await this._callOnBackendNode(
+      elementNode,
+      `function() {
+        const el = this;
+        if (!(el instanceof HTMLElement)) {
+          throw new Error('Target is not an HTMLElement');
+        }
+        let target = el;
+        while (target && target !== document.body && target !== document.documentElement) {
+          const style = window.getComputedStyle(target);
+          const hasVerticalScrollbar = target.scrollHeight > target.clientHeight;
+          const canScrollVertically =
+            style.overflowY === 'scroll' ||
+            style.overflowY === 'auto' ||
+            style.overflow === 'scroll' ||
+            style.overflow === 'auto';
+          if (hasVerticalScrollbar && canScrollVertically) {
+            break;
+          }
+          target = target.parentElement || document.body;
+        }
+        return {
+          scrollTop: target.scrollTop,
+          clientHeight: target.clientHeight,
+          scrollHeight: target.scrollHeight,
+        };
+      }`,
+    )) as { scrollTop: number; clientHeight: number; scrollHeight: number };
 
     return [scrollInfo.scrollTop, scrollInfo.clientHeight, scrollInfo.scrollHeight];
-  }
-
-  /**
-   * Find the nearest scrollable ancestor of the given element
-   * @param element The element to start searching from
-   * @returns The nearest scrollable ancestor or null if none found
-   */
-  private async _findNearestScrollableElement(element: ElementHandle): Promise<ElementHandle | null> {
-    const puppeteerPage = await this._ensurePuppeteerPage();
-
-    // Check if the current element is scrollable
-    const isScrollable = await element.evaluate((el: Node) => {
-      if (!(el instanceof HTMLElement)) return false;
-      const style = window.getComputedStyle(el);
-      const hasVerticalScrollbar = el.scrollHeight > el.clientHeight;
-      const canScrollVertically =
-        style.overflowY === 'scroll' ||
-        style.overflowY === 'auto' ||
-        style.overflow === 'scroll' ||
-        style.overflow === 'auto';
-
-      return hasVerticalScrollbar && canScrollVertically;
-    });
-
-    if (isScrollable) {
-      return element;
-    }
-
-    // Check parent elements
-    let currentElement: ElementHandle | null = element;
-
-    try {
-      while (currentElement) {
-        // Get the parent element (as an ElementHandle) of the current element
-        const parentHandle = (await currentElement.evaluateHandle((el: Node) =>
-          el instanceof Element ? el.parentElement : null,
-        )) as ElementHandle<Element> | null;
-
-        // asElement() is typed as ElementHandle<Node>; DOM parent chain only yields Elements here.
-        const parentElement = (parentHandle ? await parentHandle.asElement() : null) as ElementHandle<Element> | null;
-
-        if (!parentElement) {
-          // Reached the root without finding a scrollable ancestor
-          currentElement = null;
-          break;
-        }
-
-        const parentIsScrollable = await parentElement.evaluate((el: Node) => {
-          if (!(el instanceof HTMLElement)) return false;
-          const style = window.getComputedStyle(el);
-          const hasVerticalScrollbar = el.scrollHeight > el.clientHeight;
-          const canScrollVertically =
-            ['scroll', 'auto'].includes(style.overflowY) || ['scroll', 'auto'].includes(style.overflow);
-
-          return hasVerticalScrollbar && canScrollVertically;
-        });
-
-        if (parentIsScrollable) {
-          // Found a scrollable ancestor – return it (the caller should dispose when finished)
-          return parentElement;
-        }
-
-        // Move up the DOM tree – dispose the previous element handle before continuing
-        if (currentElement !== element) {
-          try {
-            await currentElement.dispose();
-          } catch (disposeErr) {
-            logger.debug('Failed to dispose element handle:', disposeErr);
-          }
-        }
-
-        currentElement = parentElement;
-      }
-    } catch (error) {
-      // Error accessing parent, break out of loop
-      logger.error('Error finding scrollable parent:', error);
-    }
-
-    // If no scrollable ancestor found, return the document body or documentElement
-    try {
-      const bodyElement = await puppeteerPage.$('body');
-      if (bodyElement) {
-        const bodyIsScrollable = await bodyElement.evaluate(el => {
-          if (!(el instanceof HTMLElement)) return false;
-          return el.scrollHeight > el.clientHeight;
-        });
-        if (bodyIsScrollable) {
-          return bodyElement;
-        }
-      }
-
-      // Last resort: return document element for page-level scrolling
-      const documentElement = await puppeteerPage.evaluateHandle(() => document.documentElement);
-      const docElement = (await documentElement.asElement()) as ElementHandle<Element> | null;
-      return docElement;
-    } catch (error) {
-      logger.error('Failed to find scrollable element:', error);
-      return null;
-    }
   }
 
   async getContent(): Promise<string> {
@@ -717,27 +602,26 @@ export default class Page {
         });
       }, yPercent);
     } else {
-      const element = await this.locateElement(elementNode);
-      if (!element) {
-        throw new Error(`Element: ${elementNode} not found`);
-      }
-
-      // Find the nearest scrollable ancestor
-      const scrollableElement = await this._findNearestScrollableElement(element);
-      if (!scrollableElement) {
-        throw new Error(`No scrollable ancestor found for element: ${elementNode}`);
-      }
-
-      await scrollableElement.evaluate((el, yPercent) => {
-        const scrollHeight = el.scrollHeight;
-        const viewportHeight = el.clientHeight;
-        const scrollTop = (scrollHeight - viewportHeight) * (yPercent / 100);
-        el.scrollTo({
-          top: scrollTop,
-          left: el.scrollLeft,
-          behavior: 'smooth',
-        });
-      }, yPercent);
+      await this._callOnBackendNode(
+        elementNode,
+        `function(percent) {
+          const el = this;
+          if (!(el instanceof HTMLElement)) {
+            throw new Error('Target is not an HTMLElement');
+          }
+          let target = el;
+          while (target && target !== document.body && target !== document.documentElement) {
+            if (target.scrollHeight > target.clientHeight) break;
+            target = target.parentElement || document.body;
+          }
+          const scrollHeight = target.scrollHeight;
+          const viewportHeight = target.clientHeight;
+          const scrollTop = (scrollHeight - viewportHeight) * (percent / 100);
+          target.scrollTo({ top: scrollTop, left: target.scrollLeft, behavior: 'smooth' });
+          return true;
+        }`,
+        [yPercent],
+      );
     }
   }
 
@@ -752,23 +636,23 @@ export default class Page {
         });
       }, y);
     } else {
-      const element = await this.locateElement(elementNode);
-      if (!element) {
-        throw new Error(`Element: ${elementNode} not found`);
-      }
-
-      // Find the nearest scrollable ancestor
-      const scrollableElement = await this._findNearestScrollableElement(element);
-      if (!scrollableElement) {
-        throw new Error(`No scrollable ancestor found for element: ${elementNode}`);
-      }
-      await scrollableElement.evaluate(el => {
-        el.scrollBy({
-          top: y,
-          left: 0,
-          behavior: 'smooth',
-        });
-      });
+      await this._callOnBackendNode(
+        elementNode,
+        `function(deltaY) {
+          const el = this;
+          if (!(el instanceof HTMLElement)) {
+            throw new Error('Target is not an HTMLElement');
+          }
+          let target = el;
+          while (target && target !== document.body && target !== document.documentElement) {
+            if (target.scrollHeight > target.clientHeight) break;
+            target = target.parentElement || document.body;
+          }
+          target.scrollBy({ top: deltaY, left: 0, behavior: 'smooth' });
+          return true;
+        }`,
+        [y],
+      );
     }
   }
 
@@ -779,21 +663,22 @@ export default class Page {
       // Scroll the whole page up by viewport height
       await puppeteerPage.evaluate('window.scrollBy(0, -(window.visualViewport?.height || window.innerHeight));');
     } else {
-      // Scroll the specific element up by its client height
-      const element = await this.locateElement(elementNode);
-      if (!element) {
-        throw new Error(`Element: ${elementNode} not found`);
-      }
-
-      // Find the nearest scrollable ancestor
-      const scrollableElement = await this._findNearestScrollableElement(element);
-      if (!scrollableElement) {
-        throw new Error(`No scrollable ancestor found for element: ${elementNode}`);
-      }
-
-      await scrollableElement.evaluate(el => {
-        el.scrollBy(0, -el.clientHeight);
-      });
+      await this._callOnBackendNode(
+        elementNode,
+        `function() {
+          const el = this;
+          if (!(el instanceof HTMLElement)) {
+            throw new Error('Target is not an HTMLElement');
+          }
+          let target = el;
+          while (target && target !== document.body && target !== document.documentElement) {
+            if (target.scrollHeight > target.clientHeight) break;
+            target = target.parentElement || document.body;
+          }
+          target.scrollBy(0, -target.clientHeight);
+          return true;
+        }`,
+      );
     }
   }
 
@@ -804,21 +689,22 @@ export default class Page {
       // Scroll the whole page down by viewport height
       await puppeteerPage.evaluate('window.scrollBy(0, (window.visualViewport?.height || window.innerHeight));');
     } else {
-      // Scroll the specific element down by its client height
-      const element = await this.locateElement(elementNode);
-      if (!element) {
-        throw new Error(`Element: ${elementNode} not found`);
-      }
-
-      // Find the nearest scrollable ancestor
-      const scrollableElement = await this._findNearestScrollableElement(element);
-      if (!scrollableElement) {
-        throw new Error(`No scrollable ancestor found for element: ${elementNode}`);
-      }
-
-      await scrollableElement.evaluate(el => {
-        el.scrollBy(0, el.clientHeight);
-      });
+      await this._callOnBackendNode(
+        elementNode,
+        `function() {
+          const el = this;
+          if (!(el instanceof HTMLElement)) {
+            throw new Error('Target is not an HTMLElement');
+          }
+          let target = el;
+          while (target && target !== document.body && target !== document.documentElement) {
+            if (target.scrollHeight > target.clientHeight) break;
+            target = target.parentElement || document.body;
+          }
+          target.scrollBy(0, target.clientHeight);
+          return true;
+        }`,
+      );
     }
   }
 
@@ -938,68 +824,38 @@ export default class Page {
     const puppeteerPage = await this._ensurePuppeteerPage();
 
     try {
-      // Convert text to lowercase for consistent searching
-      const lowerCaseText = text.toLowerCase();
-
-      // Try different locator strategies to find all elements containing the text
-      const selectors = [
-        // Using text selector (equivalent to get_by_text) - for exact text match
-        `::-p-text(${text})`,
-        // Using XPath selector (contains text) - case insensitive
-        `::-p-xpath(//*[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '${lowerCaseText}')])`,
-      ];
-
-      for (const selector of selectors) {
-        try {
-          // Use $$ to get all matching elements
-          const elements = await puppeteerPage.$$(selector);
-
-          if (elements.length > 0) {
-            // Find visible elements and select the nth occurrence
-            const visibleElements = [];
-
-            for (const element of elements) {
-              const isVisible = await element.evaluate(el => {
-                const style = window.getComputedStyle(el);
-                const rect = el.getBoundingClientRect();
-                return (
-                  style.display !== 'none' &&
-                  style.visibility !== 'hidden' &&
-                  style.opacity !== '0' &&
-                  rect.width > 0 &&
-                  rect.height > 0
-                );
-              });
-
-              if (isVisible) {
-                visibleElements.push(element);
-              }
+      const found = await puppeteerPage.evaluate(
+        ({ targetText, targetNth }) => {
+          const lowerCaseText = targetText.toLowerCase();
+          const nodes = Array.from(document.querySelectorAll<HTMLElement>('body *'));
+          const candidates = nodes.filter(node => {
+            const txt = (node.textContent || '').toLowerCase();
+            if (!txt.includes(lowerCaseText)) {
+              return false;
             }
-
-            // Check if we have enough visible elements for the requested nth occurrence
-            if (visibleElements.length >= nth) {
-              const targetElement = visibleElements[nth - 1]; // Convert to 0-indexed
-              await this._scrollIntoViewIfNeeded(targetElement);
-              await new Promise(resolve => setTimeout(resolve, 500)); // Wait for scroll to complete
-
-              // Dispose of all element handles to prevent memory leaks
-              for (const element of elements) {
-                await element.dispose();
-              }
-
-              return true;
-            }
+            const style = window.getComputedStyle(node);
+            const rect = node.getBoundingClientRect();
+            return (
+              style.display !== 'none' &&
+              style.visibility !== 'hidden' &&
+              style.opacity !== '0' &&
+              rect.width > 0 &&
+              rect.height > 0
+            );
+          });
+          if (candidates.length < targetNth || targetNth <= 0) {
+            return false;
           }
-
-          // Dispose of all element handles to prevent memory leaks
-          for (const element of elements) {
-            await element.dispose();
-          }
-        } catch (e) {
-          logger.debug(`Locator attempt failed: ${e}`);
-        }
+          const target = candidates[targetNth - 1];
+          target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+          return true;
+        },
+        { targetText: text, targetNth: nth },
+      );
+      if (found) {
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
-      return false;
+      return found;
     } catch (error) {
       throw new Error(error instanceof Error ? error.message : String(error));
     }
@@ -1015,24 +871,20 @@ export default class Page {
     await this._ensurePuppeteerPage();
 
     try {
-      // Get the element handle using the element's selector
-      const elementHandle = await this.locateElement(element);
-      if (!elementHandle) {
-        throw new Error('Dropdown element not found');
-      }
-
-      // Evaluate the select element to get all options
-      const options = await elementHandle.evaluate(select => {
-        if (!(select instanceof HTMLSelectElement)) {
-          throw new Error('Element is not a select element');
-        }
-
-        return Array.from(select.options).map(option => ({
-          index: option.index,
-          text: option.text, // Not trimming to maintain exact match for selection
-          value: option.value,
-        }));
-      });
+      const options = (await this._callOnBackendNode(
+        element,
+        `function() {
+          const select = this;
+          if (!(select instanceof HTMLSelectElement)) {
+            throw new Error('Element is not a select element');
+          }
+          return Array.from(select.options).map(option => ({
+            index: option.index,
+            text: option.text,
+            value: option.value,
+          }));
+        }`,
+      )) as Array<{ index: number; text: string; value: string }>;
 
       if (!options.length) {
         throw new Error('No options found in dropdown');
@@ -1065,51 +917,45 @@ export default class Page {
     }
 
     try {
-      // Get the element handle using the element's selector
-      const elementHandle = await this.locateElement(element);
-      if (!elementHandle) {
-        throw new Error(`Dropdown element with index ${index} not found`);
-      }
-
-      // Verify dropdown and select option in one call
-      const result = await elementHandle.evaluate(
-        (select, optionText, elementIndex) => {
+      const result = (await this._callOnBackendNode(
+        element,
+        `function(optionText, elementIndex) {
+          const select = this;
           if (!(select instanceof HTMLSelectElement)) {
             return {
               found: false,
-              message: `Element with index ${elementIndex} is not a SELECT`,
+              message: 'Element with index ' + elementIndex + ' is not a SELECT',
             };
           }
-
           const options = Array.from(select.options);
           const option = options.find(opt => opt.text.trim() === optionText);
-
           if (!option) {
             const availableOptions = options.map(o => o.text.trim()).join('", "');
             return {
               found: false,
-              message: `Option "${optionText}" not found in dropdown element with index ${elementIndex}. Available options: "${availableOptions}"`,
+              message:
+                'Option "' +
+                optionText +
+                '" not found in dropdown element with index ' +
+                elementIndex +
+                '. Available options: "' +
+                availableOptions +
+                '"',
             };
           }
-
-          // Set the value and dispatch events
           const previousValue = select.value;
           select.value = option.value;
-
-          // Only dispatch events if the value actually changed
           if (previousValue !== option.value) {
             select.dispatchEvent(new Event('change', { bubbles: true }));
             select.dispatchEvent(new Event('input', { bubbles: true }));
           }
-
           return {
             found: true,
-            message: `Selected option "${optionText}" with value "${option.value}"`,
+            message: 'Selected option "' + optionText + '" with value "' + option.value + '"',
           };
-        },
-        text,
-        index,
-      );
+        }`,
+        [text, index],
+      )) as { found: boolean; message: string };
 
       logger.debug('Selection result:', result);
       // whether found or not, return the message
@@ -1121,100 +967,121 @@ export default class Page {
     }
   }
 
-  async locateElement(element: EnhancedDOMTreeNode): Promise<ElementHandle | null> {
-    // if (!this._puppeteerPage || !element.backendNodeId) {
-    //   // throw new Error('Puppeteer page is not connected');
-    //   logger.warning('Puppeteer is not connected');
-    //   return null;
-    // }
-
-    // const backendNodeId = element.backendNodeId;
-
-    // const cdp = this.getCdpSession();
-    // if (!cdp) return null;
-    // // 1) 确认 backendNodeId 还有效
-    // await cdp.send('DOM.describeNode', { backendNodeId });
-    // // 2) 通过 Puppeteer realm 收养为 ElementHandle
-    // const pageWithRealm = this._puppeteerPage as unknown as {
-    //   mainRealm?: () => { adoptBackendNode?: (id: number) => Promise<ElementHandle> };
-    //   worlds?: { MAIN_WORLD?: { adoptBackendNode?: (id: number) => Promise<ElementHandle> } };
-    // };
-    // let elementHandle: ElementHandle | null = null;
-    // const mainRealm = pageWithRealm.mainRealm?.();
-    // if (mainRealm?.adoptBackendNode) {
-    //   elementHandle = await mainRealm.adoptBackendNode(backendNodeId);
-    // } else if (pageWithRealm.worlds?.MAIN_WORLD?.adoptBackendNode) {
-    //   elementHandle = await pageWithRealm.worlds.MAIN_WORLD.adoptBackendNode(backendNodeId);
-    // }
-    // return elementHandle;
-    const puppeteerPage = await this._ensurePuppeteerPage();
-    let currentFrame: PuppeteerPage | Frame = puppeteerPage;
-
-    // Start with the target element and collect all parents
-    const parents: EnhancedDOMTreeNode[] = [];
-    let current = element;
-    while (current.parent) {
-      parents.push(current.parent);
-      current = current.parent;
+  private async _resolveBackendObjectId(elementNode: EnhancedDOMTreeNode): Promise<string> {
+    const backendNodeId = elementNode.backendNodeId;
+    if (!backendNodeId) {
+      throw new Error('Missing backendNodeId');
     }
-
-    // Process all iframe parents in sequence (in reverse order - top to bottom)
-    const iframes = parents.reverse().filter(item => item.tagName === 'iframe');
-    for (const parent of iframes) {
-      const cssSelector = parent.enhancedCssSelectorForElement(this._config.includeDynamicAttributes);
-      const frameElement: ElementHandle | null = await currentFrame.$(cssSelector);
-      if (!frameElement) {
-        // throw new Error(`Could not find iframe with selector: ${cssSelector}`);
-        logger.warning(`Could not find iframe with selector: ${cssSelector}`);
-        return null;
-      }
-      const frame: Frame | null = await frameElement.contentFrame();
-      if (!frame) {
-        // throw new Error(`Could not access frame content for selector: ${cssSelector}`);
-        logger.warning(`Could not access frame content for selector: ${cssSelector}`);
-        return null;
-      }
-      currentFrame = frame;
-      logger.info('currentFrame changed', currentFrame);
+    const cdp = this.getCDPSession();
+    if (!cdp) {
+      throw new Error('CDP session unavailable');
     }
+    const resolved = await cdp.send('DOM.resolveNode', { backendNodeId });
+    const objectId = resolved.object?.objectId;
+    if (!objectId) {
+      throw new Error(`Failed to resolve backendNodeId: ${backendNodeId}`);
+    }
+    return objectId;
+  }
 
-    const cssSelector = element.enhancedCssSelectorForElement(this._config.includeDynamicAttributes);
-
+  private async _callOnBackendNode(
+    elementNode: EnhancedDOMTreeNode,
+    functionDeclaration: string,
+    args: Array<string | number | boolean | null> = [],
+    returnByValue = true,
+  ): Promise<unknown> {
+    const cdp = this.getCDPSession();
+    if (!cdp) {
+      throw new Error('CDP session unavailable');
+    }
+    const objectId = await this._resolveBackendObjectId(elementNode);
     try {
-      // Try CSS selector first
-      let elementHandle: ElementHandle | null = await currentFrame.$(cssSelector);
-
-      // If CSS selector failed, try XPath
-      if (!elementHandle) {
-        const xpath = element.xpath;
-        if (xpath) {
-          try {
-            logger.info('Trying XPath selector:', xpath);
-            const fullXpath = xpath.startsWith('/') ? xpath : `/${xpath}`;
-            const xpathSelector = `::-p-xpath(${fullXpath})`;
-            elementHandle = await currentFrame.$(xpathSelector);
-          } catch (xpathError) {
-            logger.error('Failed to locate element using XPath:', xpathError);
-          }
-        }
-      }
-
-      // If element found, check visibility and scroll into view
-      if (elementHandle) {
-        this._wrapElementEvaluateForDebug(elementHandle);
-        const isHidden = await elementHandle.isHidden();
-        if (!isHidden) {
-          await this._scrollIntoViewIfNeeded(elementHandle);
-        }
-        return elementHandle;
-      }
-
-      logger.info('elementHandle not located');
-    } catch (error) {
-      logger.error('Failed to locate element:', error);
+      const result = await cdp.send('Runtime.callFunctionOn', {
+        objectId,
+        functionDeclaration,
+        arguments: args.map(value => ({ value })),
+        returnByValue,
+      });
+      return result.result?.value;
+    } finally {
+      await cdp.send('Runtime.releaseObject', { objectId }).catch(() => undefined);
     }
+  }
 
-    return null;
+  async isElementVisibleByBackendNode(elementNode: EnhancedDOMTreeNode): Promise<boolean> {
+    await this._ensurePuppeteerPage();
+    const visible = await this._callOnBackendNode(
+      elementNode,
+      `function() {
+        const el = this;
+        if (!(el instanceof HTMLElement)) return false;
+        const style = window.getComputedStyle(el);
+        const rect = el.getBoundingClientRect();
+        return (
+          style.display !== 'none' &&
+          style.visibility !== 'hidden' &&
+          style.opacity !== '0' &&
+          rect.width > 0 &&
+          rect.height > 0
+        );
+      }`,
+    );
+    return Boolean(visible);
+  }
+
+  async pasteImageDataToElementNode(elementNode: EnhancedDOMTreeNode, src: string): Promise<void> {
+    await this._ensurePuppeteerPage();
+    await this._callOnBackendNode(
+      elementNode,
+      `async function(imageSrc) {
+        const element = this;
+        if (!(element instanceof HTMLElement)) {
+          throw new Error('Target element is not an HTMLElement');
+        }
+        const tag = element.tagName.toLowerCase();
+        const isRichEditor =
+          element.isContentEditable || tag === 'div' || element.classList.contains('ql-editor');
+        if (!isRichEditor) {
+          throw new Error('Target element ' + tag + ' is not a rich-text editor; cannot insert image node');
+        }
+        const dataUri = imageSrc.startsWith('data:') ? imageSrc : ('data:image/png;base64,' + imageSrc);
+        const commaIdx = dataUri.indexOf(',');
+        if (commaIdx < 0) {
+          throw new Error('Invalid data URI for image paste');
+        }
+        const meta = dataUri.slice(0, commaIdx);
+        const raw = dataUri.slice(commaIdx + 1);
+        const mimeMatch = /^data:([^;]+);base64$/i.exec(meta);
+        const mime = mimeMatch?.[1] || 'image/png';
+        const binary = atob(raw);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        const blob = new Blob([bytes], { type: mime });
+        const file = new File([blob], 'pasted-image', { type: blob.type || 'image/png' });
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        dataTransfer.setData('text/html', '<img src="' + dataUri + '" alt="embedded-image" />');
+        // Do not inject source URL as plain text, otherwise some editors insert it as visible content.
+        dataTransfer.setData('text/plain', '');
+        element.focus();
+        let pasteEvent;
+        try {
+          pasteEvent = new ClipboardEvent('paste', {
+            clipboardData: dataTransfer,
+            bubbles: true,
+            cancelable: true,
+          });
+        } catch {
+          pasteEvent = new Event('paste', { bubbles: true, cancelable: true });
+          Object.defineProperty(pasteEvent, 'clipboardData', { value: dataTransfer });
+        }
+        element.dispatchEvent(pasteEvent);
+        return true;
+      }`,
+      [src],
+    );
   }
 
   async inputTextElementNode(
@@ -1225,167 +1092,38 @@ export default class Page {
     await this._ensurePuppeteerPage();
 
     try {
-      const element = await this.locateElement(elementNode);
-      if (!element) {
-        throw new Error(`Element: ${elementNode} not found`);
-      }
-
-      // Ensure element is ready for input
-      try {
-        // First wait for element stability
-        await this._waitForElementStability(element, 1500);
-
-        // Then check visibility and scroll into view if needed
-        const isHidden = await element.isHidden();
-        if (!isHidden) {
-          await this._scrollIntoViewIfNeeded(element, 1500);
-        }
-      } catch (e) {
-        // Continue even if these operations fail
-        logger.debug(`Non-critical error preparing element: ${e}`);
-      }
-
-      // Get element properties to determine input method
-      const tagName = await element.evaluate(el => el.tagName.toLowerCase());
-      const isContentEditable = await element.evaluate(el => {
-        if (el instanceof HTMLElement) {
-          return el.isContentEditable;
-        }
-        return false;
-      });
-      const isReadOnly = await element.evaluate(el => {
-        if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
-          return el.readOnly;
-        }
-        return false;
-      });
-      const isDisabled = await element.evaluate(el => {
-        if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
-          return el.disabled;
-        }
-        return false;
-      });
-
-      // Choose appropriate input method based on element properties
-      if ((isContentEditable || tagName === 'input') && !isReadOnly && !isDisabled) {
-        if (inputMode === 'override') {
-          // Clear content first when overriding.
-          await element.evaluate(el => {
-            if (el instanceof HTMLElement) {
-              el.textContent = '';
-            }
-            if ('value' in el) {
-              (el as HTMLInputElement).value = '';
-            }
-            // Dispatch events
-            el.dispatchEvent(new Event('input', { bubbles: true }));
-            el.dispatchEvent(new Event('change', { bubbles: true }));
-          });
-        }
-
-        // Ensure focus and cursor at end before typing (works for append and override).
-        await element.evaluate(el => {
-          if (el instanceof HTMLElement) {
-            el.focus();
-            if (el.isContentEditable) {
-              const range = document.createRange();
-              range.selectNodeContents(el);
-              range.collapse(false);
-              const selection = window.getSelection();
-              selection?.removeAllRanges();
-              selection?.addRange(range);
-            }
+      await this._callOnBackendNode(
+        elementNode,
+        `function(value, mode) {
+          const el = this;
+          if (!(el instanceof HTMLElement)) {
+            throw new Error('Target is not an HTMLElement');
           }
+          el.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'center' });
+          el.focus();
+          const shouldAppend = mode === 'append';
+          const currentValue =
+            el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement
+              ? el.value
+              : el.isContentEditable
+                ? (el.textContent || '')
+                : (el.textContent || '');
+          const nextValue = shouldAppend ? (currentValue + value) : value;
           if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
-            el.focus();
-            const len = el.value?.length ?? 0;
-            el.setSelectionRange(len, len);
-          }
-        });
-
-        if (isContentEditable) {
-          // For rich text editors, prefer paste simulation so page-level paste handlers can process text consistently.
-          await element.evaluate(
-            (el, value, mode) => {
-              const beforeHtml = el instanceof HTMLElement ? el.innerHTML : '';
-              const beforeText = el instanceof HTMLElement ? (el.textContent ?? '') : '';
-
-              const dataTransfer = new DataTransfer();
-              dataTransfer.setData('text/plain', value);
-              dataTransfer.setData('text/html', value.replace(/\n/g, '<br>'));
-
-              let pasteEvent: Event;
-              try {
-                pasteEvent = new ClipboardEvent('paste', {
-                  clipboardData: dataTransfer,
-                  bubbles: true,
-                  cancelable: true,
-                });
-              } catch {
-                pasteEvent = new Event('paste', { bubbles: true, cancelable: true });
-                Object.defineProperty(pasteEvent, 'clipboardData', { value: dataTransfer });
-              }
-
-              el.dispatchEvent(pasteEvent);
-
-              // Some editors replace entire content on paste; for append mode,
-              // restore previous content and append new text when replacement is detected.
-              if (mode === 'append' && el instanceof HTMLElement) {
-                const afterHtml = el.innerHTML;
-                const afterText = el.textContent ?? '';
-                const hasOriginalHtml =
-                  beforeHtml.length === 0 ? afterHtml.length === 0 : afterHtml.includes(beforeHtml);
-                const hasOriginalText =
-                  beforeText.length === 0 ? true : afterText.startsWith(beforeText) || afterText.includes(beforeText);
-                const replacedContent = !hasOriginalHtml && !hasOriginalText;
-                if (replacedContent) {
-                  el.innerHTML = beforeHtml;
-                  // Keep existing rich content (including images), then append plain text lines.
-                  const lines = value.split('\n');
-                  lines.forEach((line, index) => {
-                    if (index > 0) {
-                      el.appendChild(document.createElement('br'));
-                    }
-                    el.appendChild(document.createTextNode(line));
-                  });
-                  el.dispatchEvent(new Event('input', { bubbles: true }));
-                  el.dispatchEvent(new Event('change', { bubbles: true }));
-                }
-              }
-            },
-            text,
-            inputMode,
-          );
-        } else {
-          // Type the text with a small delay between keypresses
-          await element.type(text, { delay: 50 });
-        }
-      } else {
-        // Use direct value setting for other types of elements
-        await element.evaluate(
-          (el, value, mode) => {
-            const shouldAppend = mode === 'append';
-            const currentValue =
-              el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement
-                ? el.value
-                : el instanceof HTMLElement && el.isContentEditable
-                  ? (el.textContent ?? '')
-                  : '';
-            const nextValue = shouldAppend ? `${currentValue}${value}` : value;
-
-            if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
-              el.value = nextValue;
-            } else if (el instanceof HTMLElement && el.isContentEditable) {
-              el.textContent = nextValue;
+            el.value = nextValue;
+            const len = el.value.length;
+            if (typeof el.setSelectionRange === 'function') {
+              el.setSelectionRange(len, len);
             }
-            // Dispatch events
-            el.dispatchEvent(new Event('input', { bubbles: true }));
-            el.dispatchEvent(new Event('change', { bubbles: true }));
-          },
-          text,
-          inputMode,
-        );
-      }
+          } else {
+            el.textContent = nextValue;
+          }
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+          return true;
+        }`,
+        [text, inputMode],
+      );
 
       // Wait for page stability after input
       await this.waitForPageAndFramesLoad();
@@ -1396,140 +1134,28 @@ export default class Page {
     }
   }
 
-  /**
-   * Wait for an element to become stable (no position/size changes)
-   * Similar to Playwright's wait_for_element_state('stable')
-   */
-  private async _waitForElementStability(element: ElementHandle, timeout = 1000): Promise<void> {
-    const startTime = Date.now();
-    let lastRect = await element.boundingBox();
-
-    while (Date.now() - startTime < timeout) {
-      // Wait a short time
-      await new Promise(resolve => setTimeout(resolve, 50));
-
-      // Get current position and size
-      const currentRect = await element.boundingBox();
-
-      // If element is no longer in DOM or not visible
-      if (!currentRect) {
-        break;
-      }
-
-      // Compare with previous position/size
-      if (
-        lastRect &&
-        Math.abs(lastRect.x - currentRect.x) < 2 &&
-        Math.abs(lastRect.y - currentRect.y) < 2 &&
-        Math.abs(lastRect.width - currentRect.width) < 2 &&
-        Math.abs(lastRect.height - currentRect.height) < 2
-      ) {
-        // Position is stable - wait a bit more to be sure and then return
-        await new Promise(resolve => setTimeout(resolve, 50));
-        return;
-      }
-
-      // Update last position
-      lastRect = currentRect;
-    }
-
-    // If we got here, either the element stabilized or we timed out
-    logger.debug('Element stability check completed (timeout or stable)');
-  }
-
-  private async _scrollIntoViewIfNeeded(element: ElementHandle, timeout = 1000): Promise<void> {
-    const startTime = Date.now();
-
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      // Check if element is in viewport
-      const isVisible = await element.evaluate(el => {
-        const rect = el.getBoundingClientRect();
-
-        // Check if element has size
-        if (rect.width === 0 || rect.height === 0) return false;
-
-        // Check if element is hidden
-        const style = window.getComputedStyle(el);
-        if (style.visibility === 'hidden' || style.display === 'none' || style.opacity === '0') {
-          return false;
-        }
-
-        // Check if element is in viewport
-        const isInViewport =
-          rect.top >= 0 &&
-          rect.left >= 0 &&
-          rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-          rect.right <= (window.innerWidth || document.documentElement.clientWidth);
-
-        if (!isInViewport) {
-          // Scroll into view if not visible
-          el.scrollIntoView({
-            behavior: 'auto',
-            block: 'center',
-            inline: 'center',
-          });
-          return false;
-        }
-
-        return true;
-      });
-
-      if (isVisible) break;
-
-      // Check timeout - log warning and return instead of throwing
-      if (Date.now() - startTime > timeout) {
-        logger.warning('Timed out while trying to scroll element into view, continuing anyway');
-        break;
-      }
-
-      // Small delay before next check
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-  }
 
   async clickElementNode(elementNode: EnhancedDOMTreeNode): Promise<void> {
     await this._ensurePuppeteerPage();
 
     try {
-      // Highlight before clicking
-      // if (elementNode.highlightIndex !== null) {
-      //   await this._updateState(elementNode.highlightIndex);
-      // }
-
-      const element = await this.locateElement(elementNode);
-      if (!element) {
-        throw new Error(`Element: ${elementNode} not found`);
-      }
-
-      // Scroll element into view if needed
-      await this._scrollIntoViewIfNeeded(element);
-
-      try {
-        // First attempt: Use Puppeteer's click method with timeout
-        await Promise.race([
-          element.click(),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Click timeout')), 2000)),
-        ]);
-      } catch (error) {
-        // if URLNotAllowedError, throw it
-        if (error instanceof URLNotAllowedError) {
-          throw error;
-        }
-        // Second attempt: Use evaluate to perform a direct click
-        logger.info('Failed to click element, trying again', error);
-        try {
-          await element.evaluate(el => (el as HTMLElement).click());
-        } catch (secondError) {
-          // if URLNotAllowedError, throw it
-          if (secondError instanceof URLNotAllowedError) {
-            throw secondError;
+      await this._callOnBackendNode(
+        elementNode,
+        `function() {
+          const el = this;
+          if (!(el instanceof HTMLElement)) {
+            throw new Error('Target is not an HTMLElement');
           }
-          throw new Error(
-            `Failed to click element: ${secondError instanceof Error ? secondError.message : String(secondError)}`,
-          );
-        }
-      }
+          el.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'center' });
+          el.focus();
+          if (typeof el.click === 'function') {
+            el.click();
+          } else {
+            el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, composed: true }));
+          }
+          return true;
+        }`,
+      );
     } catch (error) {
       throw new Error(
         `Failed to click element: ${elementNode}. Error: ${error instanceof Error ? error.message : String(error)}`,
@@ -1541,13 +1167,20 @@ export default class Page {
     await this._ensurePuppeteerPage();
 
     try {
-      const element = await this.locateElement(elementNode);
-      if (!element) {
-        throw new Error(`Element: ${elementNode} not found`);
-      }
-
-      await this._scrollIntoViewIfNeeded(element);
-      await element.hover();
+      await this._callOnBackendNode(
+        elementNode,
+        `function() {
+          const el = this;
+          if (!(el instanceof HTMLElement)) {
+            throw new Error('Target is not an HTMLElement');
+          }
+          el.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'center' });
+          el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, cancelable: true, composed: true }));
+          el.dispatchEvent(new MouseEvent('mouseenter', { bubbles: false, cancelable: true, composed: true }));
+          el.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, cancelable: true, composed: true }));
+          return true;
+        }`,
+      );
     } catch (error) {
       const errorMsg = `Failed to hover element: ${elementNode}. Error: ${error instanceof Error ? error.message : String(error)}`;
       logger.error(errorMsg);
@@ -1562,13 +1195,6 @@ export default class Page {
     }
     // Otherwise return the cached state's selector map
     return this._cachedState.serializedDomState.selectorMap;
-  }
-
-  async getElementByIndex(index: number): Promise<ElementHandle | null> {
-    const selectorMap = this.getSelectorMap();
-    const element = selectorMap.get(index);
-    if (!element) return null;
-    return await this.locateElement(element);
   }
 
   getDomElementByIndex(index: number): EnhancedDOMTreeNode | null {
