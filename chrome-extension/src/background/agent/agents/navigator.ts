@@ -203,7 +203,9 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
       // call the model to get the actions to take
       const inputMessages = messageManager.getMessages();
       // logger.info('Navigator input message', inputMessages[inputMessages.length - 1]);
-
+      if (import.meta.env.DEV) {
+        logger.debug('Navigator input message (DEV)', inputMessages);
+      }
       const modelOutput = await this.invoke(inputMessages);
 
       // check if the task is paused or stopped
@@ -467,8 +469,10 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
         if (result.error) {
           throw new Error(typeof result.error === 'string' ? result.error : String(result.error));
         }
+
         const afterUrl = page.url();
         const urlChanged = beforeUrl !== afterUrl;
+
         if (import.meta.env.DEV) {
           const delayMs = this.getPostActionDelayMs(actionName, result, urlChanged);
           logger.debug('Navigator action executed (DEV)', {

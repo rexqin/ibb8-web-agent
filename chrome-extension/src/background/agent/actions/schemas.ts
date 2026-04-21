@@ -8,10 +8,9 @@ export interface ActionSchema {
 
 export const doneActionSchema: ActionSchema = {
   name: 'done',
-  description: '完成任务',
+  description: '完成任务（仅需 text：总结结果与发现）',
   schema: z.object({
     text: z.string(),
-    success: z.boolean(),
   }),
 };
 
