@@ -603,9 +603,22 @@ export class ActionBuilder {
           const didTruncate = typeof maxChars === 'number' && maxChars > 0 && finalOutput.length > maxChars;
           const output = didTruncate ? finalOutput.slice(0, maxChars) : finalOutput;
 
-          await page.pasteImageDataToElementNode(targetNode, output);
+          const pasteResult = await page.pasteImageDataToElementNode(targetNode, output);
+          logger.info('downloadImageToBase64 paste diagnostics', {
+            targetIndex,
+            outputLength: output.length,
+            didTruncate,
+            inferredMime,
+            ...pasteResult,
+          });
 
-          const msg = `Downloaded image and dispatched paste image data to rich editor index ${targetIndex} (${output.length} chars)`;
+          if (!pasteResult.ok) {
+            const errorMsg = `Image paste did not mutate editor as expected (index=${targetIndex}, imageDelta=${pasteResult.imageDelta}, htmlChanged=${pasteResult.htmlChanged})`;
+            this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_FAIL, errorMsg);
+            return new ActionResult({ error: errorMsg, includeInMemory: true });
+          }
+
+          const msg = `Downloaded image and pasted to editor index ${targetIndex} (chars=${output.length}, imageDelta=${pasteResult.imageDelta}, htmlChanged=${pasteResult.htmlChanged})`;
           this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_OK, msg);
 
           return new ActionResult({ extractedContent: msg, includeInMemory: true });

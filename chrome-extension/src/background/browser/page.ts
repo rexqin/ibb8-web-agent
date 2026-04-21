@@ -1001,6 +1001,7 @@ export default class Page {
         functionDeclaration,
         arguments: args.map(value => ({ value })),
         returnByValue,
+        awaitPromise: true,
       });
       return result.result?.value;
     } finally {
@@ -1029,9 +1030,21 @@ export default class Page {
     return Boolean(visible);
   }
 
-  async pasteImageDataToElementNode(elementNode: EnhancedDOMTreeNode, src: string): Promise<void> {
+  async pasteImageDataToElementNode(
+    elementNode: EnhancedDOMTreeNode,
+    src: string,
+  ): Promise<{
+    ok: boolean;
+    beforeImageCount: number;
+    afterImageCount: number;
+    beforeTextLength: number;
+    afterTextLength: number;
+    imageDelta: number;
+    containsDataImage: boolean;
+    htmlChanged: boolean;
+  }> {
     await this._ensurePuppeteerPage();
-    await this._callOnBackendNode(
+    const result = (await this._callOnBackendNode(
       elementNode,
       `async function(imageSrc) {
         const element = this;
@@ -1077,11 +1090,50 @@ export default class Page {
           pasteEvent = new Event('paste', { bubbles: true, cancelable: true });
           Object.defineProperty(pasteEvent, 'clipboardData', { value: dataTransfer });
         }
-        element.dispatchEvent(pasteEvent);
-        return true;
+        const getSnapshot = (el) => {
+          const html = el.innerHTML || '';
+          const text = el.textContent || '';
+          const imageCount = (html.match(/<img\\b/gi) || []).length;
+          return {
+            html,
+            textLength: text.length,
+            imageCount,
+            containsDataImage: /<img[^>]+src=["']data:image\\//i.test(html),
+          };
+        };
+
+        const before = getSnapshot(element);
+        const dispatched = element.dispatchEvent(pasteEvent);
+        // Let editor handlers settle and mutate DOM.
+        await new Promise(resolve => setTimeout(resolve, 60));
+        const after = getSnapshot(element);
+        const imageDelta = after.imageCount - before.imageCount;
+        const htmlChanged = before.html !== after.html;
+        const ok = dispatched && (imageDelta > 0 || after.containsDataImage || htmlChanged);
+
+        return {
+          ok,
+          beforeImageCount: before.imageCount,
+          afterImageCount: after.imageCount,
+          beforeTextLength: before.textLength,
+          afterTextLength: after.textLength,
+          imageDelta,
+          containsDataImage: after.containsDataImage,
+          htmlChanged,
+        };
       }`,
       [src],
-    );
+    )) as {
+      ok: boolean;
+      beforeImageCount: number;
+      afterImageCount: number;
+      beforeTextLength: number;
+      afterTextLength: number;
+      imageDelta: number;
+      containsDataImage: boolean;
+      htmlChanged: boolean;
+    };
+    return result;
   }
 
   async inputTextElementNode(
