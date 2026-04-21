@@ -317,6 +317,7 @@ chrome.runtime.onConnect.addListener(port => {
           case 'cancel_task': {
             if (!currentExecutor) return port.postMessage({ type: 'error', error: t('bg_errors_noRunningTask') });
             await currentExecutor.cancel();
+            await closePlanDedicatedTabIfAny();
             break;
           }
 
