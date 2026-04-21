@@ -402,19 +402,17 @@ export default function PlanBuilder({
                 <button
                   type="button"
                   disabled={executing}
+                  onClick={() => void onReplayFailedStep?.(step)}
+                  className="text-xs text-amber-700 hover:text-amber-800 disabled:cursor-not-allowed disabled:opacity-40">
+                  {t('nav_planBuilder_replay')}
+                </button>
+                <button
+                  type="button"
+                  disabled={executing}
                   onClick={() => removeStep(step.id)}
                   className="text-xs text-red-500 hover:text-red-600 disabled:opacity-40">
                   {t('nav_planBuilder_remove')}
                 </button>
-                {stepStatusByStepId?.[step.id] === 'fail' || stepStatusByStepId?.[step.id] === 'cancel' ? (
-                  <button
-                    type="button"
-                    disabled={executing}
-                    onClick={() => void onReplayFailedStep?.(step)}
-                    className="text-xs text-amber-700 hover:text-amber-800 disabled:cursor-not-allowed disabled:opacity-40">
-                    {t('nav_planBuilder_replay')}
-                  </button>
-                ) : null}
               </div>
             </div>
             <textarea
