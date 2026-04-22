@@ -15,17 +15,7 @@ export function isUrlAllowed(url: string, allowList: string[], denyList: string[
   const lowerCaseUrl = trimmedUrl.toLowerCase();
 
   // ALWAYS block dangerous/forbidden URLs, even if firewall is disabled
-  const DANGEROUS_PREFIXES = [
-    'https://chromewebstore.google.com', // scripts are not allowed to be injected into chrome web store
-    'chrome-extension://',
-    'chrome://',
-    'javascript:',
-    'data:',
-    'file:',
-    'vbscript:',
-    'ws:',
-    'wss:',
-  ];
+  const DANGEROUS_PREFIXES = ['chrome://', 'javascript:', 'data:', 'file:', 'vbscript:', 'ws:', 'wss:'];
 
   if (DANGEROUS_PREFIXES.some(prefix => lowerCaseUrl.startsWith(prefix))) {
     return false;
@@ -90,11 +80,6 @@ export function isUrlAllowed(url: string, allowList: string[], denyList: string[
     // Invalid URL format - deny by default
     return false;
   }
-}
-
-// Check if a URL is a new tab page (about:blank or chrome://new-tab-page).
-export function isNewTabPage(url: string): boolean {
-  return url === 'about:blank' || url === 'chrome://new-tab-page' || url === 'chrome://new-tab-page/';
 }
 
 export function capTextLength(text: string, maxLength: number): string {

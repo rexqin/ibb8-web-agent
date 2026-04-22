@@ -18,17 +18,6 @@ function isNoTabError(error: unknown): boolean {
   return message.includes('No tab with id');
 }
 
-function isBlockedAutomationUrl(url: string): boolean {
-  const lower = url.toLowerCase();
-  return (
-    lower.startsWith('chrome://') ||
-    lower.startsWith('edge://') ||
-    lower.startsWith('about:') ||
-    lower.startsWith('devtools://') ||
-    lower.startsWith('view-source:')
-  );
-}
-
 export default class BrowserContext {
   private _config: BrowserContextConfig;
   private _currentTabId: number | null = null;
@@ -341,23 +330,6 @@ export default class BrowserContext {
     return page;
   }
 
-  private async findFallbackWebTab(excludeTabId?: number): Promise<chrome.tabs.Tab | null> {
-    const tabs = await chrome.tabs.query({ currentWindow: true });
-    for (const tab of tabs) {
-      if (!tab.id || tab.id === excludeTabId || !tab.url) {
-        continue;
-      }
-      if (isBlockedAutomationUrl(tab.url)) {
-        continue;
-      }
-      if (!isUrlAllowed(tab.url, this._config.allowedUrls, this._config.deniedUrls)) {
-        continue;
-      }
-      return tab;
-    }
-    return null;
-  }
-
   /**
    * Ensure current tab is navigable by automation before url updates.
    * Returns true when navigation has already been completed by opening a replacement tab.
@@ -376,19 +348,10 @@ export default class BrowserContext {
       }
       throw error;
     }
-    if (!currentTab.url || !isBlockedAutomationUrl(currentTab.url)) {
+    if (!currentTab.url) {
       return false;
     }
 
-    logger.info(`Current tab is restricted for automation: ${currentTab.url}`);
-    const fallbackTab = await this.findFallbackWebTab(currentTab.id);
-    if (fallbackTab?.id) {
-      logger.info(`Switching to fallback tab ${fallbackTab.id}: ${fallbackTab.url}`);
-      await this.switchTab(fallbackTab.id);
-      return false;
-    }
-
-    logger.info('No fallback web tab found, opening a fresh tab for navigation');
     await this.openTab(targetUrl);
     return true;
   }
