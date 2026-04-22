@@ -409,7 +409,6 @@ export class ActionBuilder {
             (dataPlaceholder && dataPlaceholder.includes('标题')) ||
             classValue.includes('publish-title'));
 
-        // Quill rich-text editor (common in many sites) usually uses `.ql-editor`.
         const isQuillBodyEditor = classValue.includes('ql-editor');
 
         const isBodyEditor =
@@ -425,9 +424,7 @@ export class ActionBuilder {
         const wantsBodyByLen = inputTextLen >= 80 && !/标题|title/i.test(input.text);
 
         if ((wantsBody || wantsBodyByLen) && !isBodyEditor) {
-          // Prefer Quill editor by `.ql-editor` for better cross-site generalization.
-          const quillCandidates: Array<[number, typeof elementNode]> = [];
-          const fallbackCandidates: Array<[number, typeof elementNode]> = [];
+          const bodyCandidates: Array<[number, typeof elementNode]> = [];
 
           for (const [idx, node] of state.serializedDomState.selectorMap.entries()) {
             const dp = (node.attributes['data-placeholder'] ?? '').toString().toLowerCase();
@@ -442,11 +439,10 @@ export class ActionBuilder {
 
             if (!candidateIsBodyish || candidateLooksLikeTitle) continue;
 
-            if (isQuill) quillCandidates.push([idx, node]);
-            else fallbackCandidates.push([idx, node]);
+            bodyCandidates.push([idx, node]);
           }
 
-          const picked = quillCandidates[0] ?? fallbackCandidates[0];
+          const picked = bodyCandidates[0];
           if (picked) {
             const [pickedIdx, pickedNode] = picked;
             targetIndex = pickedIdx;
@@ -533,36 +529,9 @@ export class ActionBuilder {
         try {
           const page = await this.context.browserContext.getCurrentPage();
           const state = await page.getState();
-          let targetIndex = input.index ?? null;
-          let targetNode = targetIndex !== null ? state?.serializedDomState.selectorMap.get(targetIndex) : undefined;
-          if (!targetNode) {
-            // Fallback for model outputs where index is null/invalid:
-            // choose the first likely editor element in current DOM snapshot.
-            const pickCandidate = () => {
-              for (const [idx, node] of state.serializedDomState.selectorMap.entries()) {
-                const cls = (node.attributes['class'] ?? '').toString().toLowerCase();
-                const ceAttr = (node.attributes['contenteditable'] ?? '').toString().toLowerCase();
-                const dp = (node.attributes['data-placeholder'] ?? '').toString().toLowerCase();
-                const ph = (node.attributes['placeholder'] ?? '').toString().toLowerCase();
-                const isEditorLike =
-                  (node.tagName === 'div' &&
-                    (cls.includes('ql-editor') || ceAttr === 'true' || ceAttr === 'contenteditable')) ||
-                  node.tagName === 'textarea' ||
-                  (node.tagName === 'input' && /url|链接|image|图片|base64/.test(ph + dp + cls));
-                if (isEditorLike) {
-                  return [idx, node] as const;
-                }
-              }
-              return null;
-            };
-
-            const candidate = pickCandidate();
-            if (candidate) {
-              targetIndex = candidate[0];
-              targetNode = candidate[1];
-            }
-          }
-          if (!targetNode || targetIndex === null) {
+          const targetIndex = input.index ?? null;
+          const targetNode = targetIndex !== null ? state?.serializedDomState.selectorMap.get(targetIndex) : undefined;
+          if (!targetNode || targetIndex === null || targetNode.attributes['contenteditable'] !== 'true') {
             throw new Error(t('act_errors_elementNotExist', [String(input.index)]));
           }
 
@@ -609,16 +578,16 @@ export class ActionBuilder {
             outputLength: output.length,
             didTruncate,
             inferredMime,
-            ...pasteResult,
+            pasteOk: pasteResult.ok,
           });
 
           if (!pasteResult.ok) {
-            const errorMsg = `Image paste did not mutate editor as expected (index=${targetIndex}, imageDelta=${pasteResult.imageDelta}, htmlChanged=${pasteResult.htmlChanged})`;
+            const errorMsg = `Image paste dispatchEvent was cancelled or failed (index=${targetIndex})`;
             this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_FAIL, errorMsg);
             return new ActionResult({ error: errorMsg, includeInMemory: true });
           }
 
-          const msg = `Downloaded image and pasted to editor index ${targetIndex} (chars=${output.length}, imageDelta=${pasteResult.imageDelta}, htmlChanged=${pasteResult.htmlChanged})`;
+          const msg = `Downloaded image and pasted to editor index ${targetIndex} (chars=${output.length})`;
           this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_OK, msg);
 
           return new ActionResult({ extractedContent: msg, includeInMemory: true });

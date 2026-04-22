@@ -1030,23 +1030,11 @@ export default class Page {
     return Boolean(visible);
   }
 
-  async pasteImageDataToElementNode(
-    elementNode: EnhancedDOMTreeNode,
-    src: string,
-  ): Promise<{
-    ok: boolean;
-    beforeImageCount: number;
-    afterImageCount: number;
-    beforeTextLength: number;
-    afterTextLength: number;
-    imageDelta: number;
-    containsDataImage: boolean;
-    htmlChanged: boolean;
-  }> {
+  async pasteImageDataToElementNode(elementNode: EnhancedDOMTreeNode, src: string): Promise<{ ok: boolean }> {
     await this._ensurePuppeteerPage();
     const result = (await this._callOnBackendNode(
       elementNode,
-      `async function(imageSrc) {
+      `function(imageSrc) {
         const element = this;
         if (!(element instanceof HTMLElement)) {
           throw new Error('Target element is not an HTMLElement');
@@ -1090,49 +1078,11 @@ export default class Page {
           pasteEvent = new Event('paste', { bubbles: true, cancelable: true });
           Object.defineProperty(pasteEvent, 'clipboardData', { value: dataTransfer });
         }
-        const getSnapshot = (el) => {
-          const html = el.innerHTML || '';
-          const text = el.textContent || '';
-          const imageCount = (html.match(/<img\\b/gi) || []).length;
-          return {
-            html,
-            textLength: text.length,
-            imageCount,
-            containsDataImage: /<img[^>]+src=["']data:image\\//i.test(html),
-          };
-        };
-
-        const before = getSnapshot(element);
-        const dispatched = element.dispatchEvent(pasteEvent);
-        // Let editor handlers settle and mutate DOM.
-        await new Promise(resolve => setTimeout(resolve, 60));
-        const after = getSnapshot(element);
-        const imageDelta = after.imageCount - before.imageCount;
-        const htmlChanged = before.html !== after.html;
-        const ok = dispatched && (imageDelta > 0 || after.containsDataImage || htmlChanged);
-
-        return {
-          ok,
-          beforeImageCount: before.imageCount,
-          afterImageCount: after.imageCount,
-          beforeTextLength: before.textLength,
-          afterTextLength: after.textLength,
-          imageDelta,
-          containsDataImage: after.containsDataImage,
-          htmlChanged,
-        };
+        const ok = element.dispatchEvent(pasteEvent);
+        return { ok };
       }`,
       [src],
-    )) as {
-      ok: boolean;
-      beforeImageCount: number;
-      afterImageCount: number;
-      beforeTextLength: number;
-      afterTextLength: number;
-      imageDelta: number;
-      containsDataImage: boolean;
-      htmlChanged: boolean;
-    };
+    )) as { ok: boolean };
     return result;
   }
 
@@ -1185,7 +1135,6 @@ export default class Page {
       throw new Error(errorMsg);
     }
   }
-
 
   async clickElementNode(elementNode: EnhancedDOMTreeNode): Promise<void> {
     await this._ensurePuppeteerPage();
