@@ -104,7 +104,6 @@ export default class Page {
   private _puppeteerPage: PuppeteerPage | null = null;
   private _config: BrowserContextConfig;
   private _state: PageState;
-  private _validWebPage = false;
   private _cachedState: PageState | null = null;
   private _cachedStateClickableElementsHashes: CachedStateClickableElementsHashes | null = null;
   private _evaluateWrapped = false;
@@ -113,33 +112,17 @@ export default class Page {
     this._tabId = tabId;
     this._config = { ...DEFAULT_BROWSER_CONTEXT_CONFIG, ...config };
     this._state = build_initial_state(tabId, url, title);
-    // chrome://newtab/, chrome://newtab/extensions, https://chromewebstore.google.com/ are not valid web pages, can't be attached
-    const lowerCaseUrl = url.trim().toLowerCase();
-    this._validWebPage =
-      (tabId &&
-        lowerCaseUrl &&
-        lowerCaseUrl.startsWith('http') &&
-        !lowerCaseUrl.startsWith('https://chromewebstore.google.com')) ||
-      false;
   }
 
   get tabId(): number {
     return this._tabId;
   }
 
-  get validWebPage(): boolean {
-    return this._validWebPage;
-  }
-
   get attached(): boolean {
-    return this._validWebPage && this._puppeteerPage !== null;
+    return this._puppeteerPage !== null;
   }
 
   async attachPuppeteer(): Promise<boolean> {
-    if (!this._validWebPage) {
-      return false;
-    }
-
     if (this._puppeteerPage) {
       return true;
     }
@@ -266,9 +249,6 @@ export default class Page {
   }
 
   async getClickableElements(focusElement: number): Promise<EnhancedDOMState | null> {
-    if (!this._validWebPage) {
-      return null;
-    }
     const puppeteerPage = await this._ensurePuppeteerPage();
     const cdpSession = this.getCDPSession();
     if (!cdpSession) {
@@ -296,9 +276,6 @@ export default class Page {
 
   // Get scroll position information for the current page.
   async getScrollInfo(): Promise<[number, number, number]> {
-    if (!this._validWebPage) {
-      return [0, 0, 0];
-    }
     return _getScrollInfo(this._tabId);
   }
 
@@ -348,10 +325,6 @@ export default class Page {
   }
 
   async getState(cacheClickableElementsHashes = false): Promise<PageState> {
-    if (!this._validWebPage) {
-      // return the initial state
-      return build_initial_state(this._tabId);
-    }
     await this.waitForPageAndFramesLoad();
     const updatedState = await this._updateState();
 
@@ -1039,12 +1012,7 @@ export default class Page {
         if (!(element instanceof HTMLElement)) {
           throw new Error('Target element is not an HTMLElement');
         }
-        const tag = element.tagName.toLowerCase();
-        const isRichEditor =
-          element.isContentEditable || tag === 'div' || element.classList.contains('ql-editor');
-        if (!isRichEditor) {
-          throw new Error('Target element ' + tag + ' is not a rich-text editor; cannot insert image node');
-        }
+
         const dataUri = imageSrc.startsWith('data:') ? imageSrc : ('data:image/png;base64,' + imageSrc);
         const commaIdx = dataUri.indexOf(',');
         if (commaIdx < 0) {

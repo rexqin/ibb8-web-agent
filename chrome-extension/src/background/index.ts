@@ -256,15 +256,6 @@ chrome.runtime.onConnect.addListener(port => {
 
             try {
               if (message.planDedicatedTab) {
-                // When navigation internally falls back to a fresh tab (e.g. about:blank is blocked),
-                // `planDedicatedTabId` might still point to the old blocked tab.
-                // In that case, prefer attaching to the incoming `message.tabId`.
-                const blockedPrefixes = ['chrome://', 'edge://', 'about:', 'devtools://', 'view-source:'];
-                const isBlockedUrl = (url?: string) => {
-                  const lower = (url ?? '').toLowerCase();
-                  return blockedPrefixes.some(prefix => lower.startsWith(prefix));
-                };
-
                 const dedicatedId = planDedicatedTabId;
                 const dedicatedTab = dedicatedId !== null ? await chrome.tabs.get(dedicatedId).catch(() => null) : null;
                 const incomingTab = await chrome.tabs.get(message.tabId).catch(() => null);
@@ -276,7 +267,7 @@ chrome.runtime.onConnect.addListener(port => {
                   messageTabUrl: incomingTab?.url,
                 });
 
-                const canUseDedicated = dedicatedId !== null && dedicatedTab?.url && !isBlockedUrl(dedicatedTab.url);
+                const canUseDedicated = dedicatedId !== null && dedicatedTab?.url;
                 if (canUseDedicated) {
                   await browserContext.attachToTabInBackground(dedicatedId);
                 } else {

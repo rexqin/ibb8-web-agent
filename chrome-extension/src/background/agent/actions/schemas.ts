@@ -126,7 +126,7 @@ export const cacheContentActionSchema: ActionSchema = {
 
 export const downloadImageToBase64ActionSchema: ActionSchema = {
   name: 'download_image_to_base64',
-  description: '从 URL 下载图片并转换为 base64，再写入指定索引的元素',
+  description: '从 URL 下载图片并转换为 base64，通过粘贴事件插入到指定索引的编辑器元素（不要将 base64 作为纯文本输入）',
   schema: z.object({
     intent: z.string().default('').describe('此动作的目的'),
     index: z.number().int().nullable().optional().describe('目标可交互输入/编辑器元素索引'),

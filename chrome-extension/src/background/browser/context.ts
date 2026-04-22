@@ -13,21 +13,6 @@ import { analytics } from '../services/analytics';
 
 const logger = createLogger('BrowserContext');
 
-interface TabLifecycleTrace {
-  tabId: number;
-  attachAttempts: number;
-  attachSuccesses: number;
-  detachAttempts: number;
-  detachSuccesses: number;
-  lastAttachAt: number | null;
-  lastDetachAt: number | null;
-  lastAccessAt: number | null;
-  lastUrl: string | null;
-  lastTitle: string | null;
-  lastError: string | null;
-  lastDetachReason: string | null;
-}
-
 function isNoTabError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
   return message.includes('No tab with id');
@@ -135,7 +120,7 @@ export default class BrowserContext {
     }
   }
 
-  public async detachPage(tabId: number, reason: string = 'manual'): Promise<void> {
+  public async detachPage(tabId: number): Promise<void> {
     logger.debug('detachPage:start', {
       tabId,
       currentAttachedCount: this._attachedPages.size,
@@ -503,7 +488,7 @@ export default class BrowserContext {
   }
 
   public async closeTab(tabId: number): Promise<void> {
-    await this.detachPage(tabId, 'closeTab');
+    await this.detachPage(tabId);
     await chrome.tabs.remove(tabId);
     // update current tab id if needed
     if (this._currentTabId === tabId) {
