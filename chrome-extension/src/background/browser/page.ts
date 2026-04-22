@@ -1003,55 +1003,96 @@ export default class Page {
     return Boolean(visible);
   }
 
-  async pasteImageDataToElementNode(elementNode: EnhancedDOMTreeNode, src: string): Promise<{ ok: boolean }> {
+  async pasteImageDataToElementNode(
+    elementNode: EnhancedDOMTreeNode,
+    imageUrl: string,
+  ): Promise<{ ok: boolean; outputLength: number; error?: string }> {
     await this._ensurePuppeteerPage();
-    const result = (await this._callOnBackendNode(
-      elementNode,
-      `function(imageSrc) {
-        const element = this;
-        if (!(element instanceof HTMLElement)) {
-          throw new Error('Target element is not an HTMLElement');
+    try {
+      const response = await fetch(imageUrl);
+      if (!response.ok) {
+        return {
+          ok: false,
+          outputLength: 0,
+          error: `Failed to download image in extension context: ${response.status} ${response.statusText}`,
+        };
+      }
+      const buffer = await response.arrayBuffer();
+      const bytes = new Uint8Array(buffer);
+      const inferredMime = (response.headers.get('content-type') || '').split(';')[0].trim() || 'image/png';
+      let base64: string;
+      const globalAny = globalThis as unknown as {
+        Buffer?: { from: (b: Uint8Array) => { toString: (enc: string) => string } };
+      };
+      if (globalAny.Buffer) {
+        base64 = globalAny.Buffer.from(bytes).toString('base64');
+      } else {
+        let binary = '';
+        const chunkSize = 0x8000;
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+          const chunk = bytes.subarray(i, i + chunkSize);
+          for (let j = 0; j < chunk.length; j++) {
+            binary += String.fromCharCode(chunk[j]);
+          }
         }
-
-        const dataUri = imageSrc.startsWith('data:') ? imageSrc : ('data:image/png;base64,' + imageSrc);
-        const commaIdx = dataUri.indexOf(',');
-        if (commaIdx < 0) {
-          throw new Error('Invalid data URI for image paste');
-        }
-        const meta = dataUri.slice(0, commaIdx);
-        const raw = dataUri.slice(commaIdx + 1);
-        const mimeMatch = /^data:([^;]+);base64$/i.exec(meta);
-        const mime = mimeMatch?.[1] || 'image/png';
-        const binary = atob(raw);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) {
-          bytes[i] = binary.charCodeAt(i);
-        }
-        const blob = new Blob([bytes], { type: mime });
-        const file = new File([blob], 'pasted-image', { type: blob.type || 'image/png' });
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(file);
-        dataTransfer.setData('text/html', '<img src="' + dataUri + '" alt="embedded-image" />');
-        // Do not inject source URL as plain text, otherwise some editors insert it as visible content.
-        dataTransfer.setData('text/plain', '');
-        element.focus();
-        let pasteEvent;
-        try {
-          pasteEvent = new ClipboardEvent('paste', {
-            clipboardData: dataTransfer,
-            bubbles: true,
-            cancelable: true,
-          });
-        } catch {
-          pasteEvent = new Event('paste', { bubbles: true, cancelable: true });
-          Object.defineProperty(pasteEvent, 'clipboardData', { value: dataTransfer });
-        }
-        const ok = element.dispatchEvent(pasteEvent);
-        return { ok };
-      }`,
-      [src],
-    )) as { ok: boolean };
-    return result;
+        base64 = btoa(binary);
+      }
+      const dataUri = `data:${inferredMime};base64,${base64}`;
+      const result = (await this._callOnBackendNode(
+        elementNode,
+        `function(uri) {
+          try {
+            const element = this;
+            if (!(element instanceof HTMLElement)) {
+              throw new Error('Target element is not an HTMLElement');
+            }
+            const commaIdx = uri.indexOf(',');
+            if (commaIdx < 0) {
+              throw new Error('Invalid data URI for image paste');
+            }
+            const meta = uri.slice(0, commaIdx);
+            const raw = uri.slice(commaIdx + 1);
+            const mimeMatch = /^data:([^;]+);base64$/i.exec(meta);
+            const mime = mimeMatch?.[1] || 'image/png';
+            const binary = atob(raw);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+              bytes[i] = binary.charCodeAt(i);
+            }
+            const blob = new Blob([bytes], { type: mime });
+            const file = new File([blob], 'pasted-image', { type: blob.type || 'image/png' });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            dataTransfer.setData('text/html', '<img src="' + uri + '" alt="embedded-image" />');
+            element.focus();
+            let pasteEvent;
+            try {
+              pasteEvent = new ClipboardEvent('paste', {
+                clipboardData: dataTransfer,
+                bubbles: true,
+                cancelable: true,
+              });
+            } catch {
+              pasteEvent = new Event('paste', { bubbles: true, cancelable: true });
+              Object.defineProperty(pasteEvent, 'clipboardData', { value: dataTransfer });
+            }
+            const ok = element.dispatchEvent(pasteEvent);
+            return { ok, outputLength: uri.length };
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            return { ok: false, outputLength: 0, error: message };
+          }
+        }`,
+        [dataUri],
+      )) as { ok: boolean; outputLength: number; error?: string } | undefined;
+      if (!result || typeof result.ok !== 'boolean' || typeof result.outputLength !== 'number') {
+        return { ok: false, outputLength: 0, error: 'Image paste CDP function returned invalid result' };
+      }
+      return result;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { ok: false, outputLength: 0, error: `Image paste failed: ${message}` };
+    }
   }
 
   async inputTextElementNode(

@@ -419,7 +419,20 @@ const SidePanel = () => {
           }
           handleTaskState(parsedExecution.data as unknown as AgentEvent);
         } else if (message.type === 'error') {
-          setPanelNotice(message.error || t('errors_unknown'));
+          const errorMessage = message.error || t('errors_unknown');
+          setPanelNotice(errorMessage);
+          const executionSnapshot = planExecutionRef.current;
+          const activePlanStepId = executionSnapshot?.steps[executionSnapshot.currentStepIndex]?.id;
+          if (activePlanStepId) {
+            appendPlanStepActivityLine(activePlanStepId, {
+              actor: Actors.SYSTEM,
+              state: ExecutionState.TASK_FAIL,
+              content: errorMessage,
+              timestamp: Date.now(),
+              isProgress: false,
+            });
+            setLastTaskTerminal(ExecutionState.TASK_FAIL);
+          }
         } else if (message.type === 'external_publish_received') {
           const publishSteps = message.payload.publishSteps ?? [];
           const normalizedSteps = publishSteps
@@ -587,6 +600,9 @@ const SidePanel = () => {
           });
         } else {
           setPanelNotice(errorMessage);
+        }
+        if (sid) {
+          setLastTaskTerminal(ExecutionState.TASK_FAIL);
         }
         stopConnection();
       }

@@ -535,51 +535,16 @@ export class ActionBuilder {
             throw new Error(t('act_errors_elementNotExist', [String(input.index)]));
           }
 
-          const res = await fetch(input.url);
-
-          if (!res.ok) {
-            throw new Error(`Failed to download image: ${res.status} ${res.statusText}`);
-          }
-
-          const buffer = await res.arrayBuffer();
-          const bytes = new Uint8Array(buffer);
-
-          // Infer mime type from response unless overridden.
-          const inferredMime =
-            input.mime_type?.trim() || res.headers.get('content-type')?.split(';')[0]?.trim() || 'image/png';
-
-          let base64: string;
-          const globalAny = globalThis as unknown as {
-            Buffer?: { from: (b: Uint8Array) => { toString: (enc: string) => string } };
-          };
-          if (globalAny.Buffer) {
-            base64 = globalAny.Buffer.from(bytes).toString('base64');
-          } else {
-            // Browser-safe base64 encoding (works in service worker contexts).
-            let binary = '';
-            const chunkSize = 0x8000;
-            for (let i = 0; i < bytes.length; i += chunkSize) {
-              const chunk = bytes.subarray(i, i + chunkSize);
-              for (let j = 0; j < chunk.length; j++) {
-                binary += String.fromCharCode(chunk[j]);
-              }
-            }
-            base64 = btoa(binary);
-          }
-
-          const finalOutput = input.as_data_uri ? `data:${inferredMime};base64,${base64}` : base64;
-          const maxChars = input.max_output_chars ?? undefined;
-          const didTruncate = typeof maxChars === 'number' && maxChars > 0 && finalOutput.length > maxChars;
-          const output = didTruncate ? finalOutput.slice(0, maxChars) : finalOutput;
-
-          const pasteResult = await page.pasteImageDataToElementNode(targetNode, output);
+          const pasteResult = await page.pasteImageDataToElementNode(targetNode, input.url);
           if (!pasteResult.ok) {
-            const errorMsg = `Image paste dispatchEvent was cancelled or failed (index=${targetIndex})`;
+            const errorMsg = pasteResult.error
+              ? `Image paste failed (index=${targetIndex}): ${pasteResult.error}`
+              : `Image paste dispatchEvent was cancelled or failed (index=${targetIndex})`;
             this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_FAIL, errorMsg);
             return new ActionResult({ error: errorMsg, includeInMemory: true });
           }
 
-          const msg = `Downloaded image and pasted to editor index ${targetIndex} (chars=${output.length})`;
+          const msg = `Downloaded image and pasted to editor index ${targetIndex} (chars=${pasteResult.outputLength})`;
           this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.ACT_OK, msg);
 
           return new ActionResult({ extractedContent: msg, includeInMemory: true });
