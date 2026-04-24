@@ -38,6 +38,12 @@ interface ParsedModelOutput {
   action?: (Record<string, unknown> | null)[] | null;
 }
 
+interface ToolEnvelopeLike {
+  name?: string;
+  type?: string;
+  args?: unknown;
+}
+
 export class NavigatorActionRegistry {
   private actions: Record<string, Action> = {};
 
@@ -114,6 +120,12 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
         if (response.parsed) {
           return response.parsed;
         }
+
+        // Some providers return a tool envelope in raw.content instead of raw.tool_calls.
+        const parsedFromRawContent = this.tryParseFromRawContent(response?.raw?.content);
+        if (parsedFromRawContent) {
+          return parsedFromRawContent;
+        }
       } catch (error) {
         if (isAbortedError(error)) {
           throw error;
@@ -138,8 +150,9 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
       const rawResponse = response.raw as BaseMessage & {
         tool_calls?: Array<{
           args: {
-            currentState: typeof agentBrainSchema._type;
-            action: z.infer<ReturnType<typeof buildDynamicActionSchema>>;
+            current_state?: typeof agentBrainSchema._type;
+            currentState?: typeof agentBrainSchema._type;
+            action?: z.infer<ReturnType<typeof buildDynamicActionSchema>> | (Record<string, unknown> | null)[];
           };
         }>;
       };
@@ -149,9 +162,11 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
         logger.info('Navigator structuredLlm tool call with empty content', rawResponse.tool_calls);
         // only use the first tool call
         const toolCall = rawResponse.tool_calls[0];
+        const currentStateCandidate = toolCall.args.current_state ?? toolCall.args.currentState;
+        const actionCandidate = Array.isArray(toolCall.args.action) ? [...toolCall.args.action] : [];
         const candidate = {
-          current_state: toolCall.args.currentState,
-          action: [...toolCall.args.action],
+          current_state: currentStateCandidate,
+          action: actionCandidate,
         };
         const validated = this.modelOutputSchema.safeParse(candidate);
         if (!validated.success) {
@@ -164,6 +179,53 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
 
     // Fallback to parent class manual JSON extraction for models without structured output support
     return super.invoke(inputMessages);
+  }
+
+  private tryParseFromRawContent(rawContent: unknown): this['ModelOutput'] | undefined {
+    let content: unknown = rawContent;
+
+    if (typeof content === 'string') {
+      try {
+        content = JSON.parse(content);
+      } catch {
+        const parsed = this.manuallyParseResponse(content);
+        if (parsed) {
+          return parsed;
+        }
+        return undefined;
+      }
+    }
+
+    if (Array.isArray(content) && content.length > 0) {
+      content = content[0];
+    }
+
+    if (!content || typeof content !== 'object') {
+      return undefined;
+    }
+
+    const envelope = content as ToolEnvelopeLike;
+    const args = envelope.args;
+    if (!args || typeof args !== 'object') {
+      return undefined;
+    }
+
+    const argsObject = args as {
+      current_state?: typeof agentBrainSchema._type;
+      currentState?: typeof agentBrainSchema._type;
+      action?: (Record<string, unknown> | null)[];
+    };
+
+    const candidate = {
+      current_state: argsObject.current_state ?? argsObject.currentState,
+      action: Array.isArray(argsObject.action) ? argsObject.action : [],
+    };
+
+    const validated = this.modelOutputSchema.safeParse(candidate);
+    if (!validated.success) {
+      return undefined;
+    }
+    return validated.data;
   }
 
   async execute(): Promise<AgentOutput<NavigatorResult>> {

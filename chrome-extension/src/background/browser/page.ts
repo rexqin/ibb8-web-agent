@@ -983,11 +983,14 @@ export default class Page {
               bytes[i] = binary.charCodeAt(i);
             }
             const blob = new Blob([bytes], { type: mime });
-            const file = new File([blob], 'pasted-image', { type: blob.type || 'image/png' });
+            const file = new File([blob], 'pasted-image.png', { type: blob.type || 'image/png' });
             const dataTransfer = new DataTransfer();
+            // Align with real browser paste: items[0]=string text/html, items[1]=file; types include text/html + Files.
+            // Note: synthetic ClipboardEvent cannot set isTrusted=true (browser security).
+            const htmlPayload = '<img src="' + uri + '" alt="embedded-image" />';
+            dataTransfer.setData('text/html', htmlPayload);
             dataTransfer.items.add(file);
-            dataTransfer.setData('text/html', '<img src="' + uri + '" alt="embedded-image" />');
-      
+
             element.focus();
             let pasteEvent;
             try {
