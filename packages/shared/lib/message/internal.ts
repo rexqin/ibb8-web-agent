@@ -55,6 +55,12 @@ export const sidePanelHeartbeatAckMessageSchema = z.object({
   type: z.literal('heartbeat_ack'),
 });
 
+/** Background resolved the real automation tab (e.g. after replacing a restricted URL). */
+export const sidePanelAutomationTargetTabMessageSchema = z.object({
+  type: z.literal('automation_target_tab'),
+  tabId: z.number(),
+});
+
 export const sidePanelSuccessMessageSchema = z
   .object({
     type: z.literal('success'),
@@ -76,6 +82,7 @@ export const sidePanelInternalMessageSchema = z.union([
   sidePanelSpeechToTextErrorMessageSchema,
   sidePanelExternalPublishReceivedMessageSchema,
   sidePanelHeartbeatAckMessageSchema,
+  sidePanelAutomationTargetTabMessageSchema,
   sidePanelSuccessMessageSchema,
 ]);
 
@@ -85,6 +92,7 @@ export type SidePanelErrorMessage = z.infer<typeof sidePanelErrorMessageSchema>;
 export type SidePanelSpeechToTextResultMessage = z.infer<typeof sidePanelSpeechToTextResultMessageSchema>;
 export type SidePanelSpeechToTextErrorMessage = z.infer<typeof sidePanelSpeechToTextErrorMessageSchema>;
 export type SidePanelHeartbeatAckMessage = z.infer<typeof sidePanelHeartbeatAckMessageSchema>;
+export type SidePanelAutomationTargetTabMessage = z.infer<typeof sidePanelAutomationTargetTabMessageSchema>;
 export type SidePanelSuccessMessage = z.infer<typeof sidePanelSuccessMessageSchema>;
 export type SidePanelPublishReceivedMessage = z.infer<typeof sidePanelExternalPublishReceivedMessageSchema>;
 export type SidePanelInternalMessage = z.infer<typeof sidePanelInternalMessageSchema>;

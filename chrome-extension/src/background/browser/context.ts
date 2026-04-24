@@ -40,7 +40,7 @@ export default class BrowserContext {
     this._config = { ...this._config, ...config };
   }
 
-  public updateCurrentTabId(tabId: number): void {
+  public updateCurrentTabId(tabId: number | null): void {
     // only update tab id, but don't attach it.
     this._currentTabId = tabId;
   }
@@ -73,7 +73,8 @@ export default class BrowserContext {
       if (!isUrlAllowed(targetUrl, this._config.allowedUrls, this._config.deniedUrls)) {
         throw new URLNotAllowedError(`Replacement tab URL is not allowed: ${targetUrl}`);
       }
-      const replacementTab = await chrome.tabs.create({ url: targetUrl, active: tab.active ?? true });
+
+      const replacementTab = await chrome.tabs.create({ url: targetUrl, active: true });
       if (!replacementTab.id) {
         throw new Error('Replacement tab ID is not available');
       }
@@ -82,7 +83,14 @@ export default class BrowserContext {
       if (!tab.id) {
         throw new Error('Tab ID is not available after replacement');
       }
+      try {
+        await chrome.tabs.update(tab.id, { active: true });
+      } catch (error) {
+        logger.warning('getOrCreatePage: failed to activate replacement tab', { tabId: tab.id, error });
+      }
     }
+
+    this.updateCurrentTabId(tab.id);
 
     logger.info('getOrCreatePage', tab.id, 'creating new page');
     return new Page(tab.id, tab.url || '', tab.title || '', this._config);
@@ -94,7 +102,7 @@ export default class BrowserContext {
       await page.detachAutomation();
     }
     this._attachedPages.clear();
-    this._currentTabId = null;
+    this.updateCurrentTabId(null);
   }
 
   public async attachPage(page: Page): Promise<boolean> {
@@ -230,7 +238,6 @@ export default class BrowserContext {
   private async _bindPageToCurrentTab(tab: chrome.tabs.Tab): Promise<Page> {
     const page = await this._getOrCreatePage(tab);
     await this.attachPage(page);
-    this._currentTabId = tab.id ?? null;
 
     return page;
   }
@@ -255,7 +262,7 @@ export default class BrowserContext {
       } catch (error) {
         if (isNoTabError(error)) {
           logger.info(`Current tab ${tabId} no longer exists, falling back to active tab`);
-          this._currentTabId = null;
+          this.updateCurrentTabId(null);
           return this.getCurrentPage();
         }
         throw error;
@@ -386,7 +393,7 @@ export default class BrowserContext {
 
     const page = await this._getOrCreatePage(await chrome.tabs.get(tabId));
     await this.attachPage(page);
-    this._currentTabId = tabId;
+
     return page;
   }
 
@@ -403,7 +410,7 @@ export default class BrowserContext {
       currentTab = await chrome.tabs.get(this._currentTabId);
     } catch (error) {
       if (isNoTabError(error)) {
-        this._currentTabId = null;
+        this.updateCurrentTabId(null);
         return false;
       }
       throw error;
@@ -453,7 +460,6 @@ export default class BrowserContext {
     // Reattach the page after navigation completes
     const updatedPage = await this._getOrCreatePage(await chrome.tabs.get(tabId), true);
     await this.attachPage(updatedPage);
-    this._currentTabId = tabId;
   }
 
   public async openTab(url: string): Promise<Page> {
@@ -462,6 +468,7 @@ export default class BrowserContext {
     }
 
     // Create the new tab
+
     const tab = await chrome.tabs.create({ url, active: true });
     if (!tab.id) {
       throw new Error('No tab ID available');
@@ -471,10 +478,11 @@ export default class BrowserContext {
 
     // Get updated tab information
     const updatedTab = await chrome.tabs.get(tab.id);
+    // Update current tab id before page resolution to avoid fallback creation on stale tab context.
     // Create and attach the page after tab is fully loaded and activated
     const page = await this._getOrCreatePage(updatedTab);
+
     await this.attachPage(page);
-    this._currentTabId = tab.id;
 
     return page;
   }
@@ -493,13 +501,13 @@ export default class BrowserContext {
     if (!tab.id) {
       throw new Error('No tab ID available');
     }
+    this.updateCurrentTabId(tab.id);
     // Blank tabs may never get a non-empty title; skip full URL/title/complete wait used by openTab.
     await this.waitForTabEvents(tab.id, { waitForUpdate: false, waitForActivation: false });
 
     const updatedTab = await chrome.tabs.get(tab.id);
     const page = await this._getOrCreatePage(updatedTab);
     await this.attachPage(page);
-    this._currentTabId = tab.id;
 
     return page;
   }
@@ -511,7 +519,7 @@ export default class BrowserContext {
     const tab = await chrome.tabs.get(tabId);
     const page = await this._getOrCreatePage(tab);
     await this.attachPage(page);
-    this._currentTabId = tabId;
+
     return page;
   }
 
@@ -520,7 +528,7 @@ export default class BrowserContext {
     await chrome.tabs.remove(tabId);
     // update current tab id if needed
     if (this._currentTabId === tabId) {
-      this._currentTabId = null;
+      this.updateCurrentTabId(null);
     }
   }
 
@@ -532,7 +540,7 @@ export default class BrowserContext {
     this._attachedPages.delete(tabId);
     // update current tab id if needed
     if (this._currentTabId === tabId) {
-      this._currentTabId = null;
+      this.updateCurrentTabId(null);
     }
   }
 

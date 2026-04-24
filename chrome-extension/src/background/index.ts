@@ -16,6 +16,7 @@ import {
   type SidePanelPublishReceivedMessage,
 } from '@extension/shared';
 import BrowserContext from './browser/context';
+import type Page from './browser/page';
 import type { AutomationConnectorMode, AutomationEngine } from './browser/automation/adapter';
 import { Executor } from './agent/executor';
 import { createLogger } from './log';
@@ -97,6 +98,14 @@ async function detachPlanDedicatedTabIfAny(reason: 'cancel' | 'disconnect'): Pro
 
 const pendingSidePanelMessages: SidePanelPublishReceivedMessage[] = [];
 const SIDE_PANEL_URL = chrome.runtime.getURL('side-panel/index.html');
+
+function postAutomationTargetTab(port: chrome.runtime.Port, page: Page): void {
+  try {
+    port.postMessage({ type: 'automation_target_tab', tabId: page.tabId });
+  } catch (error) {
+    logger.warning('postAutomationTargetTab failed', error);
+  }
+}
 
 // Setup side panel behavior
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(error => console.error(error));
@@ -247,20 +256,22 @@ chrome.runtime.onConnect.addListener(port => {
 
             logger.info('new_task', message.tabId, message.task, { planDedicatedTab: message.planDedicatedTab });
             try {
+              let attachedPage: Page;
               if (message.planDedicatedTab) {
                 // Keep plan tab lifecycle aligned with a whole plan run:
                 // attach once at plan start, detach/close when plan ends.
                 if (planDedicatedTabId === null) {
-                  // Reuse the incoming tab as dedicated tab first, avoid creating a new tab on execute.
-                  await browserContext.attachToTabInBackground(message.tabId);
-                  planDedicatedTabId = message.tabId;
+                  attachedPage = await browserContext.attachToTabInBackground(message.tabId);
+                  planDedicatedTabId = attachedPage.tabId;
                 } else {
-                  await browserContext.attachToTabInBackground(planDedicatedTabId);
+                  attachedPage = await browserContext.attachToTabInBackground(planDedicatedTabId);
+                  planDedicatedTabId = attachedPage.tabId;
                 }
               } else {
                 await closePlanDedicatedTabIfAny();
-                await browserContext.switchTab(message.tabId);
+                attachedPage = await browserContext.switchTab(message.tabId);
               }
+              postAutomationTargetTab(port, attachedPage);
             } catch (error) {
               logger.error('new_task tab setup failed:', error);
               return port.postMessage({
@@ -294,6 +305,7 @@ chrome.runtime.onConnect.addListener(port => {
             logger.info('follow_up_task', message.tabId, message.task, { planDedicatedTab: message.planDedicatedTab });
 
             try {
+              let attachedPage: Page;
               if (message.planDedicatedTab) {
                 const dedicatedId = planDedicatedTabId;
                 const dedicatedTab = dedicatedId !== null ? await chrome.tabs.get(dedicatedId).catch(() => null) : null;
@@ -308,15 +320,16 @@ chrome.runtime.onConnect.addListener(port => {
 
                 const canUseDedicated = dedicatedId !== null && dedicatedTab?.url;
                 if (canUseDedicated) {
-                  await browserContext.attachToTabInBackground(dedicatedId);
+                  attachedPage = await browserContext.attachToTabInBackground(dedicatedId);
                 } else {
-                  planDedicatedTabId = message.tabId;
-                  await browserContext.attachToTabInBackground(message.tabId);
+                  attachedPage = await browserContext.attachToTabInBackground(message.tabId);
                 }
+                planDedicatedTabId = attachedPage.tabId;
               } else {
                 await closePlanDedicatedTabIfAny();
-                await browserContext.switchTab(message.tabId);
+                attachedPage = await browserContext.switchTab(message.tabId);
               }
+              postAutomationTargetTab(port, attachedPage);
             } catch (error) {
               logger.error('follow_up_task tab setup failed:', error);
               return port.postMessage({

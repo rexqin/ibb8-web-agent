@@ -134,23 +134,16 @@ export abstract class BaseAgent<T extends z.ZodType, M = unknown> {
 
       let response = undefined;
       try {
-        logger.debug(`[${this.modelName}] Invoking LLM with structured output...`);
         response = await structuredLlm.invoke(inputMessages, {
           signal: this.context.controller.signal,
           ...this.callOptions,
-        });
-
-        logger.debug(`[${this.modelName}] LLM response received:`, {
-          hasParsed: !!response.parsed,
-          hasRaw: !!response.raw,
-          rawContent: response.raw?.content?.slice(0, 500) + (response.raw?.content?.length > 500 ? '...' : ''),
         });
 
         if (response.parsed) {
           logger.debug(`[${this.modelName}] Successfully parsed structured output`);
           return response.parsed;
         }
-        logger.error('Failed to parse response', response);
+
         throw new Error('Could not parse response with structured output');
       } catch (error) {
         if (isAbortedError(error)) {

@@ -86,6 +86,8 @@ const SidePanel = () => {
   const planExecutionRef = useRef<PlanExecutionState | null>(null);
   const portRef = useRef<chrome.runtime.Port | null>(null);
   const heartbeatIntervalRef = useRef<number | null>(null);
+  /** Tab id actually used by automation after background may replace restricted URLs (e.g. chrome://). */
+  const automationTargetTabIdRef = useRef<number | null>(null);
 
   // Check if models are configured
   const checkModelConfiguration = useCallback(async () => {
@@ -361,6 +363,7 @@ const SidePanel = () => {
       portRef.current.disconnect();
       portRef.current = null;
     }
+    automationTargetTabIdRef.current = null;
   }, []);
 
   const loadPlanMetadatas = useCallback(async () => {
@@ -462,6 +465,8 @@ const SidePanel = () => {
           }
         } else if (message.type === 'heartbeat_ack') {
           console.log('Heartbeat acknowledged');
+        } else if (message.type === 'automation_target_tab') {
+          automationTargetTabIdRef.current = message.tabId;
         }
       });
 
@@ -533,15 +538,29 @@ const SidePanel = () => {
       if (!trimmedText) return;
 
       try {
-        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-        const tabId = tabs[0]?.id;
-        if (!tabId) {
-          throw new Error('No active tab found');
-        }
+        const resolveTabIdForAutomation = async (): Promise<number> => {
+          const preferred = automationTargetTabIdRef.current;
+          if (preferred != null) {
+            const existing = await chrome.tabs.get(preferred).catch(() => null);
+            if (existing?.id != null) {
+              return existing.id;
+            }
+            automationTargetTabIdRef.current = null;
+          }
+          const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+          const id = tabs[0]?.id;
+          if (!id) {
+            throw new Error('No active tab found');
+          }
+          return id;
+        };
 
         if (!isFollowUpMode) {
+          automationTargetTabIdRef.current = null;
           sessionIdRef.current = crypto.randomUUID();
         }
+
+        const tabId = await resolveTabIdForAutomation();
 
         const userMessage = {
           actor: Actors.USER,
